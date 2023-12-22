@@ -3,11 +3,13 @@ package gb
 import (
 	"image/color"
 
+	"github.com/akatsuki105/dugb/core/gb/cpu"
 	"github.com/akatsuki105/dugb/core/gb/video"
 	"github.com/akatsuki105/dugb/util/scheduler"
 )
 
 type GB struct {
+	cpu   *cpu.Cpu
 	video *video.Video
 	s     *scheduler.Scheduler
 }
@@ -15,6 +17,7 @@ type GB struct {
 func New() *GB {
 	s := scheduler.New()
 	return &GB{
+		cpu:   cpu.New(s),
 		video: video.New(s),
 		s:     s,
 	}
