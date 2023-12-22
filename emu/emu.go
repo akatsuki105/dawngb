@@ -6,7 +6,6 @@ import (
 	"os"
 
 	"github.com/akatsuki105/dugb/core"
-	"github.com/akatsuki105/dugb/core/gb"
 	"github.com/hajimehoshi/ebiten/v2"
 )
 
@@ -21,32 +20,18 @@ var keyMap = map[ebiten.Key]string{
 	ebiten.KeyArrowRight: "RIGHT",
 }
 
-var btnMap = map[ebiten.GamepadButton]string{
-	ebiten.GamepadButton2:  "A",
-	ebiten.GamepadButton1:  "B",
-	ebiten.GamepadButton3:  "B",
-	ebiten.GamepadButton4:  "L",
-	ebiten.GamepadButton5:  "R",
-	ebiten.GamepadButton8:  "SELECT",
-	ebiten.GamepadButton9:  "START",
-	ebiten.GamepadButton15: "UP",
-	ebiten.GamepadButton16: "RIGHT",
-	ebiten.GamepadButton17: "DOWN",
-	ebiten.GamepadButton18: "LEFT",
-}
-
 type Emu struct {
 	c core.Core
 }
 
 func New() *Emu {
 	return &Emu{
-		c: gb.New(),
+		c: core.New("GB"),
 	}
 }
 
 func (e *Emu) Title() string {
-	return "TODO"
+	return e.c.Title()
 }
 
 func (e *Emu) LoadROM(path string) error {

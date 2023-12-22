@@ -35,7 +35,8 @@ func Run() exitCode {
 	e := emu.New()
 	e.LoadROM(romPath)
 
-	ebiten.SetWindowSize(160*2, 144*2)
+	w, h := e.Layout(0, 0)
+	ebiten.SetWindowSize(w*2, h*2)
 	ebiten.SetWindowTitle(fmt.Sprintf("DuGB - %s", e.Title()))
 	ebiten.SetWindowResizingMode(ebiten.WindowResizingModeEnabled)
 

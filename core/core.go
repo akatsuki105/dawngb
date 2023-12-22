@@ -1,6 +1,10 @@
 package core
 
-import "image/color"
+import (
+	"image/color"
+
+	"github.com/akatsuki105/dugb/core/gb"
+)
 
 type ID = string
 
@@ -28,4 +32,15 @@ type Core interface {
 	FrameBuffer() []color.RGBA
 
 	SetKeyInput(key string, press bool)
+
+	Title() string
+}
+
+func New(id ID) Core {
+	switch id {
+	case GB:
+		return gb.New()
+	default:
+		panic("invalid core id. valid core id is {GB}")
+	}
 }
