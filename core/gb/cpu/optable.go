@@ -3,7 +3,7 @@ package cpu
 type opcode = func(c *Cpu)
 
 var opTable = [256]opcode{
-	/* 0x00 */ op00, op01, op02, op03,
+	/* 0x00 */ op00, op01, op02, op03, op04, op05,
 }
 
 var opCycles = [256]int64{
@@ -30,17 +30,13 @@ func op00(c *Cpu) { /* nop */ }
 func op01(c *Cpu) {
 	lo := uint16(c.fetch())
 	hi := uint16(c.fetch())
-	c.r.bc = (hi << 8) | lo
+	c.r.bc.unpack((hi << 8) | lo)
 }
 
-func op02(c *Cpu) {
-	c.m.Write(c.r.bc, c.r.a)
-}
+func op02(c *Cpu) { c.m.Write(c.r.bc.pack(), c.r.a) }
 
-func op03(c *Cpu) {
-	c.r.bc++
-}
+func op03(c *Cpu) { c.r.bc.unpack(c.r.bc.pack() + 1) }
 
-func op04(c *Cpu) {
-	//
-}
+func op04(c *Cpu) { c.r.bc.hi++ }
+
+func op05(c *Cpu) { c.r.bc.hi-- }

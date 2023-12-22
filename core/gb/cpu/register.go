@@ -2,14 +2,32 @@ package cpu
 
 import "github.com/akatsuki105/dugb/util"
 
+type pair struct {
+	lo, hi uint8
+}
+
+func (p *pair) pack() uint16 {
+	return uint16(p.hi)<<8 | uint16(p.lo)
+}
+
+func (p *pair) unpack(val uint16) {
+	p.lo = uint8(val)
+	p.hi = uint8(val >> 8)
+}
+
 type Registers struct {
 	a  uint8
 	f  psr
-	bc uint16
+	bc pair
 	de uint16
 	hl uint16
 	sp uint16
 	pc uint16
+}
+
+func NewRegisters() *Registers {
+	r := &Registers{}
+	return r
 }
 
 // ZNHC----
