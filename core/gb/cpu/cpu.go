@@ -7,10 +7,16 @@ import (
 	"github.com/akatsuki105/dugb/util/scheduler"
 )
 
-const CLOCK = 1
+const CLOCK = 4
+
+type Memory interface {
+	Read(addr uint16) uint8
+	Write(addr uint16, val uint8)
+}
 
 type Cpu struct {
 	r         Registers
+	m         Memory
 	Cycles    int64
 	NextEvent int64
 	Halted    bool

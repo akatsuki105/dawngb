@@ -10,17 +10,20 @@ import (
 
 type GB struct {
 	cpu   *cpu.Cpu
+	m     Memory
 	video *video.Video
 	s     *scheduler.Scheduler
 }
 
 func New() *GB {
 	s := scheduler.New()
-	return &GB{
+	g := &GB{
 		cpu:   cpu.New(s),
 		video: video.New(s),
 		s:     s,
 	}
+	g.m = *newMemory(g)
+	return g
 }
 
 func (g *GB) ID() string {
