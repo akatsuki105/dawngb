@@ -3,6 +3,7 @@ package video
 // Mode 0
 func (v *Video) hblank(cyclesLate int64) {
 	v.mode = 0
+	v.r.DrawScanline(v.ly, v.screen[v.ly*160:(v.ly+1)*160])
 	switch v.ly {
 	case 143:
 		v.s.Schedule(&v.events[1], ((204-v.renderingCycle)*CYCLE)-cyclesLate)
