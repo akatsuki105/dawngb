@@ -1,3 +1,3 @@
 # DuGB
 
-GameBoy emulator written in Go.
+DuGB is GameBoy emulator written in Go.
