@@ -19,8 +19,8 @@ type Registers struct {
 	a  uint8
 	f  psr
 	bc pair
-	de uint16
-	hl uint16
+	de pair
+	hl pair
 	sp uint16
 	pc uint16
 }

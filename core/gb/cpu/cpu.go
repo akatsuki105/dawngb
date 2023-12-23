@@ -29,9 +29,10 @@ type Cpu struct {
 	s *scheduler.Scheduler
 }
 
-func New(s *scheduler.Scheduler) *Cpu {
+func New(s *scheduler.Scheduler, m Memory) *Cpu {
 	return &Cpu{
 		s: s,
+		m: m,
 	}
 }
 
@@ -104,6 +105,7 @@ func (c *Cpu) ProcessEvents() {
 }
 
 func (c *Cpu) fetch() uint8 {
+	pc := c.r.pc
 	c.r.pc++
-	return 0
+	return c.m.Read(pc)
 }

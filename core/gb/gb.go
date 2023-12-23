@@ -19,11 +19,11 @@ type GB struct {
 func New() *GB {
 	s := scheduler.New()
 	g := &GB{
-		cpu:   cpu.New(s),
 		video: video.New(s),
 		s:     s,
 	}
 	g.m = *newMemory(g)
+	g.cpu = cpu.New(s, &g.m)
 	return g
 }
 
