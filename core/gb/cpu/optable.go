@@ -1,10 +1,26 @@
 package cpu
 
+import "fmt"
+
 type opcode = func(c *Cpu)
 
 var opTable = [256]opcode{
 	/* 0x00 */ op00, op01, op02, op03, op04, op05, op06, todo, op08, op09, op0A, op0B, op0C, op0D, op0E, todo,
-	/* 0x10 */ todo, op11,
+	/* 0x10 */ todo, op11, op12, todo, todo, todo, todo, todo, todo, todo, todo, todo, todo, todo, todo, todo,
+	/* 0x20 */ todo, todo, todo, todo, todo, todo, todo, todo, todo, todo, todo, todo, todo, todo, todo, todo,
+	/* 0x30 */ todo, op31, todo, todo, todo, todo, todo, todo, todo, todo, todo, todo, todo, todo, todo, todo,
+	/* 0x40 */ todo, todo, todo, todo, todo, todo, todo, todo, todo, todo, todo, todo, todo, todo, todo, todo,
+	/* 0x50 */ todo, todo, todo, todo, todo, todo, todo, todo, todo, todo, todo, todo, todo, todo, todo, todo,
+	/* 0x60 */ todo, todo, todo, todo, todo, todo, todo, todo, todo, todo, todo, todo, todo, todo, todo, todo,
+	/* 0x70 */ todo, todo, todo, todo, todo, todo, todo, todo, todo, todo, todo, todo, todo, todo, todo, todo,
+	/* 0x80 */ todo, todo, todo, todo, todo, todo, todo, todo, todo, todo, todo, todo, todo, todo, todo, todo,
+	/* 0x90 */ todo, todo, todo, todo, todo, todo, todo, todo, todo, todo, todo, todo, todo, todo, todo, todo,
+	/* 0xA0 */ todo, todo, todo, todo, todo, todo, todo, todo, todo, todo, todo, todo, todo, todo, todo, todo,
+	/* 0xB0 */ todo, todo, todo, todo, todo, todo, todo, todo, todo, todo, todo, todo, todo, todo, todo, todo,
+	/* 0xC0 */ todo, todo, todo, opC3, todo, todo, todo, todo, todo, todo, todo, todo, todo, todo, todo, todo,
+	/* 0xD0 */ todo, todo, todo, todo, todo, todo, todo, todo, todo, todo, todo, todo, todo, todo, todo, todo,
+	/* 0xE0 */ todo, todo, todo, todo, todo, todo, todo, todo, todo, todo, todo, todo, todo, todo, todo, todo,
+	/* 0xF0 */ opF0, todo, todo, opF3, todo, todo, todo, todo, todo, todo, todo, todo, todo, todo, opFE, todo,
 }
 
 var opCycles = [256]int64{
@@ -27,7 +43,7 @@ var opCycles = [256]int64{
 }
 
 func todo(c *Cpu) {
-	panic("todo")
+	panic(fmt.Sprintf("todo opcode: 0x%02X in 0x%04X", c.inst.opcode, c.inst.addr))
 }
 
 func op00(c *Cpu) { /* nop */ }
@@ -99,4 +115,33 @@ func op11(c *Cpu) {
 	lo := uint16(c.fetch())
 	hi := uint16(c.fetch())
 	c.r.de.unpack((hi << 8) | lo)
+}
+
+func op12(c *Cpu) { c.m.Write(c.r.de.pack(), c.r.a) }
+
+func op31(c *Cpu) {
+	lo := uint16(c.fetch())
+	hi := uint16(c.fetch())
+	c.r.sp = (hi << 8) | lo
+}
+
+func opC3(c *Cpu) {
+	lo := uint16(c.fetch())
+	hi := uint16(c.fetch())
+	c.r.pc = (hi << 8) | lo
+}
+
+func opF0(c *Cpu) {
+	lo := uint16(c.fetch())
+	addr := 0xFF00 | lo
+	c.r.a = c.m.Read(addr)
+}
+
+func opF3(c *Cpu) { c.IME = false }
+
+func opFE(c *Cpu) {
+	val := c.fetch()
+	c.r.f.z = c.r.a == val
+	c.r.f.n = true
+	c.r.f.h = (c.r.a & 0x0F) < (val & 0x0F)
 }

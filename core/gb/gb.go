@@ -36,9 +36,15 @@ func (g *GB) Reset() {
 	g.video.Reset()
 }
 
+func (g *GB) skipBIOS() {
+	g.cpu.SkipBIOS()
+}
+
 func (g *GB) LoadROM(romData []byte) error {
 	g.loadCartridge(romData)
 	g.Reset()
+
+	g.skipBIOS()
 	return nil
 }
 

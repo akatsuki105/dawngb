@@ -42,3 +42,7 @@ func (v *Video) Reset() {
 func (v *Video) FrameBuffer() []color.RGBA {
 	return v.screen[:]
 }
+
+func (v *Video) Scanline() uint8 {
+	return uint8(v.ly)
+}

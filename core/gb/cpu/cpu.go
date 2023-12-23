@@ -26,7 +26,8 @@ type Cpu struct {
 		opcode uint8
 		addr   uint16
 	}
-	s *scheduler.Scheduler
+	s   *scheduler.Scheduler
+	IME bool
 }
 
 func New(s *scheduler.Scheduler, m Memory) *Cpu {
@@ -42,6 +43,16 @@ func (c *Cpu) Reset() {
 	c.s.Reset(&c.Cycles, &c.NextEvent)
 }
 
+func (c *Cpu) SkipBIOS() {
+	c.r.a = 0x11
+	c.r.f.unpack(0x80)
+	c.r.de.unpack(0xFF56)
+	c.r.hl.unpack(0x000D)
+
+	c.r.sp = 0xFFFE
+	c.r.pc = 0x100
+}
+
 func (c *Cpu) Step() {
 	pc := c.r.pc
 	c.inst.addr = pc
@@ -50,6 +61,7 @@ func (c *Cpu) Step() {
 
 	fn := opTable[opcode]
 	if fn != nil {
+		fmt.Printf("0x%02X in 0x%04X\n", opcode, pc)
 		fn(c)
 	} else {
 		panic(fmt.Sprintf("illegal opcode: 0x%02X in 0x%04X", opcode, pc))
