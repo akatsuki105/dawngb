@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/akatsuki105/dugb/emu"
 	"github.com/hajimehoshi/ebiten/v2"
 )
 
@@ -32,7 +31,7 @@ func Run() exitCode {
 	}
 
 	romPath := flag.Arg(0)
-	e := emu.New()
+	e := createEmu()
 	e.LoadROM(romPath)
 
 	w, h := e.Layout(0, 0)
