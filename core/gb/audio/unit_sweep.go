@@ -31,9 +31,8 @@ func (s *sweep) update() bool {
 			if !s.updateFrequency(true) {
 				return false
 			}
+			s.step = s.speed
 		}
-
-		s.step = s.speed
 	}
 
 	return true
