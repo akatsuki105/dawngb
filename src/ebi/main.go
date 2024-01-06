@@ -24,20 +24,23 @@ func main() {
 func Run() exitCode {
 	flag.Parse()
 
-	if flag.NArg() == 0 {
-		msg := "rom path is not specified"
-		fmt.Fprintln(os.Stderr, msg)
-		return exitCodeError
-	}
-
-	romPath := flag.Arg(0)
 	e := createEmu()
-	e.LoadROM(romPath)
+
+	if flag.NArg() > 0 {
+		e.LoadROMFromPath(flag.Arg(0))
+	}
 
 	w, h := e.Layout(0, 0)
 	ebiten.SetWindowSize(w*2, h*2)
-	ebiten.SetWindowTitle(fmt.Sprintf("DuGB - %s", e.Title()))
+	ebiten.SetWindowTitle(e.Title())
 	ebiten.SetWindowResizingMode(ebiten.WindowResizingModeEnabled)
+
+	defer func() {
+		if e.music != nil {
+			e.music.Close()
+			e.context.Close()
+		}
+	}()
 
 	if err := ebiten.RunGame(e); err != nil {
 		fmt.Fprintln(os.Stderr, err)

@@ -24,3 +24,17 @@ func Btoi(b bool) int {
 	}
 	return 0
 }
+
+func Btou8(b bool) uint8 {
+	if b {
+		return 1
+	}
+	return 0
+}
+
+func Flip(size int, b bool, i int) int {
+	if b {
+		return (size - 1) - i
+	}
+	return i
+}

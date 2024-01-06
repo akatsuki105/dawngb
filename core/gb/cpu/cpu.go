@@ -2,12 +2,9 @@ package cpu
 
 import (
 	"fmt"
-	"math"
 
-	"github.com/akatsuki105/dugb/util/scheduler"
+	"github.com/akatsuki105/dugb/util/sched"
 )
-
-const CLOCK = 4
 
 type Memory interface {
 	Read(addr uint16) uint8
@@ -15,35 +12,37 @@ type Memory interface {
 }
 
 type Cpu struct {
-	r         Registers
-	m         Memory
-	Cycles    int64
-	NextEvent int64
-	Halted    bool
-	Blocked   bool
-	EarlyExit bool // 描画やサウンドの準備が整った時に、残ったイベントの処理(.Cyclesのコミット)をせずに ProcessEvents を終了して、フロントエンド側に処理を移すためのフラグ
-	inst      struct {
+	r       Registers
+	m       Memory
+	Blocked bool
+	inst    struct {
 		opcode uint8
 		addr   uint16
+		cb     bool
 	}
-	s   *scheduler.Scheduler
-	IME bool
+	s          *sched.Sched
+	IME        bool
+	halt, stop func()
+	Cycle      int64 // 8 or 4
 }
 
-func New(s *scheduler.Scheduler, m Memory) *Cpu {
+func New(s *sched.Sched, m Memory, halt, stop func()) *Cpu {
 	return &Cpu{
-		s: s,
-		m: m,
+		s:     s,
+		m:     m,
+		halt:  halt,
+		stop:  stop,
+		Cycle: 8,
 	}
 }
 
-func (c *Cpu) Reset() {
-	c.Cycles = 0
-	c.NextEvent = 0
-	c.s.Reset(&c.Cycles, &c.NextEvent)
+func (c *Cpu) Reset(hasBIOS bool) {
+	if !hasBIOS {
+		c.skipBIOS()
+	}
 }
 
-func (c *Cpu) SkipBIOS() {
+func (c *Cpu) skipBIOS() {
 	c.r.a = 0x11
 	c.r.f.unpack(0x80)
 	c.r.de.unpack(0xFF56)
@@ -58,62 +57,17 @@ func (c *Cpu) Step() {
 	c.inst.addr = pc
 	opcode := c.fetch()
 	c.inst.opcode = opcode
+	c.inst.cb = false
 
 	fn := opTable[opcode]
 	if fn != nil {
-		fmt.Printf("0x%02X in 0x%04X\n", opcode, pc)
+		// fmt.Printf("0x%02X in 0x%04X\n", opcode, pc)
 		fn(c)
 	} else {
 		panic(fmt.Sprintf("illegal opcode: 0x%02X in 0x%04X", opcode, pc))
 	}
 
-	c.Cycles += int64(opCycles[opcode] * CLOCK)
-}
-
-// This is called when `c.Cycles >= c.NextEvent` is satisfied.
-func (c *Cpu) ProcessEvents() {
-	nextEvent := c.NextEvent
-	for c.Cycles >= nextEvent {
-		c.NextEvent = math.MaxInt64
-		nextEvent = 0
-
-		// Blockedを考慮しているせいで複雑になっているが、基本的にc.Cyclesをコミットしているだけ
-		first := true
-		for first || (c.Blocked && !c.EarlyExit) {
-			first = false
-
-			cycles := c.Cycles
-			c.Cycles = 0
-			if cycles < 0 {
-				panic(fmt.Sprintf("negative cycles passed: %d", cycles))
-			}
-
-			if cycles < nextEvent {
-				// こっちにくるのは first == false　のとき、つまりCPUがDMAにBlockedされて停止しているとき
-				nextEvent = c.s.Add(nextEvent) // CPUが停止しているので一気に進めてOK
-			} else {
-				// first == true のときは、(nextEvent が 0なので)、 こっち
-				nextEvent = c.s.Add(cycles)
-			}
-		}
-
-		c.NextEvent = nextEvent
-		if c.Halted {
-			c.Cycles = nextEvent
-			break
-		} else if nextEvent < 0 {
-			panic(fmt.Sprintf("negative cycles passed: %d", nextEvent))
-		}
-
-		if c.EarlyExit {
-			break
-		}
-	}
-
-	c.EarlyExit = false
-	if c.Blocked {
-		c.Cycles = c.NextEvent
-	}
+	c.s.Add(opCycles[opcode] * c.Cycle)
 }
 
 func (c *Cpu) fetch() uint8 {

@@ -2,6 +2,7 @@ package core
 
 import (
 	"image/color"
+	"io"
 
 	"github.com/akatsuki105/dugb/core/gb"
 )
@@ -29,17 +30,17 @@ type Core interface {
 	// Get display resolution
 	Resolution() (w int, h int)
 
-	FrameBuffer() []color.RGBA
+	Screen() []color.RGBA
 
 	SetKeyInput(key string, press bool)
 
 	Title() string
 }
 
-func New(id ID) Core {
+func New(id ID, audioBuffer io.Writer) Core {
 	switch id {
 	case GB:
-		return gb.New()
+		return gb.New(audioBuffer)
 	default:
 		panic("invalid core id. valid core id is {GB}")
 	}
