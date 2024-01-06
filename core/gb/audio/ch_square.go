@@ -37,30 +37,38 @@ func newSquareChannel(hasSweep bool) *square {
 }
 
 func (ch *square) clock64Hz() {
-	ch.enabled = ch.envelope.update()
+	if ch.enabled {
+		ch.enabled = ch.envelope.update()
+	}
 }
 
 func (ch *square) clock128Hz() {
-	if ch.sweep != nil {
-		ch.enabled = ch.sweep.update()
+	if ch.enabled {
+		if ch.sweep != nil {
+			ch.enabled = ch.sweep.update()
+		}
 	}
 }
 
 func (ch *square) clock256Hz() {
-	if ch.stop && ch.length > 0 {
-		ch.length--
-		if ch.length <= 0 {
-			ch.enabled = false
+	if ch.enabled {
+		if ch.stop && ch.length > 0 {
+			ch.length--
+			if ch.length <= 0 {
+				ch.enabled = false
+			}
 		}
 	}
 }
 
 func (ch *square) clockTimer() {
-	if ch.freqCounter > 0 {
-		ch.freqCounter--
-	} else {
-		ch.freqCounter = ch.dutyStepCycle()
-		ch.dutyCounter = (ch.dutyCounter + 1) % 8
+	if ch.enabled {
+		if ch.freqCounter > 0 {
+			ch.freqCounter--
+		} else {
+			ch.freqCounter = ch.dutyStepCycle()
+			ch.dutyCounter = (ch.dutyCounter + 1) % 8
+		}
 	}
 }
 
@@ -74,7 +82,6 @@ func (ch *square) getOutput() int {
 
 // デューティ比の1ステップの長さをAPUサイクル数で返す
 func (ch *square) dutyStepCycle() int {
-	// hz := (1048576 / (2048 - ch.period)) // freqency
-	// return 4194304 / hz
-	return 4 * (2048 - ch.period)
+	hz := (1048576 / (2048 - ch.period)) // freqency
+	return 4194304 / hz
 }
