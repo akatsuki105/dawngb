@@ -34,15 +34,15 @@ type GB struct {
 func New(audioBuffer io.Writer) *GB {
 	s := sched.New()
 	g := &GB{
-		s:     s,
-		input: newInput(),
-		dma:   *sched.NewEvent("GB_DMA", func(cycle int64) {}),
+		s:   s,
+		dma: *sched.NewEvent("GB_DMA", func(cycle int64) {}),
 	}
 	g.m = newMemory(g)
 	g.cpu = cpu.New(s, g.m, g.halt, g.stop)
 	g.video = video.New(g.requestInterrupt)
 	g.timer = newTimer(g)
 	g.audio = audio.New(audioBuffer)
+	g.input = newInput(g.requestInterrupt)
 	return g
 }
 
