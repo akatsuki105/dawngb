@@ -40,7 +40,7 @@ func New(audioBuffer io.Writer) *GB {
 	}
 	g.m = newMemory(g)
 	g.cpu = cpu.New(s, g.m, g.halt, g.stop)
-	g.video = video.New(s, g.requestInterrupt)
+	g.video = video.New(g.requestInterrupt)
 	g.timer = newTimer(g)
 	g.audio = audio.New(audioBuffer)
 	return g
@@ -77,8 +77,10 @@ func (g *GB) RunFrame() {
 	frame := g.video.FrameCounter
 	for frame == g.video.FrameCounter /* && ((g.s.Cycle() - start) < FRAME) */ {
 		g.run()
+		g.video.CatchUp()
 	}
 	g.audio.CatchUp()
+	g.video.CatchUp()
 }
 
 func (g *GB) run() {
@@ -100,6 +102,7 @@ func (g *GB) run() {
 	}
 
 	g.audio.Add(g.s.Cycle() - prev)
+	g.video.Add(g.s.Cycle() - prev)
 
 	g.s.Commit()
 }

@@ -3,6 +3,8 @@ package video
 import "github.com/akatsuki105/dugb/util"
 
 func (v *Video) ReadIO(addr uint16) uint8 {
+	v.CatchUp()
+
 	switch addr {
 	case 0xFF40:
 		return v.lcdc
@@ -36,6 +38,8 @@ func (v *Video) ReadIO(addr uint16) uint8 {
 }
 
 func (v *Video) WriteIO(addr uint16, val uint8) {
+	v.CatchUp()
+
 	switch addr {
 	case 0xFF40:
 		v.lcdc = val
