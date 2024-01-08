@@ -139,15 +139,13 @@ func (c *Cpu) swap(r *uint8) {
 }
 
 func (c *Cpu) sra(r *uint8) {
-	msb := *r & 0b1000_0000
-	c.r.f.c = util.Bit(*r, 0)
-	*r = (*r >> 1) | msb
-	c.r.f.z, c.r.f.n, c.r.f.h = (*r == 0), false, false
+	carry := util.Bit(*r, 0)
+	*r = uint8(int8(*r) >> 1)
+	c.r.f.z, c.r.f.n, c.r.f.h, c.r.f.c = (*r == 0), false, false, carry
 }
 
 func (c *Cpu) rlc(r *uint8) {
-	msb := util.Bit(*r, 7)
-	c.r.f.c = msb
-	*r = (*r << 1) | util.Btou8(msb)
+	*r = (*r << 1) | (*r >> 7)
+	c.r.f.c = util.Bit(*r, 0)
 	c.r.f.z, c.r.f.n, c.r.f.h = (*r == 0), false, false
 }
