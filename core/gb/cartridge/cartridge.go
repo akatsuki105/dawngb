@@ -54,7 +54,7 @@ func createMBC(c *Cartridge) mbc {
 	switch mbcType {
 	case 0:
 		return newMBC0(c)
-	case 1, 3:
+	case 1, 2, 3:
 		return newMBC1(c)
 	case 16, 19:
 		return newMBC3(c)

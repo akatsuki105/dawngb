@@ -12,7 +12,7 @@ import (
 	"github.com/hajimehoshi/oto"
 )
 
-var music = false
+var music = true
 var samples = make([]byte, 4096)
 
 var keyMap = map[ebiten.Key]string{

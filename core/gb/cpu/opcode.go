@@ -85,8 +85,6 @@ func (c *Cpu) sub(val uint8) {
 	c.r.f.z, c.r.f.n, c.r.f.h, c.r.f.c = (c.r.a == 0), true, (int(a&0x0F)-int(val&0x0F) < 0), (diff < 0)
 }
 
-func (c *Cpu) rst(addr uint16) { c.call(addr) }
-
 func (c *Cpu) adc(val uint8) {
 	carry := util.Btou8(c.r.f.c)
 	a := c.r.a

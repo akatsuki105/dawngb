@@ -39,10 +39,10 @@ var opCycles = [256]int64{
 	/* 0x90 */ 1, 1, 1, 1, 1, 1, 2, 1, 1, 1, 1, 1, 1, 1, 2, 1,
 	/* 0xA0 */ 1, 1, 1, 1, 1, 1, 2, 1, 1, 1, 1, 1, 1, 1, 2, 1,
 	/* 0xB0 */ 1, 1, 1, 1, 1, 1, 2, 1, 1, 1, 1, 1, 1, 1, 2, 1,
-	/* 0xC0 */ 2, 1, 3, 3, 3, 2, 2, 4, 2, 1, 1, 0, 3, 3, 2, 4,
-	/* 0xD0 */ 2, 1, 3, 0, 3, 2, 2, 4, 2, 1, 3, 0, 3, 0, 2, 4,
-	/* 0xE0 */ 3, 1, 2, 0, 0, 2, 2, 4, 4, 0, 4, 0, 0, 0, 2, 4,
-	/* 0xF0 */ 3, 1, 2, 1, 0, 2, 2, 4, 3, 2, 4, 1, 0, 0, 2, 4,
+	/* 0xC0 */ 2, 1, 3, 3, 3, 2, 2, 1, 2, 1, 3, 0, 3, 3, 2, 1,
+	/* 0xD0 */ 2, 1, 3, 0, 3, 2, 2, 1, 2, 1, 3, 0, 3, 0, 2, 1,
+	/* 0xE0 */ 3, 1, 2, 0, 0, 2, 2, 1, 4, 0, 4, 0, 0, 0, 2, 1,
+	/* 0xF0 */ 3, 1, 2, 1, 0, 2, 2, 1, 3, 2, 4, 1, 0, 0, 2, 1,
 }
 
 func op00(c *Cpu) { /* nop */ }
@@ -729,7 +729,7 @@ func opC6(c *Cpu) {
 	c.r.f.z, c.r.f.n, c.r.f.h, c.r.f.c = (c.r.a == 0), false, ((a&0x0F)+(val&0x0F) > 0x0F), (result > 0xFF)
 }
 
-func opC7(c *Cpu) { c.rst(0x00) }
+func opC7(c *Cpu) { c.call(0x00) }
 
 func opC8(c *Cpu) {
 	if c.r.f.z {
@@ -772,7 +772,7 @@ func opCD(c *Cpu) {
 
 func opCE(c *Cpu) { c.adc(c.fetch()) } // adc a, u8
 
-func opCF(c *Cpu) { c.rst(0x08) }
+func opCF(c *Cpu) { c.call(0x08) }
 
 func opD0(c *Cpu) {
 	if !c.r.f.c {
@@ -808,7 +808,7 @@ func opD6(c *Cpu) {
 	c.r.f.z, c.r.f.n, c.r.f.h, c.r.f.c = (c.r.a == 0), true, (int(a&0x0F)-int(val&0x0F) < 0), (diff < 0)
 }
 
-func opD7(c *Cpu) { c.rst(0x10) }
+func opD7(c *Cpu) { c.call(0x10) }
 
 func opD8(c *Cpu) {
 	if c.r.f.c {
@@ -848,7 +848,7 @@ func opDE(c *Cpu) {
 	c.r.f.z, c.r.f.n, c.r.f.h, c.r.f.c = (c.r.a == 0), true, (int(a&0x0F)-int(val&0x0F)-int(carry) < 0), (result < 0)
 }
 
-func opDF(c *Cpu) { c.rst(0x18) }
+func opDF(c *Cpu) { c.call(0x18) }
 
 func opE0(c *Cpu) {
 	addr := 0xFF00 | uint16(c.fetch())
@@ -870,7 +870,7 @@ func opE6(c *Cpu) {
 	c.r.f.z, c.r.f.n, c.r.f.h, c.r.f.c = (c.r.a == 0), false, true, false
 }
 
-func opE7(c *Cpu) { c.rst(0x20) }
+func opE7(c *Cpu) { c.call(0x20) }
 
 func opE8(c *Cpu) {
 	sp := c.r.sp
@@ -895,7 +895,7 @@ func opEE(c *Cpu) {
 	c.r.f.z, c.r.f.n, c.r.f.h, c.r.f.c = (c.r.a == 0), false, false, false
 }
 
-func opEF(c *Cpu) { c.rst(0x28) }
+func opEF(c *Cpu) { c.call(0x28) }
 
 func opF0(c *Cpu) {
 	addr := 0xFF00 | uint16(c.fetch())
@@ -928,7 +928,7 @@ func opF6(c *Cpu) {
 	c.r.f.z, c.r.f.n, c.r.f.h, c.r.f.c = (c.r.a == 0), false, false, false
 }
 
-func opF7(c *Cpu) { c.rst(0x30) }
+func opF7(c *Cpu) { c.call(0x30) }
 
 func opF8(c *Cpu) {
 	rel := int8(c.fetch())
@@ -954,4 +954,4 @@ func opFE(c *Cpu) {
 	c.r.f.z, c.r.f.n, c.r.f.h, c.r.f.c = (diff == 0), true, ((c.r.a & 0x0F) < (val & 0x0F)), (diff < 0)
 }
 
-func opFF(c *Cpu) { c.rst(0x38) }
+func opFF(c *Cpu) { c.call(0x38) }
