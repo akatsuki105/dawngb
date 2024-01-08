@@ -78,19 +78,12 @@ func (c *Cpu) add(val uint8, carry bool) {
 	c.r.a = uint8(x)
 }
 
-func (c *Cpu) sub(val uint8) {
-	a := c.r.a
-	diff := int(a) - int(val)
-	c.r.a = uint8(diff)
-	c.r.f.z, c.r.f.n, c.r.f.h, c.r.f.c = (c.r.a == 0), true, (int(a&0x0F)-int(val&0x0F) < 0), (diff < 0)
-}
-
-func (c *Cpu) sbc(val uint8) {
-	carry := util.Btou8(c.r.f.c)
-	a := c.r.a
-	result := int(a) - int(val) - int(carry)
-	c.r.a = uint8(result)
-	c.r.f.z, c.r.f.n, c.r.f.h, c.r.f.c = (c.r.a == 0), true, (int(a&0x0F)-int(val&0x0F)-int(carry) < 0), (result < 0)
+func (c *Cpu) sub(val uint8, carry bool) {
+	cf := util.Btou8(carry)
+	x := uint16(c.r.a) - uint16(val) - uint16(cf)
+	y := (c.r.a & 0xF) - (val & 0xF) - cf
+	c.r.f.z, c.r.f.n, c.r.f.h, c.r.f.c = (uint8(x) == 0), true, (y > 0x0F), (x > 0xFF)
+	c.r.a = uint8(x)
 }
 
 func (c *Cpu) set_hl(bit int, b bool) {
