@@ -96,7 +96,7 @@ func (m *Memory) Write(addr uint16, val byte) {
 		bank := m.wram[m.wramBank*(4*KB) : (m.wramBank+1)*(4*KB)]
 		bank[addr&0xFFF] = val
 	case 0xF:
-		if addr < 0xFDFF {
+		if addr <= 0xFDFF {
 			bank := m.wram[m.wramBank*(4*KB) : (m.wramBank+1)*(4*KB)]
 			bank[addr&0xFFF] = val
 		}
