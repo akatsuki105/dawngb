@@ -67,8 +67,9 @@ func (c *Cpu) call(dst uint16) {
 
 func (c *Cpu) cp(val uint8) {
 	a := c.r.a
-	diff := int(a) - int(val)
-	c.r.f.z, c.r.f.n, c.r.f.h, c.r.f.c = (diff == 0), true, (int(a&0x0F)-int(val&0x0F) < 0), (diff < 0)
+	x := uint16(a) - uint16(val)
+	y := (a & 0xF) - (val & 0xF)
+	c.r.f.z, c.r.f.n, c.r.f.h, c.r.f.c = (uint8(x) == 0), true, (y > 0x0F), (x > 0xFF)
 }
 
 func (c *Cpu) add(val uint8) {
