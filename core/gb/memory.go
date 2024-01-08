@@ -20,6 +20,12 @@ func newMemory(gb *GB) *Memory {
 }
 
 func (m *Memory) Read(addr uint16) byte {
+	if m.gb.inGDMA {
+		if addr < 0xFF80 && addr > 0xFFFE {
+			return 0xFF
+		}
+	}
+
 	switch addr >> 12 {
 	case 0x0, 0x1, 0x2, 0x3, 0x4, 0x5, 0x6, 0x7, 0xA, 0xB:
 		return m.gb.cartridge.Read(addr)
@@ -31,6 +37,10 @@ func (m *Memory) Read(addr uint16) byte {
 		bank := m.wram[m.wramBank*(4*KB) : (m.wramBank+1)*(4*KB)]
 		return bank[addr&0xFFF]
 	case 0xF:
+		if addr < 0xFDFF {
+			bank := m.wram[m.wramBank*(4*KB) : (m.wramBank+1)*(4*KB)]
+			return bank[addr&0xFFF]
+		}
 		if addr >= 0xFE00 && addr <= 0xFE9F {
 			return m.gb.video.OAM[addr&0xFF]
 		}
@@ -69,6 +79,12 @@ func (m *Memory) Read(addr uint16) byte {
 }
 
 func (m *Memory) Write(addr uint16, val byte) {
+	if m.gb.inGDMA {
+		if addr < 0xFF80 && addr > 0xFFFE {
+			return
+		}
+	}
+
 	switch addr >> 12 {
 	case 0x0, 0x1, 0x2, 0x3, 0x4, 0x5, 0x6, 0x7, 0xA, 0xB:
 		m.gb.cartridge.Write(addr, val)
@@ -80,6 +96,10 @@ func (m *Memory) Write(addr uint16, val byte) {
 		bank := m.wram[m.wramBank*(4*KB) : (m.wramBank+1)*(4*KB)]
 		bank[addr&0xFFF] = val
 	case 0xF:
+		if addr < 0xFDFF {
+			bank := m.wram[m.wramBank*(4*KB) : (m.wramBank+1)*(4*KB)]
+			bank[addr&0xFFF] = val
+		}
 		if addr >= 0xFE00 && addr <= 0xFE9F {
 			m.gb.video.OAM[addr&0xFF] = val
 			return

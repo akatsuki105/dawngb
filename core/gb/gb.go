@@ -28,6 +28,7 @@ type GB struct {
 	dma       sched.Event
 	halted    bool
 	key1      bool // FF4D's bit 0
+	inGDMA    bool
 }
 
 func New(audioBuffer io.Writer) *GB {
@@ -144,7 +145,9 @@ func (g *GB) triggerGDMA(src uint16) {
 		for i := 0; i < 160; i++ {
 			g.video.OAM[i] = g.m.Read(src + uint16(i))
 		}
+		g.inGDMA = false
 	}
+	g.inGDMA = true
 	g.s.Schedule(&g.dma, 160*g.cpu.Cycle)
 }
 
