@@ -35,6 +35,9 @@ func (m *mbc3) write(addr uint16, val uint8) {
 		}
 	case 0x2, 0x3:
 		m.romBank = val & 0b111_1111
+		if m.romBank&0x1F == 0 {
+			m.romBank++
+		}
 	case 0x4, 0x5:
 		m.ramBank = val & 0b11
 	case 0xA, 0xB:
