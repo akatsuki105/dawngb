@@ -17,18 +17,18 @@ type VRAM struct {
 }
 
 type Video struct {
-	screen                            [160 * 144]color.RGBA
-	s                                 *sched.Sched
-	FrameCounter                      uint64
-	ly                                int
-	r                                 renderer.Renderer
-	renderingCycle                    int64
-	events                            [4]sched.Event
-	ram                               VRAM
-	lcdc, stat, lyc, scx, scy, wx, wy uint8
-	onInterrupt                       func(id int)
-	OAM                               [160]uint8
-	ioreg                             [0x40]uint8
+	screen                                             [160 * 144]color.RGBA
+	s                                                  *sched.Sched
+	FrameCounter                                       uint64
+	ly                                                 int
+	r                                                  renderer.Renderer
+	renderingCycle                                     int64
+	events                                             [4]sched.Event
+	ram                                                VRAM
+	lcdc, stat, lyc, scx, scy, wx, wy, bgp, obp0, obp1 uint8
+	onInterrupt                                        func(id int)
+	OAM                                                [160]uint8
+	ioreg                                              [0x40]uint8
 }
 
 func New(s *sched.Sched, onInterrupt func(id int)) *Video {

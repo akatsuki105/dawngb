@@ -14,19 +14,24 @@ func (v *Video) ReadIO(addr uint16) uint8 {
 		return uint8(v.ly)
 	case 0xFF45:
 		return v.lyc
+	case 0xFF47:
+		return v.bgp
+	case 0xFF48:
+		return v.obp0
+	case 0xFF49:
+		return v.obp1
 	case 0xFF4A:
 		return v.wy
 	case 0xFF4B:
 		return v.wx
 	case 0xFF4F:
 		return uint8(v.ram.bank)
+	default:
+		return v.ioreg[addr-0xFF40]
 	}
-	return v.ioreg[addr-0xFF40]
 }
 
 func (v *Video) WriteIO(addr uint16, val uint8) {
-	v.ioreg[addr-0xFF40] = val
-
 	switch addr {
 	case 0xFF40:
 		v.lcdc = val
@@ -42,10 +47,13 @@ func (v *Video) WriteIO(addr uint16, val uint8) {
 	case 0xFF45:
 		v.lyc = val
 	case 0xFF47:
+		v.bgp = val
 		v.r.SetBGP(val)
 	case 0xFF48:
+		v.obp0 = val
 		v.r.SetOBP0(val)
 	case 0xFF49:
+		v.obp1 = val
 		v.r.SetOBP1(val)
 	case 0xFF4A:
 		v.wy = val
@@ -63,5 +71,7 @@ func (v *Video) WriteIO(addr uint16, val uint8) {
 		v.r.SetOBPI(val)
 	case 0xFF6B:
 		v.r.SetOBPD(val)
+	default:
+		v.ioreg[addr-0xFF40] = val
 	}
 }
