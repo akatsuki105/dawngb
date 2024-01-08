@@ -934,7 +934,7 @@ func opF8(c *Cpu) {
 	rel := int8(c.fetch())
 	val := c.r.sp + uint16(rel)
 	c.r.hl.unpack(val)
-	c.r.f.z, c.r.f.n, c.r.f.h, c.r.f.c = false, false, ((c.r.sp&0x0F)+(uint16(rel)&0x0F) > 0x0F), ((val & 0xFF) < (c.r.sp & 0xFF))
+	c.r.f.z, c.r.f.n, c.r.f.h, c.r.f.c = false, false, ((c.r.sp&0x0F)+(uint16(rel)&0x0F) > 0x0F), ((int(c.r.sp)&0xFF)+int(rel)&0xFF) > 0xFF
 }
 
 func opF9(c *Cpu) { c.r.sp = c.r.hl.pack() }

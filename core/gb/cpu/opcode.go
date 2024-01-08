@@ -90,7 +90,7 @@ func (c *Cpu) adc(val uint8) {
 	a := c.r.a
 	result := int(a) + int(val) + int(carry)
 	c.r.a = uint8(result)
-	c.r.f.z, c.r.f.n, c.r.f.h, c.r.f.c = (c.r.a == 0), false, (int(a&0x0F)+int(val&0x0F)+int(carry) > 0x0F), (result > 0xFF)
+	c.r.f.z, c.r.f.n, c.r.f.h, c.r.f.c = (c.r.a == 0), false, ((a&0x0F)+(val&0x0F)+carry > 0x0F), (result > 0xFF)
 }
 
 func (c *Cpu) sbc(val uint8) {
