@@ -12,6 +12,13 @@ const (
 	Z_SPR
 )
 
+var dmgPalette = [4]color.RGBA{
+	{0xE0, 0xF8, 0xCF, 0xFF},
+	{0x86, 0xC0, 0x6C, 0xFF},
+	{0x30, 0x68, 0x50, 0xFF},
+	{0x07, 0x18, 0x21, 0xFF},
+}
+
 type Software struct {
 	vram     []uint8
 	oam      []uint8
@@ -68,42 +75,24 @@ func (s *Software) SetLCDC(val uint8) {
 }
 
 func (s *Software) SetBGP(val uint8) {
-	var palette = [4]color.RGBA{
-		{0xE0, 0xF8, 0xCF, 0xFF},
-		{0x86, 0xC0, 0x6C, 0xFF},
-		{0x30, 0x68, 0x50, 0xFF},
-		{0x07, 0x18, 0x21, 0xFF},
-	}
-	s.bg.palette[0] = palette[val&0b11]
-	s.bg.palette[1] = palette[(val>>2)&0b11]
-	s.bg.palette[2] = palette[(val>>4)&0b11]
-	s.bg.palette[3] = palette[(val>>6)&0b11]
+	s.bg.palette[0] = dmgPalette[val&0b11]
+	s.bg.palette[1] = dmgPalette[(val>>2)&0b11]
+	s.bg.palette[2] = dmgPalette[(val>>4)&0b11]
+	s.bg.palette[3] = dmgPalette[(val>>6)&0b11]
 }
 
 func (s *Software) SetOBP0(val uint8) {
-	var palette = [4]color.RGBA{
-		{0xE0, 0xF8, 0xCF, 0xFF},
-		{0x86, 0xC0, 0x6C, 0xFF},
-		{0x30, 0x68, 0x50, 0xFF},
-		{0x07, 0x18, 0x21, 0xFF},
-	}
-	s.sprite.palette[0] = palette[val&0b11]
-	s.sprite.palette[1] = palette[(val>>2)&0b11]
-	s.sprite.palette[2] = palette[(val>>4)&0b11]
-	s.sprite.palette[3] = palette[(val>>6)&0b11]
+	s.sprite.palette[0] = dmgPalette[val&0b11]
+	s.sprite.palette[1] = dmgPalette[(val>>2)&0b11]
+	s.sprite.palette[2] = dmgPalette[(val>>4)&0b11]
+	s.sprite.palette[3] = dmgPalette[(val>>6)&0b11]
 }
 
 func (s *Software) SetOBP1(val uint8) {
-	var palette = [4]color.RGBA{
-		{0xE0, 0xF8, 0xCF, 0xFF},
-		{0x86, 0xC0, 0x6C, 0xFF},
-		{0x30, 0x68, 0x50, 0xFF},
-		{0x07, 0x18, 0x21, 0xFF},
-	}
-	s.sprite.palette[4] = palette[val&0b11]
-	s.sprite.palette[5] = palette[(val>>2)&0b11]
-	s.sprite.palette[6] = palette[(val>>4)&0b11]
-	s.sprite.palette[7] = palette[(val>>6)&0b11]
+	s.sprite.palette[4] = dmgPalette[val&0b11]
+	s.sprite.palette[5] = dmgPalette[(val>>2)&0b11]
+	s.sprite.palette[6] = dmgPalette[(val>>4)&0b11]
+	s.sprite.palette[7] = dmgPalette[(val>>6)&0b11]
 }
 
 func (s *Software) SetSCX(val uint8) { s.bg.scx = int(val) }
@@ -114,44 +103,48 @@ func (s *Software) SetWY(val uint8) { s.win.wy = int(val) }
 
 func (s *Software) SetBGPI(val uint8) { s.bg.bgpi = val }
 func (s *Software) SetBGPD(val uint8) {
-	palID := int((s.bg.bgpi & 0x3F) / 8)
-	colorID := int(s.bg.bgpi&7) >> 1
-	rgba := &s.bg.palette[palID*4+colorID]
-	isHi := util.Bit(s.bg.bgpi, 0)
-	// val is rgb555 format
-	if isHi {
-		// 0b0BBBBBGG
-		rgba.G = (((val & 0b11) << 3) | ((rgba.G >> 3) & 0b111)) << 3
-		rgba.B = ((val >> 2) & 0b11111) << 3
-	} else {
-		// 0bGGGRRRRR
-		rgba.R = (val & 0b11111) << 3
-		rgba.G = (((rgba.G >> 3) & 0b11000) | ((val >> 5) & 0b111)) << 3
-	}
+	if s.model == 1 {
+		palID := int((s.bg.bgpi & 0x3F) / 8)
+		colorID := int(s.bg.bgpi&7) >> 1
+		rgba := &s.bg.palette[palID*4+colorID]
+		isHi := util.Bit(s.bg.bgpi, 0)
+		// val is rgb555 format
+		if isHi {
+			// 0b0BBBBBGG
+			rgba.G = (((val & 0b11) << 3) | ((rgba.G >> 3) & 0b111)) << 3
+			rgba.B = ((val >> 2) & 0b11111) << 3
+		} else {
+			// 0bGGGRRRRR
+			rgba.R = (val & 0b11111) << 3
+			rgba.G = (((rgba.G >> 3) & 0b11000) | ((val >> 5) & 0b111)) << 3
+		}
 
-	if util.Bit(s.bg.bgpi, 7) {
-		s.bg.bgpi++
+		if util.Bit(s.bg.bgpi, 7) {
+			s.bg.bgpi++
+		}
 	}
 }
 
 func (s *Software) SetOBPI(val uint8) { s.sprite.obpi = val }
 func (s *Software) SetOBPD(val uint8) {
-	palID := int((s.sprite.obpi & 0x3F) / 8)
-	colorID := int(s.sprite.obpi&7) >> 1
-	rgba := &s.sprite.palette[palID*4+colorID]
-	isHi := util.Bit(s.sprite.obpi, 0)
-	// val is rgb555 format
-	if isHi {
-		// 0b0BBBBBGG
-		rgba.G = (((val & 0b11) << 3) | ((rgba.G >> 3) & 0b111)) << 3
-		rgba.B = ((val >> 2) & 0b11111) << 3
-	} else {
-		// 0bGGGRRRRR
-		rgba.R = (val & 0b11111) << 3
-		rgba.G = (((rgba.G >> 3) & 0b11000) | ((val >> 5) & 0b111)) << 3
-	}
+	if s.model == 1 {
+		palID := int((s.sprite.obpi & 0x3F) / 8)
+		colorID := int(s.sprite.obpi&7) >> 1
+		rgba := &s.sprite.palette[palID*4+colorID]
+		isHi := util.Bit(s.sprite.obpi, 0)
+		// val is rgb555 format
+		if isHi {
+			// 0b0BBBBBGG
+			rgba.G = (((val & 0b11) << 3) | ((rgba.G >> 3) & 0b111)) << 3
+			rgba.B = ((val >> 2) & 0b11111) << 3
+		} else {
+			// 0bGGGRRRRR
+			rgba.R = (val & 0b11111) << 3
+			rgba.G = (((rgba.G >> 3) & 0b11000) | ((val >> 5) & 0b111)) << 3
+		}
 
-	if util.Bit(s.sprite.obpi, 7) {
-		s.sprite.obpi++
+		if util.Bit(s.sprite.obpi, 7) {
+			s.sprite.obpi++
+		}
 	}
 }
