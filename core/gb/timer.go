@@ -5,22 +5,22 @@ import (
 	"github.com/akatsuki105/dugb/util/sched"
 )
 
-var timaClock = [4]int64{256, 4, 16, 64}
+var timaClock = [4]int64{64, 1, 4, 16}
 
 type timer struct {
 	g                   *GB
 	div, tima, tma, tac uint8
-	divEvent            sched.Event
-	timaEvent           sched.Event
 	overflowEvent       sched.Event
+
+	updateEvent sched.Event
+	counter     int64
 }
 
 func newTimer(g *GB) *timer {
 	t := &timer{
 		g: g,
 	}
-	t.divEvent = *sched.NewEvent("GB_DIV", t.incrementDiv)
-	t.timaEvent = *sched.NewEvent("GB_TIMA", t.incrementTima)
+	t.updateEvent = *sched.NewEvent("GB_TIMER_UPDATE", t.update)
 	t.overflowEvent = *sched.NewEvent("GB_OVERFLOW", t.overflowTima)
 	return t
 }
@@ -30,7 +30,7 @@ func (t *timer) Reset() {
 	t.tima = 0
 	t.tma = 0
 	t.tac = 0
-	t.g.s.Schedule(&t.divEvent, 64*t.g.cpu.Cycle)
+	t.g.s.Schedule(&t.updateEvent, 16) // 524288Hz(一番細かいのが524288Hzなのであとはそれの倍数で数えれば良い)
 }
 
 func (t *timer) ReadIO(addr uint16) uint8 {
@@ -56,40 +56,31 @@ func (t *timer) WriteIO(addr uint16, val uint8) {
 	case 0xFF06:
 		t.tma = val
 	case 0xFF07:
-		enabled := util.Bit(t.tac, 2)
 		t.tac = val & 0b111
-		if enabled && !util.Bit(t.tac, 2) {
-			t.g.s.Cancel(&t.timaEvent)
-		} else if !enabled && util.Bit(t.tac, 2) {
-			t.triggerTima()
+	}
+}
+
+func (t *timer) update(cyclesLate int64) {
+	x := t.g.cpu.Cycle / 4
+
+	t.counter++
+	if (t.counter % (16 * x)) == 0 {
+		t.div++
+	}
+
+	if util.Bit(t.tac, 2) {
+		if (t.counter % (timaClock[t.tac&0b11] * x)) == 0 {
+			t.tima++
+			if t.tima == 0 {
+				t.g.s.Schedule(&t.overflowEvent, t.g.cpu.Cycle-cyclesLate)
+			}
 		}
 	}
-}
 
-func (t *timer) incrementDiv(cyclesLate int64) {
-	t.div++
-	t.g.s.Schedule(&t.divEvent, (64*t.g.cpu.Cycle)-cyclesLate)
-}
-
-func (t *timer) incrementTima(cyclesLate int64) {
-	t.tima++
-	if t.tima == 0 {
-		t.g.s.Schedule(&t.overflowEvent, t.g.cpu.Cycle-cyclesLate)
-	} else {
-		clock := timaClock[t.tac&0b11] * t.g.cpu.Cycle
-		t.g.s.Schedule(&t.timaEvent, clock-cyclesLate)
-	}
-}
-
-func (t *timer) triggerTima() {
-	clock := timaClock[t.tac&0b11] * t.g.cpu.Cycle
-	t.g.s.Schedule(&t.timaEvent, clock)
+	t.g.s.Schedule(&t.updateEvent, 16-cyclesLate) // 524288Hz
 }
 
 func (t *timer) overflowTima(cyclesLate int64) {
 	t.tima = t.tma
 	t.g.requestInterrupt(2)
-
-	clock := timaClock[t.tac&0b11] * t.g.cpu.Cycle
-	t.g.s.Schedule(&t.timaEvent, clock-cyclesLate)
 }
