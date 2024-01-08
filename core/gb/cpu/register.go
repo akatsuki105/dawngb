@@ -16,13 +16,10 @@ func (p *pair) unpack(val uint16) {
 }
 
 type Registers struct {
-	a  uint8
-	f  psr
-	bc pair
-	de pair
-	hl pair
-	sp uint16
-	pc uint16
+	a          uint8
+	f          psr
+	bc, de, hl pair
+	sp, pc     uint16
 }
 
 func NewRegisters() *Registers {
