@@ -13,20 +13,20 @@ func newInput() *Input {
 
 func (i *Input) ReadIO(addr uint16) uint8 {
 	val := uint8(0b11_1111)
-	if i.dpad {
-		val = util.SetBit(val, 4, false)
-		val = util.SetBit(val, 0, !i.inputs[4])
-		val = util.SetBit(val, 1, !i.inputs[5])
-		val = util.SetBit(val, 2, !i.inputs[6])
-		val = util.SetBit(val, 3, !i.inputs[7])
-		return val
-	}
 	if i.btn {
 		val = util.SetBit(val, 5, false)
 		val = util.SetBit(val, 0, !i.inputs[0])
 		val = util.SetBit(val, 1, !i.inputs[1])
 		val = util.SetBit(val, 2, !i.inputs[2])
 		val = util.SetBit(val, 3, !i.inputs[3])
+		return val
+	}
+	if i.dpad {
+		val = util.SetBit(val, 4, false)
+		val = util.SetBit(val, 0, !i.inputs[4])
+		val = util.SetBit(val, 1, !i.inputs[5])
+		val = util.SetBit(val, 2, !i.inputs[6])
+		val = util.SetBit(val, 3, !i.inputs[7])
 		return val
 	}
 	return val

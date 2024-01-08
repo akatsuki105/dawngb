@@ -26,7 +26,8 @@ func (m *mbc1) read(addr uint16) uint8 {
 		return bank[addr&0x3FFF]
 	case 0xA, 0xB:
 		if m.ramEnabled {
-			return m.c.ram[(uint32(m.ramBank)<<13)|(uint32(addr&0x1FFF))]
+			bank := m.c.ram[(8*KB)*uint(m.ramBank):]
+			return bank[addr&0x1FFF]
 		}
 	}
 	return 0xFF
@@ -48,12 +49,17 @@ func (m *mbc1) write(addr uint16, val uint8) {
 		}
 	case 0x4, 0x5:
 		if m.mode == 0 {
-			m.romBank &= 0x1F
+			m.romBank &= 0b001_1111
 			m.romBank |= (val & 0b11) << 5
 		} else {
 			m.ramBank = val & 0b11
 		}
 	case 0x6, 0x7:
 		m.mode = val & 0b1
+	case 0xA, 0xB:
+		if m.ramEnabled {
+			bank := m.c.ram[(8*KB)*uint(m.ramBank):]
+			bank[addr&0x1FFF] = val
+		}
 	}
 }
