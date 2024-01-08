@@ -115,10 +115,9 @@ func (c *Cpu) rrc(r *uint8) {
 }
 
 func (c *Cpu) rl(r *uint8) {
-	carry := c.r.f.c
-	c.r.f.c = util.Bit(*r, 7)
-	*r = (*r << 1) | util.Btou8(carry)
-	c.r.f.z, c.r.f.n, c.r.f.h = (*r == 0), false, false
+	carry := util.Bit(*r, 7)
+	*r = (*r << 1) | util.Btou8(c.r.f.c)
+	c.r.f.z, c.r.f.n, c.r.f.h, c.r.f.c = (*r == 0), false, false, carry
 }
 
 func (c *Cpu) sla(r *uint8) {
@@ -128,9 +127,9 @@ func (c *Cpu) sla(r *uint8) {
 }
 
 func (c *Cpu) srl(r *uint8) {
-	c.r.f.c = util.Bit(*r, 0)
+	carry := util.Bit(*r, 0)
 	*r >>= 1
-	c.r.f.z, c.r.f.n, c.r.f.h = (*r == 0), false, false
+	c.r.f.z, c.r.f.n, c.r.f.h, c.r.f.c = (*r == 0), false, false, carry
 }
 
 func (c *Cpu) swap(r *uint8) {
