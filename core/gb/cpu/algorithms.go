@@ -72,11 +72,11 @@ func (c *Cpu) cp(val uint8) {
 	c.r.f.z, c.r.f.n, c.r.f.h, c.r.f.c = (uint8(x) == 0), true, (y > 0x0F), (x > 0xFF)
 }
 
-func (c *Cpu) add(val uint8) {
-	a := c.r.a
-	sum := int(a) + int(val)
-	c.r.a = uint8(sum)
-	c.r.f.z, c.r.f.n, c.r.f.h, c.r.f.c = (c.r.a == 0), false, ((a&0x0F)+(val&0x0F) > 0x0F), (sum > 0xFF)
+func (c *Cpu) add(val uint8, carry bool) {
+	x := uint16(c.r.a) + uint16(val) + uint16(util.Btou8(carry))
+	y := uint16(c.r.a&0xF) + uint16(val&0xF) + uint16(util.Btou8(carry))
+	c.r.f.z, c.r.f.n, c.r.f.h, c.r.f.c = (uint8(x) == 0), false, (y > 0x0F), (x > 0xFF)
+	c.r.a = uint8(x)
 }
 
 func (c *Cpu) sub(val uint8) {
@@ -84,14 +84,6 @@ func (c *Cpu) sub(val uint8) {
 	diff := int(a) - int(val)
 	c.r.a = uint8(diff)
 	c.r.f.z, c.r.f.n, c.r.f.h, c.r.f.c = (c.r.a == 0), true, (int(a&0x0F)-int(val&0x0F) < 0), (diff < 0)
-}
-
-func (c *Cpu) adc(val uint8) {
-	carry := util.Btou8(c.r.f.c)
-	a := c.r.a
-	result := int(a) + int(val) + int(carry)
-	c.r.a = uint8(result)
-	c.r.f.z, c.r.f.n, c.r.f.h, c.r.f.c = (c.r.a == 0), false, ((a&0x0F)+(val&0x0F)+carry > 0x0F), (result > 0xFF)
 }
 
 func (c *Cpu) sbc(val uint8) {

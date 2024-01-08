@@ -489,37 +489,37 @@ func op7E(c *Cpu) { c.r.a = c.m.Read(c.r.hl.pack()) }
 
 func op7F(c *Cpu) { /* ld a, a */ }
 
-func op80(c *Cpu) { c.add(c.r.bc.hi) }
+func op80(c *Cpu) { c.add(c.r.bc.hi, false) }
 
-func op81(c *Cpu) { c.add(c.r.bc.lo) }
+func op81(c *Cpu) { c.add(c.r.bc.lo, false) }
 
-func op82(c *Cpu) { c.add(c.r.de.hi) }
+func op82(c *Cpu) { c.add(c.r.de.hi, false) }
 
-func op83(c *Cpu) { c.add(c.r.de.lo) }
+func op83(c *Cpu) { c.add(c.r.de.lo, false) }
 
-func op84(c *Cpu) { c.add(c.r.hl.hi) }
+func op84(c *Cpu) { c.add(c.r.hl.hi, false) }
 
-func op85(c *Cpu) { c.add(c.r.hl.lo) }
+func op85(c *Cpu) { c.add(c.r.hl.lo, false) }
 
-func op86(c *Cpu) { c.add(c.m.Read(c.r.hl.pack())) }
+func op86(c *Cpu) { c.add(c.m.Read(c.r.hl.pack()), false) }
 
-func op87(c *Cpu) { c.add(c.r.a) }
+func op87(c *Cpu) { c.add(c.r.a, false) }
 
-func op88(c *Cpu) { c.adc(c.r.bc.hi) }
+func op88(c *Cpu) { c.add(c.r.bc.hi, c.r.f.c) }
 
-func op89(c *Cpu) { c.adc(c.r.bc.lo) }
+func op89(c *Cpu) { c.add(c.r.bc.lo, c.r.f.c) }
 
-func op8A(c *Cpu) { c.adc(c.r.de.hi) }
+func op8A(c *Cpu) { c.add(c.r.de.hi, c.r.f.c) }
 
-func op8B(c *Cpu) { c.adc(c.r.de.lo) }
+func op8B(c *Cpu) { c.add(c.r.de.lo, c.r.f.c) }
 
-func op8C(c *Cpu) { c.adc(c.r.hl.hi) }
+func op8C(c *Cpu) { c.add(c.r.hl.hi, c.r.f.c) }
 
-func op8D(c *Cpu) { c.adc(c.r.hl.lo) }
+func op8D(c *Cpu) { c.add(c.r.hl.lo, c.r.f.c) }
 
-func op8E(c *Cpu) { c.adc(c.m.Read(c.r.hl.pack())) }
+func op8E(c *Cpu) { c.add(c.m.Read(c.r.hl.pack()), c.r.f.c) }
 
-func op8F(c *Cpu) { c.adc(c.r.a) }
+func op8F(c *Cpu) { c.add(c.r.a, c.r.f.c) }
 
 func op90(c *Cpu) { c.sub(c.r.bc.hi) }
 
@@ -770,7 +770,7 @@ func opCD(c *Cpu) {
 	c.call((hi << 8) | lo)
 }
 
-func opCE(c *Cpu) { c.adc(c.fetch()) } // adc a, u8
+func opCE(c *Cpu) { c.add(c.fetch(), c.r.f.c) } // adc a, u8
 
 func opCF(c *Cpu) { c.call(0x08) }
 
