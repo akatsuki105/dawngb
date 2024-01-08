@@ -1,6 +1,11 @@
 package dummy
 
-import "image/color"
+import (
+	"image"
+	"image/color"
+)
+
+var screen = image.NewRGBA(image.Rect(0, 0, 256, 256))
 
 type Renderer struct{}
 
@@ -23,3 +28,7 @@ func (r *Renderer) SetBGPD(val uint8) {}
 
 func (r *Renderer) SetOBPI(val uint8) {}
 func (r *Renderer) SetOBPD(val uint8) {}
+
+func (r *Renderer) Debug() image.Image {
+	return screen
+}

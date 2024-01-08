@@ -24,7 +24,7 @@ func main() {
 func Run() exitCode {
 	flag.Parse()
 
-	e := createEmu()
+	e := createEmu(true)
 
 	if flag.NArg() > 0 {
 		e.LoadROMFromPath(flag.Arg(0))

@@ -1,6 +1,7 @@
 package video
 
 import (
+	"image"
 	"image/color"
 
 	"github.com/akatsuki105/dugb/core/gb/video/renderer"
@@ -80,4 +81,8 @@ func (v *Video) setLy(ly int) {
 	if ly == int(v.lyc) && util.Bit(v.stat, 6) {
 		v.onInterrupt(1)
 	}
+}
+
+func (v *Video) Debug() image.Image {
+	return v.r.Debug()
 }
