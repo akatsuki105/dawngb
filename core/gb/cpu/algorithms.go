@@ -60,9 +60,8 @@ func (c *Cpu) ret() {
 }
 
 func (c *Cpu) call(dst uint16) {
-	pc := c.r.pc
+	c.push16(c.r.pc)
 	c.branch(dst)
-	c.push16(pc)
 }
 
 func (c *Cpu) cp(val uint8) {
