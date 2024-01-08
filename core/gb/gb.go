@@ -58,6 +58,8 @@ func (g *GB) Reset(hasBIOS bool) {
 	g.cpu.Reset(hasBIOS)
 	g.video.Reset(model, hasBIOS)
 	g.timer.Reset()
+
+	g.m.Write(0xFF0F, 1)
 }
 
 func (g *GB) LoadROM(romData []byte) error {
@@ -68,11 +70,11 @@ func (g *GB) LoadROM(romData []byte) error {
 }
 
 func (g *GB) RunFrame() {
-	const FRAME = 70224 * video.CYCLE
-	start := g.s.Cycle()
+	// const FRAME = 70224 * video.CYCLE
+	// start := g.s.Cycle()
 
 	frame := g.video.FrameCounter
-	for frame == g.video.FrameCounter && ((g.s.Cycle() - start) < FRAME) {
+	for frame == g.video.FrameCounter /* && ((g.s.Cycle() - start) < FRAME) */ {
 		g.run()
 	}
 	g.audio.CatchUp()

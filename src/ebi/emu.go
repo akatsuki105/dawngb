@@ -102,7 +102,7 @@ func (e *Emu) Update() error {
 	if e.active {
 		e.pollInput()
 		e.c.RunFrame()
-		if e.music != nil {
+		if music && e.music != nil {
 			for i := 0; i < len(samples); i++ {
 				samples[i] = 0
 			}

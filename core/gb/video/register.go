@@ -1,5 +1,7 @@
 package video
 
+import "github.com/akatsuki105/dugb/util"
+
 func (v *Video) ReadIO(addr uint16) uint8 {
 	switch addr {
 	case 0xFF40:
@@ -25,7 +27,9 @@ func (v *Video) ReadIO(addr uint16) uint8 {
 	case 0xFF4B:
 		return v.wx
 	case 0xFF4F:
-		return uint8(v.ram.bank)
+		val := uint8(0xFE)
+		val = util.SetBit(val, 0, v.ram.bank == 1)
+		return val
 	default:
 		return v.ioreg[addr-0xFF40]
 	}
