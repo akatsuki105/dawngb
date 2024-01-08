@@ -19,9 +19,9 @@ func newTimer(g *GB) *timer {
 	t := &timer{
 		g: g,
 	}
-	t.divEvent = *sched.NewEvent("GB_DIV", t.incrementDiv, 0x40)
-	t.timaEvent = *sched.NewEvent("GB_TIMA", t.incrementTima, 0x41)
-	t.overflowEvent = *sched.NewEvent("GB_OVERFLOW", t.overflowTima, 0x42)
+	t.divEvent = *sched.NewEvent("GB_DIV", t.incrementDiv)
+	t.timaEvent = *sched.NewEvent("GB_TIMA", t.incrementTima)
+	t.overflowEvent = *sched.NewEvent("GB_OVERFLOW", t.overflowTima)
 	return t
 }
 

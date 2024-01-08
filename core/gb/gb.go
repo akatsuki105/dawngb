@@ -35,7 +35,7 @@ func New(audioBuffer io.Writer) *GB {
 	g := &GB{
 		s:     s,
 		input: newInput(),
-		dma:   *sched.NewEvent("GB_DMA", func(cycle int64) {}, 0x08),
+		dma:   *sched.NewEvent("GB_DMA", func(cycle int64) {}),
 	}
 	g.m = newMemory(g)
 	g.cpu = cpu.New(s, g.m, g.halt, g.stop)

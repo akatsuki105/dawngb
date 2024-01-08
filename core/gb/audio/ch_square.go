@@ -82,6 +82,7 @@ func (ch *square) getOutput() int {
 
 // デューティ比の1ステップの長さをAPUサイクル数で返す
 func (ch *square) dutyStepCycle() int {
-	hz := (1048576 / (2048 - ch.period)) // freqency
-	return 4194304 / hz
+	// hz := (1048576 / (2048 - ch.period)) // freqency
+	// return 4194304 / hz
+	return 4 * (2048 - ch.period)
 }

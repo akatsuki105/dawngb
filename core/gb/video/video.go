@@ -28,6 +28,7 @@ type Video struct {
 	lcdc, stat, lyc, scx, scy, wx, wy uint8
 	onInterrupt                       func(id int)
 	OAM                               [160]uint8
+	ioreg                             [0x40]uint8
 }
 
 func New(s *sched.Sched, onInterrupt func(id int)) *Video {
@@ -37,10 +38,10 @@ func New(s *sched.Sched, onInterrupt func(id int)) *Video {
 	}
 	v.r = renderer.New("dummy", v.ram.data[:], v.OAM[:], 0)
 	v.events = [4]sched.Event{
-		*sched.NewEvent("GB_HBLANK", v.hblank, 0x10),
-		*sched.NewEvent("GB_VBLANK", v.vblank, 0x11),
-		*sched.NewEvent("GB_SCAN_OAM", v.scanOAM, 0x12),
-		*sched.NewEvent("GB_DRAWING", v.drawing, 0x13),
+		*sched.NewEvent("GB_HBLANK", v.hblank),
+		*sched.NewEvent("GB_VBLANK", v.vblank),
+		*sched.NewEvent("GB_SCAN_OAM", v.scanOAM),
+		*sched.NewEvent("GB_DRAWING", v.drawing),
 	}
 	return v
 }

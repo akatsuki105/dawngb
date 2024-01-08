@@ -21,10 +21,12 @@ func (v *Video) ReadIO(addr uint16) uint8 {
 	case 0xFF4F:
 		return uint8(v.ram.bank)
 	}
-	return 0
+	return v.ioreg[addr-0xFF40]
 }
 
 func (v *Video) WriteIO(addr uint16, val uint8) {
+	v.ioreg[addr-0xFF40] = val
+
 	switch addr {
 	case 0xFF40:
 		v.lcdc = val
