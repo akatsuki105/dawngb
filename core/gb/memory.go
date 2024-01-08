@@ -37,7 +37,7 @@ func (m *Memory) Read(addr uint16) byte {
 		bank := m.wram[m.wramBank*(4*KB) : (m.wramBank+1)*(4*KB)]
 		return bank[addr&0xFFF]
 	case 0xF:
-		if addr < 0xFDFF {
+		if addr <= 0xFDFF {
 			bank := m.wram[m.wramBank*(4*KB) : (m.wramBank+1)*(4*KB)]
 			return bank[addr&0xFFF]
 		}
