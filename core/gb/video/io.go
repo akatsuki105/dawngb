@@ -1,8 +1,22 @@
 package video
 
-import "github.com/akatsuki105/dugb/util"
+import (
+	"github.com/akatsuki105/dugb/util"
+	. "github.com/akatsuki105/dugb/util/datasize"
+)
 
-func (v *Video) ReadIO(addr uint16) uint8 {
+func (v *Video) Read(addr uint16) uint8 {
+	if addr >= 0xFE00 && addr <= 0xFE9F {
+		return v.oam[addr&0xFF]
+	}
+
+	switch addr >> 12 {
+	case 0x8, 0x9:
+		bank := uint(v.ram.bank) * (8 * KB)
+		vram := v.ram.data[bank : bank+(8*KB)]
+		return vram[addr&0x1FFF]
+	}
+
 	v.CatchUp()
 
 	switch addr {
@@ -23,7 +37,20 @@ func (v *Video) ReadIO(addr uint16) uint8 {
 	}
 }
 
-func (v *Video) WriteIO(addr uint16, val uint8) {
+func (v *Video) Write(addr uint16, val uint8) {
+	if addr >= 0xFE00 && addr <= 0xFE9F {
+		v.oam[addr&0xFF] = val
+		return
+	}
+
+	switch addr >> 12 {
+	case 0x8, 0x9:
+		bank := uint(v.ram.bank) * (8 * KB)
+		vram := v.ram.data[bank : bank+(8*KB)]
+		vram[addr&0x1FFF] = val
+		return
+	}
+
 	v.CatchUp()
 
 	switch addr {

@@ -152,7 +152,7 @@ func (g *GB) checkInterrupt() int {
 func (g *GB) triggerGDMA(src uint16) {
 	g.dma.Callback = func(cyclesLate int64) {
 		for i := 0; i < 160; i++ {
-			g.video.OAM[i] = g.m.Read(src + uint16(i))
+			g.m.Write(0xFE00+uint16(i), g.m.Read(src+uint16(i)))
 		}
 		g.inGDMA = false
 	}

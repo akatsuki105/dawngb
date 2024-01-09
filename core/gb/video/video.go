@@ -27,7 +27,7 @@ type Video struct {
 	ram             VRAM
 	lcdc, stat, lyc uint8
 	onInterrupt     func(id int)
-	OAM             [160]uint8
+	oam             [160]uint8
 	ioreg           [0x40]uint8
 }
 
@@ -35,12 +35,12 @@ func New(onInterrupt func(id int)) *Video {
 	v := &Video{
 		onInterrupt: onInterrupt,
 	}
-	v.r = renderer.New("dummy", v.ram.data[:], v.OAM[:], 0)
+	v.r = renderer.New("dummy", v.ram.data[:], v.oam[:], 0)
 	return v
 }
 
 func (v *Video) Reset(model int, hasBIOS bool) {
-	v.r = renderer.New("software", v.ram.data[:], v.OAM[:], model)
+	v.r = renderer.New("software", v.ram.data[:], v.oam[:], model)
 	v.ly = 0
 	v.ram.bank = 0
 	v.scanOAM(0)
@@ -56,11 +56,6 @@ func (v *Video) skipBIOS() {
 
 func (v *Video) Screen() []color.RGBA {
 	return v.screen[:]
-}
-
-func (v *Video) VRAM() []uint8 {
-	bank := uint(v.ram.bank) * (8 * KB)
-	return v.ram.data[bank : bank+(8*KB)]
 }
 
 func (v *Video) Add(cycles int64) {
