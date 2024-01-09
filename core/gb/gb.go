@@ -14,6 +14,12 @@ import (
 
 var buttons = [8]string{"A", "B", "SELECT", "START", "RIGHT", "LEFT", "UP", "DOWN"}
 
+type peripheral interface {
+	Reset()
+	Read(addr uint16) uint8
+	Write(addr uint16, val uint8)
+}
+
 type GB struct {
 	cpu       *cpu.Cpu
 	m         *Memory
@@ -21,7 +27,7 @@ type GB struct {
 	s         *sched.Sched
 	cartridge *cartridge.Cartridge
 	input     *Input
-	timer     *timer
+	timer     peripheral
 	audio     audio.Audio
 	ie        uint8
 	interrupt [5]bool // IF

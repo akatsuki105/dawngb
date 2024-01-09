@@ -14,6 +14,10 @@ func newInput(onInterrupt func(id int)) *Input {
 	}
 }
 
+func (i *Input) Reset() {
+	i.val = 0x0F
+}
+
 func (i *Input) Read(addr uint16) uint8 {
 	pressed := false
 

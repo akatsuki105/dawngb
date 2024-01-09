@@ -33,7 +33,7 @@ func (t *timer) Reset() {
 	t.g.s.Schedule(&t.updateEvent, 16) // 524288Hz(一番細かいのが524288Hzなのであとはそれの倍数で数えれば良い)
 }
 
-func (t *timer) ReadIO(addr uint16) uint8 {
+func (t *timer) Read(addr uint16) uint8 {
 	switch addr {
 	case 0xFF04:
 		return t.div
@@ -47,7 +47,7 @@ func (t *timer) ReadIO(addr uint16) uint8 {
 	return 0
 }
 
-func (t *timer) WriteIO(addr uint16, val uint8) {
+func (t *timer) Write(addr uint16, val uint8) {
 	switch addr {
 	case 0xFF04:
 		t.div = 0

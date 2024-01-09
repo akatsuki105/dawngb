@@ -48,7 +48,7 @@ func (m *Memory) Read(addr uint16) byte {
 		case 0xFF00:
 			return m.gb.input.Read(addr)
 		case 0xFF04, 0xFF05, 0xFF06, 0xFF07:
-			return m.gb.timer.ReadIO(addr)
+			return m.gb.timer.Read(addr)
 		case 0xFF0F:
 			val := uint8(0)
 			for i := 0; i < 5; i++ {
@@ -109,7 +109,7 @@ func (m *Memory) Write(addr uint16, val byte) {
 		case 0xFF00:
 			m.gb.input.Write(addr, val)
 		case 0xFF04, 0xFF05, 0xFF06, 0xFF07:
-			m.gb.timer.WriteIO(addr, val)
+			m.gb.timer.Write(addr, val)
 		case 0xFF0F:
 			for i := 0; i < 5; i++ {
 				m.gb.interrupt[i] = util.Bit(val, i)
