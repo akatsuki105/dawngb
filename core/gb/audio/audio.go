@@ -13,6 +13,7 @@ type Audio interface {
 type audio struct {
 	enabled      bool
 	ch1, ch2     *square
+	ch3          *wave
 	sampleBuffer io.Writer
 	cycles       int64 // 遅れているサイクル数(8.3MHzのマスターサイクル単位)
 
@@ -28,6 +29,7 @@ func New(sampleBuffer io.Writer) Audio {
 	return &audio{
 		ch1:          newSquareChannel(true),
 		ch2:          newSquareChannel(false),
+		ch3:          newWaveChannel(),
 		sampleBuffer: sampleBuffer,
 	}
 }
