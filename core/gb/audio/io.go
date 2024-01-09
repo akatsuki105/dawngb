@@ -72,7 +72,33 @@ func (a *audio) Write(addr uint16, val uint8) {
 			}
 		}
 
+	case 0xFF1A:
+		a.ch3.active = util.Bit(val, 7)
+	case 0xFF1B:
+		a.ch3.length = 256 - int(val)
+	case 0xFF1C:
+		a.ch3.volume = [4]int{4, 0, 1, 2}[int(val>>5)&0b11] // 波形は最大15なので4左シフトすれば0%
+	case 0xFF1D:
+		a.ch3.period &= 0b111_0000_0000
+		a.ch3.period |= int(val)
+		a.ch3.freqCounter = a.ch3.windowStepCycle()
+	case 0xFF1E:
+		a.ch3.stop = util.Bit(val, 6)
+		a.ch3.period &= 0b000_1111_1111
+		a.ch3.period |= int(val&0b111) << 8
+		a.ch3.freqCounter = a.ch3.windowStepCycle()
+		if util.Bit(val, 7) {
+			a.ch3.enabled = a.ch3.active
+			if a.ch3.length == 0 {
+				a.ch3.length = 256
+			}
+			a.ch3.window = 0
+		}
+
 	case 0xFF26:
 		a.enabled = util.Bit(val, 7)
+
+	case 0xFF30, 0xFF31, 0xFF32, 0xFF33, 0xFF34, 0xFF35, 0xFF36, 0xFF37, 0xFF38, 0xFF39, 0xFF3A, 0xFF3B, 0xFF3C, 0xFF3D, 0xFF3E, 0xFF3F:
+		a.ch3.samples[addr-0xFF30] = val
 	}
 }

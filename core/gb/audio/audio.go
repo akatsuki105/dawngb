@@ -53,6 +53,7 @@ func (a *audio) CatchUp() {
 				if is256Hz {
 					a.ch1.clock256Hz()
 					a.ch2.clock256Hz()
+					a.ch3.clock256Hz()
 				}
 				if is128Hz {
 					a.ch1.clock128Hz()
@@ -68,9 +69,10 @@ func (a *audio) CatchUp() {
 
 			a.ch1.clockTimer()
 			a.ch2.clockTimer()
+			a.ch3.clockTimer()
 
 			// サンプルを生成
-			sample := uint8(a.ch1.getOutput() + a.ch2.getOutput()) // 各チャンネルの出力(音量=波)を足し合わせたものがサンプル
+			sample := uint8(a.ch1.getOutput() + a.ch2.getOutput() + a.ch3.getOutput()) // 各チャンネルの出力(音量=波)を足し合わせたものがサンプル
 			if a.sampleTimer <= 0 {
 				if a.sampleBuffer != nil {
 					a.sampleBuffer.Write([]byte{0, sample, 0, sample})
