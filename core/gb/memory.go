@@ -46,7 +46,7 @@ func (m *Memory) Read(addr uint16) byte {
 		}
 		switch addr {
 		case 0xFF00:
-			return m.gb.input.ReadIO(addr)
+			return m.gb.input.Read(addr)
 		case 0xFF04, 0xFF05, 0xFF06, 0xFF07:
 			return m.gb.timer.ReadIO(addr)
 		case 0xFF0F:
@@ -107,7 +107,7 @@ func (m *Memory) Write(addr uint16, val byte) {
 
 		switch addr {
 		case 0xFF00:
-			m.gb.input.WriteIO(addr, val)
+			m.gb.input.Write(addr, val)
 		case 0xFF04, 0xFF05, 0xFF06, 0xFF07:
 			m.gb.timer.WriteIO(addr, val)
 		case 0xFF0F:

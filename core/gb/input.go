@@ -14,7 +14,7 @@ func newInput(onInterrupt func(id int)) *Input {
 	}
 }
 
-func (i *Input) ReadIO(addr uint16) uint8 {
+func (i *Input) Read(addr uint16) uint8 {
 	pressed := false
 
 	val := i.val
@@ -43,6 +43,6 @@ func (i *Input) ReadIO(addr uint16) uint8 {
 	return val
 }
 
-func (i *Input) WriteIO(addr uint16, val uint8) {
+func (i *Input) Write(addr uint16, val uint8) {
 	i.val = val | 0x0F
 }
