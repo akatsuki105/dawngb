@@ -17,18 +17,18 @@ type VRAM struct {
 }
 
 type Video struct {
-	cycles                                             int64 // 遅れているサイクル数(8.3MHzのマスターサイクル単位)
-	dot                                                int
-	screen                                             [160 * 144]color.RGBA
-	FrameCounter                                       uint64
-	ly                                                 int
-	r                                                  renderer.Renderer
-	renderingCycle                                     int64
-	ram                                                VRAM
-	lcdc, stat, lyc, scx, scy, wx, wy, bgp, obp0, obp1 uint8
-	onInterrupt                                        func(id int)
-	OAM                                                [160]uint8
-	ioreg                                              [0x40]uint8
+	cycles          int64 // 遅れているサイクル数(8.3MHzのマスターサイクル単位)
+	dot             int
+	screen          [160 * 144]color.RGBA
+	FrameCounter    uint64
+	ly              int
+	r               renderer.Renderer
+	renderingCycle  int64
+	ram             VRAM
+	lcdc, stat, lyc uint8
+	onInterrupt     func(id int)
+	OAM             [160]uint8
+	ioreg           [0x40]uint8
 }
 
 func New(onInterrupt func(id int)) *Video {
