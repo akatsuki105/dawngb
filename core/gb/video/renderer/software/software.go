@@ -121,6 +121,7 @@ func (s *Software) SetBGPD(val uint8) {
 			rgba.R = (val & 0b11111) << 3
 			rgba.G = (((rgba.G >> 3) & 0b11000) | ((val >> 5) & 0b111)) << 3
 		}
+		rgba.A = 0xFF
 
 		if util.Bit(s.bg.bgpi, 7) {
 			s.bg.bgpi++
@@ -145,6 +146,7 @@ func (s *Software) SetOBPD(val uint8) {
 			rgba.R = (val & 0b11111) << 3
 			rgba.G = (((rgba.G >> 3) & 0b11000) | ((val >> 5) & 0b111)) << 3
 		}
+		rgba.A = 0xFF
 
 		if util.Bit(s.sprite.obpi, 7) {
 			s.sprite.obpi++
