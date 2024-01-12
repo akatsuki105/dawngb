@@ -12,7 +12,7 @@ import (
 	"github.com/hajimehoshi/oto"
 )
 
-var music = true
+var music = false
 var samples = make([]byte, 4096)
 
 var keyMap = map[ebiten.Key]string{
@@ -91,7 +91,26 @@ func (e *Emu) LoadROMFromPath(path string) error {
 		return err
 	}
 
-	return e.LoadROM(data)
+	err = e.LoadROM(data)
+	if err != nil {
+		return err
+	}
+
+	// xxxx.gb or xxxx.gbc -> xxxx.sav
+	if len(path) > 4 && path[len(path)-4:] == ".gbc" {
+		path = path[:len(path)-4]
+	} else if len(path) > 3 && path[len(path)-3:] == ".gb" {
+		path = path[:len(path)-3]
+	}
+	savPath := path + ".sav"
+	if _, err := os.Stat(savPath); err == nil {
+		savData, err := os.ReadFile(savPath)
+		if err == nil {
+			e.c.LoadSRAM(savData)
+		}
+	}
+
+	return nil
 }
 
 func (e *Emu) LoadROM(data []byte) error {

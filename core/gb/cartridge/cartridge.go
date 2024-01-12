@@ -80,3 +80,8 @@ func (c *Cartridge) Write(addr uint16, val uint8) {
 func (c *Cartridge) IsCGB() bool {
 	return c.rom[0x143] == 0x80 || c.rom[0x143] == 0xC0
 }
+
+func (c *Cartridge) LoadSRAM(data []uint8) error {
+	copy(c.ram, data)
+	return nil
+}

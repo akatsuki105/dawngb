@@ -25,6 +25,8 @@ type Core interface {
 	// NOTE: romData is mutable(not copied).
 	LoadROM(romData []byte) error
 
+	LoadSRAM(sramData []byte) error
+
 	// RunFrame runs emulator until a next frame
 	RunFrame()
 

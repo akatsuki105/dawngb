@@ -1,6 +1,7 @@
 package gb
 
 import (
+	"fmt"
 	"image/color"
 	"io"
 
@@ -74,6 +75,13 @@ func (g *GB) LoadROM(romData []byte) error {
 	g.Reset(false)
 
 	return nil
+}
+
+func (g *GB) LoadSRAM(data []byte) error {
+	if g.cartridge == nil {
+		return fmt.Errorf("no cartridge loaded")
+	}
+	return g.cartridge.LoadSRAM(data)
 }
 
 func (g *GB) RunFrame() {
