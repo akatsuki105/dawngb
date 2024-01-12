@@ -20,7 +20,7 @@ func newMemory(gb *GB) *Memory {
 }
 
 func (m *Memory) Read(addr uint16) byte {
-	if m.gb.inGDMA {
+	if m.gb.inOAMDMA {
 		if addr < 0xFF80 && addr > 0xFFFE {
 			return 0xFF
 		}
@@ -79,7 +79,7 @@ func (m *Memory) Read(addr uint16) byte {
 }
 
 func (m *Memory) Write(addr uint16, val byte) {
-	if m.gb.inGDMA {
+	if m.gb.inOAMDMA {
 		if addr < 0xFF80 && addr > 0xFFFE {
 			return
 		}
@@ -127,7 +127,7 @@ func (m *Memory) Write(addr uint16, val byte) {
 				m.gb.video.Write(addr, val)
 			}
 		case 0xFF46:
-			m.gb.triggerGDMA(uint16(val) << 8)
+			m.gb.triggerOAMDMA(uint16(val) << 8)
 		case 0xFF4D:
 			m.gb.key1 = util.Bit(val, 0)
 		case 0xFF70:

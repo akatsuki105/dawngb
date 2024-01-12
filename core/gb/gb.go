@@ -35,7 +35,7 @@ type GB struct {
 	dma       sched.Event
 	halted    bool
 	key1      bool // FF4D's bit 0
-	inGDMA    bool
+	inOAMDMA  bool
 }
 
 func New(audioBuffer io.Writer) *GB {
@@ -157,14 +157,14 @@ func (g *GB) checkInterrupt() int {
 	return -1
 }
 
-func (g *GB) triggerGDMA(src uint16) {
+func (g *GB) triggerOAMDMA(src uint16) {
 	g.dma.Callback = func(cyclesLate int64) {
 		for i := 0; i < 160; i++ {
 			g.m.Write(0xFE00+uint16(i), g.m.Read(src+uint16(i)))
 		}
-		g.inGDMA = false
+		g.inOAMDMA = false
 	}
-	g.inGDMA = true
+	g.inOAMDMA = true
 	g.s.Schedule(&g.dma, 160*g.cpu.Cycle)
 }
 
