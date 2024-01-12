@@ -43,7 +43,6 @@ func (v *Video) Reset(model int, hasBIOS bool) {
 	v.r = renderer.New("software", v.ram.data[:], v.oam[:], model)
 	v.ly = 0
 	v.ram.bank = 0
-	v.scanOAM(0)
 	if !hasBIOS {
 		v.skipBIOS()
 	}
