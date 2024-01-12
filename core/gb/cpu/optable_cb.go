@@ -56,11 +56,9 @@ func cb05(c *Cpu) { c.rlc(&c.r.hl.lo) }
 func cb06(c *Cpu) {
 	hl := c.r.hl.pack()
 	val := c.m.Read(hl)
-	msb := util.Bit(val, 7)
-	c.r.f.c = msb
-	val = (val << 1) | util.Btou8(msb)
+	val = (val << 1) | (val >> 7)
 	c.m.Write(hl, val)
-	c.r.f.z, c.r.f.n, c.r.f.h = (val == 0), false, false
+	c.r.f.z, c.r.f.n, c.r.f.h, c.r.f.c = (val == 0), false, false, util.Bit(val, 0)
 }
 
 func cb07(c *Cpu) { c.rlc(&c.r.a) }
@@ -104,10 +102,10 @@ func cb15(c *Cpu) { c.rl(&c.r.hl.lo) }
 func cb16(c *Cpu) {
 	hl := c.r.hl.pack()
 	val := c.m.Read(hl)
-	msb := util.Bit(val, 7)
+	carry := util.Bit(val, 7)
 	val = (val << 1) | util.Btou8(c.r.f.c)
 	c.m.Write(hl, val)
-	c.r.f.z, c.r.f.n, c.r.f.h, c.r.f.c = (val == 0), false, false, msb
+	c.r.f.z, c.r.f.n, c.r.f.h, c.r.f.c = (val == 0), false, false, carry
 }
 
 func cb17(c *Cpu) { c.rl(&c.r.a) }
