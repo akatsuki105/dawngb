@@ -59,7 +59,10 @@ func (m *mbc1) write(addr uint16, val uint8) {
 	case 0xA, 0xB:
 		if m.ramEnabled {
 			bank := m.c.ram[(8*KB)*uint(m.ramBank):]
-			bank[addr&0x1FFF] = val
+			addr &= 0x1FFF
+			if addr < uint16(len(bank)) {
+				bank[addr] = val
+			}
 		}
 	}
 }
