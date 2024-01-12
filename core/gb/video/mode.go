@@ -18,8 +18,9 @@ func (v *Video) hblank(cyclesLate int64) {
 // Mode 1
 func (v *Video) vblank(cyclesLate int64) {
 	v.stat = (v.stat & 0xFC) | 1
-	if v.ly == 144 {
-		v.onInterrupt(0)
+	v.onInterrupt(0)
+
+	if util.Bit(v.lcdc, 7) {
 		if util.Bit(v.stat, 4) {
 			v.onInterrupt(1)
 		}

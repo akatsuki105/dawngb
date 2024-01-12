@@ -17,7 +17,7 @@ type VRAM struct {
 }
 
 type Video struct {
-	cycles          int64 // 遅れているサイクル数(8.3MHzのマスターサイクル単位)
+	cycles          int64 // 遅れているサイクル数(8.38MHzのマスターサイクル単位)
 	dot             int
 	screen          [160 * 144]color.RGBA
 	FrameCounter    uint64
@@ -63,7 +63,7 @@ func (v *Video) Add(cycles int64) {
 }
 
 func (v *Video) CatchUp() {
-	dotCycles := v.cycles / 2 // 1dot = 4.19MHz, 1マスターサイクル = 8.3MHz
+	dotCycles := v.cycles / 2 // 1dot = 4.19MHz, 1マスターサイクル = 8.38MHz
 
 	for i := 0; i < int(dotCycles); i++ {
 		if v.ly < 144 {
