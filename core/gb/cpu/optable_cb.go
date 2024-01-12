@@ -128,10 +128,11 @@ func cb1D(c *Cpu) { c.rr(&c.r.hl.lo) }
 func cb1E(c *Cpu) {
 	hl := c.r.hl.pack()
 	val := c.m.Read(hl)
-	lsb := util.Bit(val, 0)
-	val = (val >> 1) | (util.Btou8(c.r.f.c) << 7)
+	carry := util.Btou8(c.r.f.c)
+	c.r.f.c = util.Bit(val, 0)
+	val = (val >> 1) | (carry << 7)
 	c.m.Write(hl, val)
-	c.r.f.z, c.r.f.n, c.r.f.h, c.r.f.c = (val == 0), false, false, lsb
+	c.r.f.z, c.r.f.n, c.r.f.h = (val == 0), false, false
 }
 
 func cb1F(c *Cpu) { c.rr(&c.r.a) }
@@ -177,7 +178,7 @@ func cb2E(c *Cpu) {
 	hl := c.r.hl.pack()
 	val := c.m.Read(hl)
 	c.r.f.c = util.Bit(val, 0)
-	val = (val >> 1) | (val & 0x80)
+	val = uint8(int8(val) >> 1)
 	c.m.Write(hl, val)
 	c.r.f.z, c.r.f.n, c.r.f.h = (val == 0), false, false
 }
