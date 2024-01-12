@@ -101,10 +101,8 @@ func (c *Cpu) rr(r *uint8) {
 }
 
 func (c *Cpu) rrc(r *uint8) {
-	lsb := util.Bit(*r, 0)
-	c.r.f.c = lsb
-	*r = (*r >> 1) | (util.Btou8(lsb) << 7)
-	c.r.f.z, c.r.f.n, c.r.f.h = (*r == 0), false, false
+	*r = (*r << 7) | (*r >> 1)
+	c.r.f.z, c.r.f.n, c.r.f.h, c.r.f.c = (*r == 0), false, false, util.Bit(*r, 7)
 }
 
 func (c *Cpu) rl(r *uint8) {
@@ -138,6 +136,5 @@ func (c *Cpu) sra(r *uint8) {
 
 func (c *Cpu) rlc(r *uint8) {
 	*r = (*r << 1) | (*r >> 7)
-	c.r.f.c = util.Bit(*r, 0)
-	c.r.f.z, c.r.f.n, c.r.f.h = (*r == 0), false, false
+	c.r.f.z, c.r.f.n, c.r.f.h, c.r.f.c = (*r == 0), false, false, util.Bit(*r, 0)
 }

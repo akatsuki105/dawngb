@@ -55,12 +55,14 @@ type Emu struct {
 	context      *oto.Context
 	music        *oto.Player
 	isDebugMode  bool
+	turbo        int
 }
 
 func createEmu(isDebugMode bool) *Emu {
 	e := &Emu{
 		sampleBuffer: bytes.NewBuffer(make([]byte, 0)),
 		isDebugMode:  isDebugMode,
+		turbo:        4,
 	}
 	e.c = core.New("GB", e.sampleBuffer)
 
@@ -122,7 +124,9 @@ func (e *Emu) LoadROM(data []byte) error {
 func (e *Emu) Update() error {
 	if e.active {
 		e.pollInput()
-		e.c.RunFrame()
+		for i := 0; i < e.turbo; i++ {
+			e.c.RunFrame()
+		}
 		if music && e.music != nil {
 			for i := 0; i < len(samples); i++ {
 				samples[i] = 0

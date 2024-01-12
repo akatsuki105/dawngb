@@ -79,13 +79,11 @@ func cb0D(c *Cpu) { c.rrc(&c.r.hl.lo) }
 
 // rrc (hl)
 func cb0E(c *Cpu) {
-	addr := c.r.hl.pack()
-	val := c.m.Read(addr)
-	lsb := util.Bit(val, 0)
-	c.r.f.c = lsb
-	val = (val >> 1) | (util.Btou8(lsb) << 7)
-	c.m.Write(addr, val)
-	c.r.f.z, c.r.f.n, c.r.f.h = (val == 0), false, false
+	hl := c.r.hl.pack()
+	val := c.m.Read(hl)
+	val = (val << 7) | (val >> 1)
+	c.m.Write(hl, val)
+	c.r.f.z, c.r.f.n, c.r.f.h, c.r.f.c = (val == 0), false, false, util.Bit(val, 7)
 }
 
 func cb0F(c *Cpu) { c.rrc(&c.r.a) }
