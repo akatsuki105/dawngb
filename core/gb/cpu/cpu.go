@@ -12,10 +12,9 @@ type Memory interface {
 }
 
 type Cpu struct {
-	r       Registers
-	m       Memory
-	Blocked bool
-	inst    struct {
+	r    Registers
+	m    Memory
+	inst struct {
 		opcode uint8
 		addr   uint16
 		cb     bool

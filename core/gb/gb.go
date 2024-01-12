@@ -34,6 +34,7 @@ type GB struct {
 	interrupt [5]bool // IF
 	dma       sched.Event
 	halted    bool
+	blocked   bool // DMA
 	key1      bool // FF4D's bit 0
 	inOAMDMA  bool
 }
@@ -109,7 +110,7 @@ func (g *GB) run() {
 		} else {
 			g.cpu.Step()
 		}
-	} else if g.halted || g.cpu.Blocked {
+	} else if g.halted || g.blocked {
 		g.s.Add(max(g.s.UntilNextEvent(), 1))
 	} else {
 		g.cpu.Step()
