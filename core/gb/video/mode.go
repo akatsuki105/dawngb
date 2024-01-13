@@ -6,31 +6,32 @@ import (
 
 // Mode 0
 func (v *Video) hblank(cyclesLate int64) {
+	oldStat := v.stat
 	v.stat = (v.stat & 0xFC)
 	if util.Bit(v.lcdc, 7) {
 		v.r.DrawScanline(v.ly, v.screen[v.ly*160:(v.ly+1)*160])
 	}
-	if util.Bit(v.stat, 3) {
+	if !statIRQAsserted(oldStat) && statIRQAsserted(v.stat) {
 		v.onInterrupt(1)
 	}
 }
 
 // Mode 1
 func (v *Video) vblank(cyclesLate int64) {
+	oldStat := v.stat
 	v.stat = (v.stat & 0xFC) | 1
 	v.onInterrupt(0)
 
-	if util.Bit(v.lcdc, 7) {
-		if util.Bit(v.stat, 4) {
-			v.onInterrupt(1)
-		}
+	if !statIRQAsserted(oldStat) && statIRQAsserted(v.stat) {
+		v.onInterrupt(1)
 	}
 }
 
 // Mode 2
 func (v *Video) scanOAM(cyclesLate int64) {
+	oldStat := v.stat
 	v.stat = (v.stat & 0xFC) | 2
-	if util.Bit(v.stat, 5) {
+	if !statIRQAsserted(oldStat) && statIRQAsserted(v.stat) {
 		v.onInterrupt(1)
 	}
 }

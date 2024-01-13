@@ -58,13 +58,18 @@ func (v *Video) Write(addr uint16, val uint8) {
 		v.lcdc = val
 		v.r.SetLCDC(val)
 	case 0xFF41:
+		oldStat := v.stat
 		v.stat = (v.stat & 0x7) | (val & 0x78)
+		if !statIRQAsserted(oldStat) && statIRQAsserted(v.stat) {
+			v.onInterrupt(1)
+		}
 	case 0xFF42:
 		v.r.SetSCY(val)
 	case 0xFF43:
 		v.r.SetSCX(val)
 	case 0xFF45:
 		v.lyc = val
+		v.compareLYC()
 	case 0xFF47:
 		v.r.SetBGP(val)
 	case 0xFF48:

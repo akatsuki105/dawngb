@@ -95,12 +95,32 @@ func (v *Video) setLy(ly int) {
 		v.FrameCounter++
 	}
 	v.ly = ly
-	v.stat = util.SetBit(v.stat, 2, ly == int(v.lyc))
-	if ly == int(v.lyc) && util.Bit(v.stat, 6) {
+	v.compareLYC()
+}
+
+func (v *Video) compareLYC() {
+	oldStat := v.stat
+	v.stat = util.SetBit(v.stat, 2, v.ly == int(v.lyc))
+	if !statIRQAsserted(oldStat) && statIRQAsserted(v.stat) {
 		v.onInterrupt(1)
 	}
 }
 
 func (v *Video) Debug() image.Image {
 	return v.r.Debug()
+}
+
+func statIRQAsserted(stat byte) bool {
+	if util.Bit(stat, 6) && util.Bit(stat, 2) {
+		return true
+	}
+	switch stat & 0b11 {
+	case 0:
+		return util.Bit(stat, 3)
+	case 1:
+		return util.Bit(stat, 4)
+	case 2:
+		return util.Bit(stat, 5)
+	}
+	return false
 }

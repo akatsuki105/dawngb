@@ -12,7 +12,7 @@ import (
 	"github.com/hajimehoshi/oto"
 )
 
-var music = false
+var music = true
 var samples = make([]byte, 4096)
 
 var keyMap = map[ebiten.Key]string{
@@ -62,7 +62,7 @@ func createEmu(isDebugMode bool) *Emu {
 	e := &Emu{
 		sampleBuffer: bytes.NewBuffer(make([]byte, 0)),
 		isDebugMode:  isDebugMode,
-		turbo:        4,
+		turbo:        1,
 	}
 	e.c = core.New("GB", e.sampleBuffer)
 
