@@ -68,8 +68,6 @@ func (g *GB) Reset(hasBIOS bool) {
 	g.video.Reset(model, hasBIOS)
 	g.audio.Reset(hasBIOS)
 	g.timer.Reset()
-
-	g.m.Write(0xFF0F, 1)
 }
 
 func (g *GB) LoadROM(romData []byte) error {
