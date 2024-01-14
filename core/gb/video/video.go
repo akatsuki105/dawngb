@@ -49,8 +49,10 @@ func (v *Video) Reset(model int, hasBIOS bool) {
 }
 
 func (v *Video) skipBIOS() {
-	v.lcdc = 0x91
-	v.r.SetLCDC(v.lcdc)
+	v.Write(0xFF40, 0x91) // LCDC
+	v.Write(0xFF47, 0xFC) // BGP
+	v.Write(0xFF48, 0xFF) // OBP0
+	v.Write(0xFF49, 0xFF) // OBP1
 }
 
 func (v *Video) Screen() []color.RGBA {
