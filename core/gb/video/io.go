@@ -67,6 +67,9 @@ func (v *Video) Write(addr uint16, val uint8) {
 		v.r.SetSCY(val)
 	case 0xFF43:
 		v.r.SetSCX(val)
+	case 0xFF44:
+		v.ly = 0
+		v.compareLYC()
 	case 0xFF45:
 		v.lyc = val
 		v.compareLYC()

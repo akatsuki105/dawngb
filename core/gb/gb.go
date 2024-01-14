@@ -87,11 +87,11 @@ func (g *GB) LoadSRAM(data []byte) error {
 }
 
 func (g *GB) RunFrame() {
-	// const FRAME = 70224 * video.CYCLE
-	// start := g.s.Cycle()
+	const FRAME = 70224 * video.CYCLE
+	start := g.s.Cycle()
 
 	frame := g.video.FrameCounter
-	for frame == g.video.FrameCounter /* && ((g.s.Cycle() - start) < FRAME) */ {
+	for frame == g.video.FrameCounter && ((g.s.Cycle() - start) < FRAME) {
 		g.run()
 		g.video.CatchUp()
 	}
