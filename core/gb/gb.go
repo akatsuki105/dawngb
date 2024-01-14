@@ -66,6 +66,7 @@ func (g *GB) Reset(hasBIOS bool) {
 	g.s.Reset()
 	g.cpu.Reset(hasBIOS)
 	g.video.Reset(model, hasBIOS)
+	g.audio.Reset(hasBIOS)
 	g.timer.Reset()
 
 	g.m.Write(0xFF0F, 1)
