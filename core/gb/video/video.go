@@ -74,27 +74,26 @@ func (v *Video) CatchUp() {
 			case 252:
 				v.hblank(0)
 			}
-		} else if v.ly == 144 {
-			if v.dot == 0 {
-				v.vblank(0)
-			}
 		}
 		v.dot++
 		if v.dot == 456 {
 			v.dot = 0
-			v.setLy(v.ly + 1)
+			v.incrementLY()
 		}
 	}
 
 	v.cycles -= dotCycles * 2
 }
 
-func (v *Video) setLy(ly int) {
-	if ly == 154 {
-		ly = 0
+func (v *Video) incrementLY() {
+	v.ly++
+	switch v.ly {
+	case 144:
+		v.vblank(0)
+	case 154:
+		v.ly = 0
 		v.FrameCounter++
 	}
-	v.ly = ly
 	v.compareLYC()
 }
 
