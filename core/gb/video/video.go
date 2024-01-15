@@ -34,6 +34,7 @@ type Video struct {
 func New(onInterrupt func(id int)) *Video {
 	v := &Video{
 		onInterrupt: onInterrupt,
+		stat:        0x80,
 	}
 	v.r = renderer.New("dummy", v.ram.data[:], v.oam[:], 0)
 	return v
@@ -41,7 +42,8 @@ func New(onInterrupt func(id int)) *Video {
 
 func (v *Video) Reset(model int, hasBIOS bool) {
 	v.r = renderer.New("software", v.ram.data[:], v.oam[:], model)
-	v.ly = 0
+	v.ly, v.dot = 0, 0
+	v.stat = 0x80
 	v.ram.bank = 0
 	if !hasBIOS {
 		v.skipBIOS()

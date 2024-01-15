@@ -74,5 +74,5 @@ func (t *timer) update(cyclesLate int64) {
 		}
 	}
 
-	t.g.s.Schedule(&t.updateEvent, 16-cyclesLate) // 524288Hz
+	t.g.s.Reschedule(&t.updateEvent, 16-cyclesLate) // 524288Hz
 }

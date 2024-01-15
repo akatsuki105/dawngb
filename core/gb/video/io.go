@@ -23,6 +23,9 @@ func (v *Video) Read(addr uint16) uint8 {
 	case 0xFF40:
 		return v.lcdc
 	case 0xFF41:
+		if !util.Bit(v.lcdc, 7) {
+			return 0x80
+		}
 		return v.stat
 	case 0xFF44:
 		return uint8(v.ly)

@@ -169,7 +169,13 @@ func (g *GB) triggerOAMDMA(src uint16) {
 }
 
 func (g *GB) halt() {
-	g.halted = true
+	if g.cpu.IME {
+		g.halted = true
+	} else {
+		if g.checkInterrupt() < 0 {
+			g.halted = true
+		}
+	}
 }
 
 func (g *GB) stop() {

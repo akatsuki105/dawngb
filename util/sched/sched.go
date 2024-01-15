@@ -46,6 +46,11 @@ func (s *Sched) Cancel(event *Event) {
 	}
 }
 
+func (s *Sched) Reschedule(event *Event, after int64) {
+	s.Cancel(event)
+	s.Schedule(event, after)
+}
+
 func (s *Sched) Commit() {
 	s.cycles += s.staging
 	s.staging = 0
