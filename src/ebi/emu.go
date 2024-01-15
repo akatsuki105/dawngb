@@ -66,6 +66,10 @@ func createEmu(isDebugMode bool) *Emu {
 	}
 	e.c = core.New("GB", e.sampleBuffer)
 
+	if e.turbo > 1 {
+		music = false
+	}
+
 	if music {
 		context, err := oto.NewContext(44100, 2, 2, 4096)
 		if err != nil {
