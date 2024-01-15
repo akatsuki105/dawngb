@@ -12,9 +12,6 @@ import (
 	"github.com/hajimehoshi/oto"
 )
 
-var music = true
-var samples = make([]byte, 4096)
-
 var keyMap = map[ebiten.Key]string{
 	ebiten.KeyX:          "A",
 	ebiten.KeyZ:          "B",
@@ -49,34 +46,33 @@ var inputMap = map[string]bool{
 }
 
 type Emu struct {
-	c            core.Core
-	active       bool
+	c      core.Core
+	active bool
+
+	// Audio
+	soundEnabled bool
+	samples      []byte
 	sampleBuffer *bytes.Buffer
 	context      *oto.Context
 	music        *oto.Player
-	isDebugMode  bool
-	turbo        int
+
+	isDebugMode bool
+	turbo       int
+	taskQueue   []func() // Run at the start of the frame, so safe to access the core
 }
 
 func createEmu(isDebugMode bool) *Emu {
 	e := &Emu{
+		samples:      make([]byte, 4096),
 		sampleBuffer: bytes.NewBuffer(make([]byte, 0)),
 		isDebugMode:  isDebugMode,
 		turbo:        1,
+		taskQueue:    make([]func(), 0, 10),
 	}
 	e.c = core.New("GB", e.sampleBuffer)
 
 	if e.turbo > 1 {
-		music = false
-	}
-
-	if music {
-		context, err := oto.NewContext(44100, 2, 2, 4096)
-		if err != nil {
-			panic("oto.NewContext failed: " + err.Error())
-		}
-		e.context = context
-		e.music = context.NewPlayer()
+		e.soundEnabled = false
 	}
 	return e
 }
@@ -126,18 +122,29 @@ func (e *Emu) LoadROM(data []byte) error {
 }
 
 func (e *Emu) Update() error {
+	if len(e.taskQueue) > 0 {
+		for _, task := range e.taskQueue {
+			task()
+		}
+		e.taskQueue = e.taskQueue[:0]
+	}
+
+	if e.soundEnabled && e.context == nil {
+		e.initAudio()
+	}
+
 	if e.active {
 		e.pollInput()
 		for i := 0; i < e.turbo; i++ {
 			e.c.RunFrame()
 		}
-		if music && e.music != nil {
-			for i := 0; i < len(samples); i++ {
-				samples[i] = 0
+		if e.soundEnabled && e.music != nil {
+			for i := 0; i < len(e.samples); i++ {
+				e.samples[i] = 0
 			}
-			n, err := e.sampleBuffer.Read(samples)
+			n, err := e.sampleBuffer.Read(e.samples)
 			if err == nil && n > 0 {
-				e.music.Write(samples[:n])
+				e.music.Write(e.samples[:n])
 			}
 		}
 	} else {
@@ -243,8 +250,29 @@ func (e *Emu) pollGamepadInput() {
 }
 
 func (e *Emu) Turbo(speed int) {
-	e.turbo = speed
-	if e.turbo > 1 {
-		music = false
+	e.queueTask(func() {
+		e.turbo = speed
+		if e.turbo > 1 {
+			e.soundEnabled = false
+		}
+	})
+}
+
+func (e *Emu) EnableSound(enabled bool) {
+	e.queueTask(func() {
+		e.soundEnabled = enabled
+	})
+}
+
+func (e *Emu) queueTask(f func()) {
+	e.taskQueue = append(e.taskQueue, f)
+}
+
+func (e *Emu) initAudio() {
+	context, err := oto.NewContext(44100, 2, 2, len(e.samples))
+	if err != nil {
+		panic("oto.NewContext failed: " + err.Error())
 	}
+	e.context = context
+	e.music = context.NewPlayer()
 }

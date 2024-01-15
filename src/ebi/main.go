@@ -18,7 +18,9 @@ const (
 )
 
 var (
-	turbo = flag.Int("t", 1, "Emulator speed xN")
+	turbo       = flag.Int("t", 1, "Emulator speed xN")
+	sound       = flag.Bool("s", false, "Enable sound")
+	isDebugMode = flag.Bool("d", false, "Enable debug mode")
 )
 
 func main() {
@@ -28,7 +30,7 @@ func main() {
 func Run() exitCode {
 	flag.Parse()
 
-	e := createEmu(false)
+	e := createEmu(*isDebugMode)
 
 	if flag.NArg() > 0 {
 		e.LoadROMFromPath(flag.Arg(0))
@@ -49,6 +51,7 @@ func Run() exitCode {
 	if *turbo > 1 {
 		e.Turbo(*turbo)
 	}
+	e.EnableSound(*sound)
 
 	if err := ebiten.RunGame(e); err != nil {
 		fmt.Fprintln(os.Stderr, err)
