@@ -46,6 +46,7 @@ func New(rom []uint8) *Cartridge {
 	}
 
 	c.mbc = createMBC(c)
+	fmt.Println("MapperID:", c.rom[0x147])
 	return c
 }
 
