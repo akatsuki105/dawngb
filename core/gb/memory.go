@@ -7,7 +7,7 @@ import (
 
 type Memory struct {
 	gb       *GB
-	wram     [4 * KB * 8]uint8
+	wram     [(4 * KB) * 8]uint8
 	wramBank uint
 	hram     [0x7F]uint8
 }
@@ -34,12 +34,10 @@ func (m *Memory) Read(addr uint16) byte {
 	case 0xC, 0xE:
 		return m.wram[addr&0xFFF]
 	case 0xD:
-		bank := m.wram[m.wramBank*(4*KB) : (m.wramBank+1)*(4*KB)]
-		return bank[addr&0xFFF]
+		return m.wram[(m.wramBank<<12)|uint(addr&0xFFF)]
 	case 0xF:
 		if addr <= 0xFDFF {
-			bank := m.wram[m.wramBank*(4*KB) : (m.wramBank+1)*(4*KB)]
-			return bank[addr&0xFFF]
+			return m.wram[(m.wramBank<<12)|uint(addr&0xFFF)]
 		}
 		if addr >= 0xFE00 && addr <= 0xFE9F {
 			return m.gb.video.Read(addr)
@@ -93,12 +91,10 @@ func (m *Memory) Write(addr uint16, val byte) {
 	case 0xC, 0xE:
 		m.wram[addr&0xFFF] = val
 	case 0xD:
-		bank := m.wram[m.wramBank*(4*KB) : (m.wramBank+1)*(4*KB)]
-		bank[addr&0xFFF] = val
+		m.wram[(m.wramBank<<12)|uint(addr&0xFFF)] = val
 	case 0xF:
 		if addr <= 0xFDFF {
-			bank := m.wram[m.wramBank*(4*KB) : (m.wramBank+1)*(4*KB)]
-			bank[addr&0xFFF] = val
+			m.wram[(m.wramBank<<12)|uint(addr&0xFFF)] = val
 		}
 		if addr >= 0xFE00 && addr <= 0xFE9F {
 			m.gb.video.Write(addr, val)
