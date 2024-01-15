@@ -13,7 +13,7 @@ func New() *Sched {
 func (s *Sched) Reset() {
 	s.cycles = 0
 	s.staging = 0
-	s.events = make([]*Event, 0)
+	s.events = make([]*Event, 0, 128)
 }
 
 func (s *Sched) Cycle() int64 {
