@@ -28,7 +28,7 @@ type Video struct {
 	lcdc, stat, lyc uint8
 	onInterrupt     func(id int)
 	oam             [160]uint8
-	ioreg           [0x40]uint8
+	ioreg           [0x30]uint8
 }
 
 func New(onInterrupt func(id int)) *Video {
