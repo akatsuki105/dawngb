@@ -241,3 +241,10 @@ func (e *Emu) pollGamepadInput() {
 		}
 	}
 }
+
+func (e *Emu) Turbo(speed int) {
+	e.turbo = speed
+	if e.turbo > 1 {
+		music = false
+	}
+}

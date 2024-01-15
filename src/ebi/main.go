@@ -17,6 +17,10 @@ const (
 	exitCodeError
 )
 
+var (
+	turbo = flag.Int("t", 1, "Emulator speed xN")
+)
+
 func main() {
 	os.Exit(int(Run()))
 }
@@ -41,6 +45,10 @@ func Run() exitCode {
 			e.context.Close()
 		}
 	}()
+
+	if *turbo > 1 {
+		e.Turbo(*turbo)
+	}
 
 	if err := ebiten.RunGame(e); err != nil {
 		fmt.Fprintln(os.Stderr, err)
