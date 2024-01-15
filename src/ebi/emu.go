@@ -12,7 +12,7 @@ import (
 	"github.com/hajimehoshi/oto"
 )
 
-var music = false
+var music = true
 var samples = make([]byte, 4096)
 
 var keyMap = map[ebiten.Key]string{
@@ -135,8 +135,10 @@ func (e *Emu) Update() error {
 			for i := 0; i < len(samples); i++ {
 				samples[i] = 0
 			}
-			n, _ := e.sampleBuffer.Read(samples)
-			e.music.Write(samples[:n])
+			n, err := e.sampleBuffer.Read(samples)
+			if err != nil && n > 0 {
+				e.music.Write(samples[:n])
+			}
 		}
 	} else {
 		file := ebiten.DroppedFiles()
