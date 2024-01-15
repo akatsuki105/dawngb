@@ -67,20 +67,22 @@ func (v *Video) CatchUp() {
 	dotCycles := v.cycles / 2 // 1dot = 4.19MHz, 1マスターサイクル = 8.38MHz
 
 	for i := 0; i < int(dotCycles); i++ {
-		if v.ly < 144 {
-			switch v.dot {
-			case 0:
-				v.scanOAM(0)
-			case 80:
-				v.drawing(0)
-			case 252:
-				v.hblank(0)
+		if util.Bit(v.lcdc, 7) {
+			if v.ly < 144 {
+				switch v.dot {
+				case 0:
+					v.scanOAM(0)
+				case 80:
+					v.drawing(0)
+				case 252:
+					v.hblank(0)
+				}
 			}
-		}
-		v.dot++
-		if v.dot == 456 {
-			v.dot = 0
-			v.incrementLY()
+			v.dot++
+			if v.dot == 456 {
+				v.dot = 0
+				v.incrementLY()
+			}
 		}
 	}
 

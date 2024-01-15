@@ -62,7 +62,7 @@ func createEmu(isDebugMode bool) *Emu {
 	e := &Emu{
 		sampleBuffer: bytes.NewBuffer(make([]byte, 0)),
 		isDebugMode:  isDebugMode,
-		turbo:        1,
+		turbo:        8,
 	}
 	e.c = core.New("GB", e.sampleBuffer)
 
