@@ -10,7 +10,7 @@ GOOS?=$(shell go env GOOS)
 GOARCH?=$(shell go env GOARCH)
 GODOT?=$(shell which godot)
 
-.PHONY: build wasm goenv godot clean
+.PHONY: build wasm goenv profile godot clean
 
 build:
 	go build -o build/$(NAME)$(EXE) ./src/ebi
@@ -20,6 +20,9 @@ wasm:
 
 goenv:
 	go env
+
+profile:
+	go build -o build/profile/profile ./src/profile
 
 godot: goenv
 	CGO_ENABLED=1 \
