@@ -136,7 +136,7 @@ func (e *Emu) Update() error {
 				samples[i] = 0
 			}
 			n, err := e.sampleBuffer.Read(samples)
-			if err != nil && n > 0 {
+			if err == nil && n > 0 {
 				e.music.Write(samples[:n])
 			}
 		}
