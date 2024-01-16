@@ -36,8 +36,11 @@ func (v *Video) Read(addr uint16) uint8 {
 		val = util.SetBit(val, 0, v.ram.bank == 1)
 		return val
 	default:
-		return v.ioreg[addr-0xFF40]
+		if addr >= 0xFF40 && addr < 0xFF70 {
+			return v.ioreg[addr-0xFF40]
+		}
 	}
+	return 0xFF
 }
 
 func (v *Video) Write(addr uint16, val uint8) {
@@ -102,5 +105,7 @@ func (v *Video) Write(addr uint16, val uint8) {
 	case 0xFF6B:
 		v.r.SetOBPD(val)
 	}
-	v.ioreg[addr-0xFF40] = val
+	if addr >= 0xFF40 && addr < 0xFF70 {
+		v.ioreg[addr-0xFF40] = val
+	}
 }

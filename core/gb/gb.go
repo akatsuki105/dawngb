@@ -39,6 +39,7 @@ type GB struct {
 	inOAMDMA  bool
 	sb, sc    uint8
 	inputs    [8]bool // A, B, Select, Start, Right, Left, Up, Down
+	dmac      peripheral
 }
 
 func New(audioBuffer io.Writer) *GB {
@@ -53,6 +54,7 @@ func New(audioBuffer io.Writer) *GB {
 	g.timer = newTimer(g)
 	g.audio = audio.New(audioBuffer)
 	g.input = newInput(g)
+	g.dmac = newDMAController(g)
 	return g
 }
 
@@ -71,6 +73,7 @@ func (g *GB) Reset(hasBIOS bool) {
 	g.audio.Reset(hasBIOS)
 	g.timer.Reset(hasBIOS)
 	g.input.Reset(hasBIOS)
+	g.dmac.Reset(hasBIOS)
 
 	if !hasBIOS {
 		g.m.Write(0xFF0F, 0xE1)

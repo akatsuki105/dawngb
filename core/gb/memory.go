@@ -135,7 +135,9 @@ func (m *Memory) Write(addr uint16, val byte) {
 		case 0xFF4D:
 			m.gb.key1 = util.Bit(val, 0)
 		case 0xFF51, 0xFF52, 0xFF53, 0xFF54, 0xFF55:
-			// TODO: CGB DMA
+			if m.gb.cartridge.IsCGB() {
+				m.gb.dmac.Write(addr, val)
+			}
 		case 0xFF70:
 			if m.gb.cartridge.IsCGB() {
 				m.wramBank = uint(val & 0b111)
