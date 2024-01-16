@@ -65,7 +65,7 @@ func (l *windowLayer) drawScanline(y int, scanline []pixel) {
 								colorID := int((hi << 1) | lo)
 								if (i + j) < len(scanline) {
 									if scanline[i+j].z <= z {
-										scanline[i+j].rgba = l.r.bg.palette[(palID*4)+colorID]
+										scanline[i+j].rgba = l.r.bg.palette[(palID*4)+colorID].RGBA()
 										scanline[i+j].z = z
 										scanline[i+j].colorID = colorID
 									}

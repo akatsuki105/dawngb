@@ -1,8 +1,6 @@
 package software
 
 import (
-	"image/color"
-
 	"github.com/akatsuki105/dugb/util"
 	. "github.com/akatsuki105/dugb/util/datasize"
 )
@@ -12,7 +10,7 @@ type bgLayer struct {
 	r        *Software
 	tilemap  uint16 // 0x1800 or 0x1C00
 	tiledata int    // 0x800 or 0x0
-	palette  [32]color.RGBA
+	palette  [4 * 8]rgb555
 	scx, scy int
 	bgpi     uint8
 }
@@ -60,7 +58,7 @@ func (l *bgLayer) drawScanline(y int, scanline []pixel) {
 					colorID := int((hi << 1) | lo)
 					if (i + j) < len(scanline) {
 						if z >= scanline[i+j].z {
-							scanline[i+j].rgba = l.palette[(palID*4)+colorID]
+							scanline[i+j].rgba = l.palette[(palID*4)+colorID].RGBA()
 							scanline[i+j].z = z
 							scanline[i+j].colorID = colorID
 						}

@@ -1,8 +1,6 @@
 package software
 
 import (
-	"image/color"
-
 	"github.com/akatsuki105/dugb/util"
 	. "github.com/akatsuki105/dugb/util/datasize"
 )
@@ -11,7 +9,7 @@ type spriteLayer struct {
 	active  bool
 	r       *Software
 	height  int // 8 or 16
-	palette [32]color.RGBA
+	palette [4 * 8]rgb555
 	obpi    uint8
 }
 
@@ -72,7 +70,7 @@ func (l *spriteLayer) drawObjScanline8(spriteIdx int, scanline []pixel, y int) {
 			idx := s.x + util.Flip(8, s.xflip, i)
 			if (0 <= idx) && (idx < 160) {
 				if scanline[idx].z <= s.z || (scanline[idx].colorID == 0) {
-					scanline[idx].rgba = palette[colorID]
+					scanline[idx].rgba = palette[colorID].RGBA()
 					scanline[idx].z = s.z
 					scanline[idx].colorID = colorID
 				}
@@ -110,7 +108,7 @@ func (l *spriteLayer) drawObjScanline16(spriteIdx int, scanline []pixel, y int) 
 			idx := s.x + util.Flip(8, s.xflip, i)
 			if (0 <= idx) && (idx < 160) {
 				if scanline[idx].z <= s.z || (scanline[idx].colorID == 0) {
-					scanline[idx].rgba = palette[colorID]
+					scanline[idx].rgba = palette[colorID].RGBA()
 					scanline[idx].z = s.z
 					scanline[idx].colorID = colorID
 				}

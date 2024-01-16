@@ -13,11 +13,11 @@ const (
 	Z_SPR
 )
 
-var dmgPalette = [4]color.RGBA{
-	{0xE0, 0xF8, 0xCF, 0xFF},
-	{0x86, 0xC0, 0x6C, 0xFF},
-	{0x30, 0x68, 0x50, 0xFF},
-	{0x07, 0x18, 0x21, 0xFF},
+var dmgPalette = [4]rgb555{
+	{0b11111, 0b11111, 0b11111},
+	{0b10001, 0b10001, 0b10001},
+	{0b01010, 0b01010, 0b01010},
+	{0b00000, 0b00000, 0b00000},
 }
 
 var screen = image.NewRGBA(image.Rect(0, 0, 256, 256))
@@ -112,19 +112,19 @@ func (s *Software) SetBGPD(val uint8) {
 	if s.model == 1 {
 		palID := int((s.bg.bgpi & 0x3F) / 8)
 		colorID := int(s.bg.bgpi&7) >> 1
-		rgba := &s.bg.palette[palID*4+colorID]
+		rgb := &s.bg.palette[palID*4+colorID]
 		isHi := util.Bit(s.bg.bgpi, 0)
-		// val is rgb555 format
 		if isHi {
 			// 0b0BBBBBGG
-			rgba.G = (((val & 0b11) << 3) | ((rgba.G >> 3) & 0b111)) << 3
-			rgba.B = ((val >> 2) & 0b11111) << 3
+			rgb.g &= 0b111
+			rgb.g |= ((val & 0b11) << 3)
+			rgb.b = ((val >> 2) & 0b11111)
 		} else {
 			// 0bGGGRRRRR
-			rgba.R = (val & 0b11111) << 3
-			rgba.G = (((rgba.G >> 3) & 0b11000) | ((val >> 5) & 0b111)) << 3
+			rgb.r = (val & 0b11111)
+			rgb.g &= 0b11000
+			rgb.g |= ((val >> 5) & 0b111)
 		}
-		rgba.A = 0xFF
 
 		if util.Bit(s.bg.bgpi, 7) {
 			s.bg.bgpi++
@@ -137,19 +137,19 @@ func (s *Software) SetOBPD(val uint8) {
 	if s.model == 1 {
 		palID := int((s.sprite.obpi & 0x3F) / 8)
 		colorID := int(s.sprite.obpi&7) >> 1
-		rgba := &s.sprite.palette[palID*4+colorID]
+		rgb := &s.sprite.palette[palID*4+colorID]
 		isHi := util.Bit(s.sprite.obpi, 0)
-		// val is rgb555 format
 		if isHi {
 			// 0b0BBBBBGG
-			rgba.G = (((val & 0b11) << 3) | ((rgba.G >> 3) & 0b111)) << 3
-			rgba.B = ((val >> 2) & 0b11111) << 3
+			rgb.g &= 0b111
+			rgb.g |= ((val & 0b11) << 3)
+			rgb.b = ((val >> 2) & 0b11111)
 		} else {
 			// 0bGGGRRRRR
-			rgba.R = (val & 0b11111) << 3
-			rgba.G = (((rgba.G >> 3) & 0b11000) | ((val >> 5) & 0b111)) << 3
+			rgb.r = (val & 0b11111)
+			rgb.g &= 0b11000
+			rgb.g |= ((val >> 5) & 0b111)
 		}
-		rgba.A = 0xFF
 
 		if util.Bit(s.sprite.obpi, 7) {
 			s.sprite.obpi++
@@ -170,7 +170,7 @@ func (s *Software) Debug() image.Image {
 							lo := (planes[0] >> (7 - uint(x))) & 0b1
 							hi := (planes[1] >> (7 - uint(x))) & 0b1
 							colorID := int((hi << 1) | lo)
-							screen.Set(col*8+x, row*8+y, s.bg.palette[colorID])
+							screen.Set(col*8+x, row*8+y, s.bg.palette[colorID].RGBA())
 						}
 					}
 				}
