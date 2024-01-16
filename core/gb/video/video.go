@@ -71,11 +71,11 @@ func (v *Video) CatchUp() {
 			if v.ly < 144 {
 				switch v.dot {
 				case 0:
-					v.scanOAM(0)
+					v.scanOAM()
 				case 80:
-					v.drawing(0)
+					v.drawing()
 				case 252:
-					v.hblank(0)
+					v.hblank()
 				}
 			}
 			v.dot++
@@ -93,7 +93,7 @@ func (v *Video) incrementLY() {
 	v.ly++
 	switch v.ly {
 	case 144:
-		v.vblank(0)
+		v.vblank()
 	case 154:
 		v.ly = 0
 		v.FrameCounter++

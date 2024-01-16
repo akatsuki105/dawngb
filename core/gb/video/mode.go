@@ -5,7 +5,7 @@ import (
 )
 
 // Mode 0
-func (v *Video) hblank(cyclesLate int64) {
+func (v *Video) hblank() {
 	oldStat := v.stat
 	v.stat = (v.stat & 0xFC)
 	if util.Bit(v.lcdc, 7) {
@@ -17,7 +17,7 @@ func (v *Video) hblank(cyclesLate int64) {
 }
 
 // Mode 1
-func (v *Video) vblank(cyclesLate int64) {
+func (v *Video) vblank() {
 	oldStat := v.stat
 	v.stat = (v.stat & 0xFC) | 1
 	v.onInterrupt(0)
@@ -28,7 +28,7 @@ func (v *Video) vblank(cyclesLate int64) {
 }
 
 // Mode 2
-func (v *Video) scanOAM(cyclesLate int64) {
+func (v *Video) scanOAM() {
 	oldStat := v.stat
 	v.stat = (v.stat & 0xFC) | 2
 	if !statIRQAsserted(oldStat) && statIRQAsserted(v.stat) {
@@ -37,7 +37,7 @@ func (v *Video) scanOAM(cyclesLate int64) {
 }
 
 // Mode 3
-func (v *Video) drawing(cyclesLate int64) {
+func (v *Video) drawing() {
 	v.stat = (v.stat & 0xFC) | 3
 	v.renderingCycle = 0
 }
