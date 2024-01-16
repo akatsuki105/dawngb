@@ -51,10 +51,11 @@ func (d *dmaController) Write(addr uint16, val uint8) {
 	case 0xFF54: // lower dst
 		d.dst = (d.dst & 0xFF00) | uint16(val)
 	case 0xFF55: // control
+		wasCompleted := d.completed
 		d.length = (uint16(val&0b111_1111) + 1) * 16 // 16~2048バイトまで指定可能
 		d.mode = val >> 7
-		d.completed = false
-		if d.mode == GDMA {
+		d.completed = (d.mode == GDMA)
+		if wasCompleted && d.mode == GDMA {
 			// Trigger GDMA
 			period := int64(d.length) * 4
 			length := d.length
@@ -65,7 +66,6 @@ func (d *dmaController) Write(addr uint16, val uint8) {
 					}
 					d.length -= 16
 				}
-				d.completed = true
 				d.g.blocked = false
 			}
 			d.g.blocked = true
