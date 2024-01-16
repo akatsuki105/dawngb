@@ -16,7 +16,7 @@ import (
 var buttons = [8]string{"A", "B", "SELECT", "START", "RIGHT", "LEFT", "UP", "DOWN"}
 
 type peripheral interface {
-	Reset()
+	Reset(hasBIOS bool)
 	Read(addr uint16) uint8
 	Write(addr uint16, val uint8)
 }
@@ -67,7 +67,11 @@ func (g *GB) Reset(hasBIOS bool) {
 	g.cpu.Reset(hasBIOS)
 	g.video.Reset(model, hasBIOS)
 	g.audio.Reset(hasBIOS)
-	g.timer.Reset()
+	g.timer.Reset(hasBIOS)
+
+	if !hasBIOS {
+		g.m.Write(0xFF0F, 0xE1)
+	}
 }
 
 func (g *GB) LoadROM(romData []byte) error {

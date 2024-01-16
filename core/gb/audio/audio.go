@@ -13,9 +13,12 @@ type Audio interface {
 }
 
 type audio struct {
-	enabled      bool
-	ch1, ch2     *square
-	ch3          *wave
+	enabled bool
+
+	ch1, ch2 *square
+	ch3      *wave
+	ch4      *noise
+
 	sampleBuffer io.Writer
 	cycles       int64 // 遅れているサイクル数(8.3MHzのマスターサイクル単位)
 
@@ -32,30 +35,34 @@ func New(sampleBuffer io.Writer) Audio {
 		ch1:          newSquareChannel(true),
 		ch2:          newSquareChannel(false),
 		ch3:          newWaveChannel(),
+		ch4:          newNoiseChannel(),
 		sampleBuffer: sampleBuffer,
 	}
 }
 
 func (a *audio) Reset(hasBIOS bool) {
 	if !hasBIOS {
-		// a.Write(0xFF10, 0x80)
-		// a.Write(0xFF11, 0xBF)
-		// a.Write(0xFF12, 0xF3)
-		// a.Write(0xFF14, 0xBF)
-		// a.Write(0xFF16, 0x3F)
-		// a.Write(0xFF17, 0x00)
-		// a.Write(0xFF19, 0xBF)
-		// a.Write(0xFF1A, 0x7F)
-		// a.Write(0xFF1B, 0xFF)
-		// a.Write(0xFF1C, 0x9F)
-		// a.Write(0xFF1E, 0xBF)
-		// a.Write(0xFF20, 0xFF)
-		// a.Write(0xFF21, 0x00)
-		// a.Write(0xFF22, 0x00)
-		// a.Write(0xFF23, 0xBF)
-		// a.Write(0xFF24, 0x77)
-		// a.Write(0xFF25, 0xF3)
-		// a.Write(0xFF26, 0xF1)
+		a.Write(0xFF10, 0x80)
+		a.Write(0xFF11, 0xBF)
+		a.Write(0xFF12, 0xF3)
+		a.Write(0xFF13, 0xFF)
+		a.Write(0xFF14, 0xBF)
+		a.Write(0xFF16, 0x3F)
+		a.Write(0xFF17, 0x00)
+		a.Write(0xFF18, 0xFF)
+		a.Write(0xFF19, 0xBF)
+		a.Write(0xFF1A, 0x7F)
+		a.Write(0xFF1B, 0xFF)
+		a.Write(0xFF1C, 0x9F)
+		a.Write(0xFF1D, 0xFF)
+		a.Write(0xFF1E, 0xBF)
+		a.Write(0xFF20, 0xFF)
+		a.Write(0xFF21, 0x00)
+		a.Write(0xFF22, 0x00)
+		a.Write(0xFF23, 0xBF)
+		a.Write(0xFF24, 0x77)
+		a.Write(0xFF25, 0xF3)
+		a.Write(0xFF26, 0xF1)
 	}
 }
 
@@ -97,8 +104,8 @@ func (a *audio) CatchUp() {
 			a.ch3.clockTimer()
 
 			// サンプルを生成
-			sample := uint8(a.ch1.getOutput() + a.ch2.getOutput() + a.ch3.getOutput()) // 各チャンネルの出力(音量=波)を足し合わせたものがサンプル
 			if a.sampleTimer <= 0 {
+				sample := uint8(a.ch1.getOutput() + a.ch2.getOutput() + a.ch3.getOutput() + a.ch4.getOutput()) // 各チャンネルの出力(音量=波)を足し合わせたものがサンプル
 				if a.sampleBuffer != nil {
 					a.sampleBuffer.Write([]byte{0, sample, 0, sample})
 				}

@@ -70,10 +70,6 @@ func createEmu(isDebugMode bool) *Emu {
 		taskQueue:    make([]func(), 0, 10),
 	}
 	e.c = core.New("GB", e.sampleBuffer)
-
-	if e.turbo > 1 {
-		e.soundEnabled = false
-	}
 	return e
 }
 
@@ -129,7 +125,7 @@ func (e *Emu) Update() error {
 		e.taskQueue = e.taskQueue[:0]
 	}
 
-	if e.soundEnabled && e.context == nil {
+	if !e.muted() && e.context == nil {
 		e.initAudio()
 	}
 
@@ -138,7 +134,7 @@ func (e *Emu) Update() error {
 		for i := 0; i < e.turbo; i++ {
 			e.c.RunFrame()
 		}
-		if e.soundEnabled && e.music != nil {
+		if !e.muted() {
 			for i := 0; i < len(e.samples); i++ {
 				e.samples[i] = 0
 			}
@@ -252,9 +248,6 @@ func (e *Emu) pollGamepadInput() {
 func (e *Emu) Turbo(speed int) {
 	e.queueTask(func() {
 		e.turbo = speed
-		if e.turbo > 1 {
-			e.soundEnabled = false
-		}
 	})
 }
 
@@ -275,4 +268,8 @@ func (e *Emu) initAudio() {
 	}
 	e.context = context
 	e.music = context.NewPlayer()
+}
+
+func (e *Emu) muted() bool {
+	return !e.soundEnabled || e.turbo > 1
 }

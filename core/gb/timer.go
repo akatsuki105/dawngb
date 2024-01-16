@@ -23,11 +23,14 @@ func newTimer(g *GB) *timer {
 	return t
 }
 
-func (t *timer) Reset() {
+func (t *timer) Reset(hasBIOS bool) {
 	t.counter = 0
 	t.tima = 0
 	t.tma = 0
 	t.tac = 0
+	if !hasBIOS {
+		t.tac = 0xF8
+	}
 	t.g.s.Schedule(&t.updateEvent, 16)
 }
 

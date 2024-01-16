@@ -1,6 +1,8 @@
 package audio
 
-import "github.com/akatsuki105/dugb/util"
+import (
+	"github.com/akatsuki105/dugb/util"
+)
 
 func (a *audio) Read(addr uint16) uint8 {
 	a.CatchUp()
@@ -94,6 +96,12 @@ func (a *audio) Write(addr uint16, val uint8) {
 			}
 			a.ch3.window = 0
 		}
+
+	case 0xFF25:
+		a.ch1.ignored = !util.Bit(val, 0)
+		a.ch2.ignored = !util.Bit(val, 1)
+		a.ch3.ignored = !util.Bit(val, 2)
+		a.ch4.ignored = !util.Bit(val, 3)
 
 	case 0xFF26:
 		a.enabled = util.Bit(val, 7)

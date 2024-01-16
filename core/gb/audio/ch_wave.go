@@ -2,10 +2,12 @@ package audio
 
 type wave struct {
 	enabled bool
-	active  bool // NR30's bit7
-	stop    bool // .length が 0 になったときに 音を止めるかどうか(NR34's bit6)
-	length  int  // 音の残り再生時間
-	volume  int  // NR32's bit6-5 (0: 0%, 1: 100%, 2: 50%, 3: 25%)
+	ignored bool // Ignore sample output
+
+	active bool // NR30's bit7
+	stop   bool // .length が 0 になったときに 音を止めるかどうか(NR34's bit6)
+	length int  // 音の残り再生時間
+	volume int  // NR32's bit6-5 (0: 0%, 1: 100%, 2: 50%, 3: 25%)
 
 	period      int // GBでは周波数を指定するのではなく、周期の長さを指定する
 	freqCounter int
@@ -15,7 +17,9 @@ type wave struct {
 }
 
 func newWaveChannel() *wave {
-	return &wave{}
+	return &wave{
+		ignored: true,
+	}
 }
 
 func (ch *wave) clock256Hz() {
@@ -41,15 +45,17 @@ func (ch *wave) clockTimer() {
 }
 
 func (ch *wave) getOutput() int {
-	if ch.enabled && ch.active {
-		isHi := ch.window&1 == 0 // 上位4bit -> 下位4bit -> 上位4bit -> 下位4bit -> ...
-		sample := uint8(0)
-		if isHi {
-			sample = ch.samples[ch.window>>1] >> 4
-		} else {
-			sample = ch.samples[ch.window>>1] & 0xF
+	if !ch.ignored {
+		if ch.enabled && ch.active {
+			isHi := ch.window&1 == 0 // 上位4bit -> 下位4bit -> 上位4bit -> 下位4bit -> ...
+			sample := uint8(0)
+			if isHi {
+				sample = ch.samples[ch.window>>1] >> 4
+			} else {
+				sample = ch.samples[ch.window>>1] & 0xF
+			}
+			return int(sample >> ch.volume)
 		}
-		return int(sample >> ch.volume)
 	}
 	return 0
 }

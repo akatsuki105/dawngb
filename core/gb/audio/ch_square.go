@@ -9,6 +9,7 @@ var squareDutyTable = [4][8]int{
 
 type square struct {
 	enabled bool
+	ignored bool // Ignore sample output
 
 	length int  // 音の残り再生時間
 	stop   bool // .length が 0 になったときに 音を止めるかどうか(NR14's bit6)
@@ -26,6 +27,7 @@ type square struct {
 func newSquareChannel(hasSweep bool) *square {
 	ch := &square{
 		enabled:  false,
+		ignored:  true,
 		envelope: newEnvelope(),
 	}
 
@@ -73,9 +75,11 @@ func (ch *square) clockTimer() {
 }
 
 func (ch *square) getOutput() int {
-	dutyTable := (squareDutyTable[ch.duty])[:]
-	if dutyTable[ch.dutyCounter] != 0 {
-		return ch.envelope.volume
+	if !ch.ignored {
+		dutyTable := (squareDutyTable[ch.duty])[:]
+		if dutyTable[ch.dutyCounter] != 0 {
+			return ch.envelope.volume
+		}
 	}
 	return 0
 }
