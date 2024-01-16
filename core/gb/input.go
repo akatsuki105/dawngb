@@ -3,19 +3,21 @@ package gb
 import "github.com/akatsuki105/dugb/util"
 
 type Input struct {
-	inputs      [8]bool // A, B, Select, Start, Right, Left, Up, Down
-	onInterrupt func(id int)
-	val         uint8
+	g   *GB
+	val uint8
 }
 
-func newInput(onInterrupt func(id int)) *Input {
+func newInput(g *GB) *Input {
 	return &Input{
-		onInterrupt: onInterrupt,
+		g: g,
 	}
 }
 
-func (i *Input) Reset() {
+func (i *Input) Reset(hasBIOS bool) {
 	i.val = 0x0F
+	if !hasBIOS {
+		i.val = 0xCF
+	}
 }
 
 func (i *Input) Read(addr uint16) uint8 {
@@ -24,7 +26,7 @@ func (i *Input) Read(addr uint16) uint8 {
 	val := i.val
 	if !util.Bit(val, 5) {
 		for key := 0; key < 4; key++ {
-			if i.inputs[key] {
+			if i.g.inputs[key] {
 				val = util.SetBit(val, key, false)
 				pressed = true
 			}
@@ -32,7 +34,7 @@ func (i *Input) Read(addr uint16) uint8 {
 	}
 	if !util.Bit(val, 4) {
 		for key := 4; key < 8; key++ {
-			if i.inputs[key] {
+			if i.g.inputs[key] {
 				val = util.SetBit(val, key-4, false)
 				pressed = true
 			}
@@ -40,7 +42,7 @@ func (i *Input) Read(addr uint16) uint8 {
 	}
 
 	if pressed {
-		i.onInterrupt(4)
+		i.g.requestInterrupt(4)
 	}
 
 	i.val = val

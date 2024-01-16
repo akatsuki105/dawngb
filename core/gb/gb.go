@@ -27,7 +27,7 @@ type GB struct {
 	video     *video.Video
 	s         *sched.Sched
 	cartridge *cartridge.Cartridge
-	input     *Input
+	input     peripheral
 	timer     peripheral
 	audio     audio.Audio
 	ie        uint8
@@ -37,6 +37,8 @@ type GB struct {
 	blocked   bool // DMA
 	key1      bool // FF4D's bit 0
 	inOAMDMA  bool
+	sb, sc    uint8
+	inputs    [8]bool // A, B, Select, Start, Right, Left, Up, Down
 }
 
 func New(audioBuffer io.Writer) *GB {
@@ -50,7 +52,7 @@ func New(audioBuffer io.Writer) *GB {
 	g.video = video.New(g.requestInterrupt)
 	g.timer = newTimer(g)
 	g.audio = audio.New(audioBuffer)
-	g.input = newInput(g.requestInterrupt)
+	g.input = newInput(g)
 	return g
 }
 
@@ -68,6 +70,7 @@ func (g *GB) Reset(hasBIOS bool) {
 	g.video.Reset(model, hasBIOS)
 	g.audio.Reset(hasBIOS)
 	g.timer.Reset(hasBIOS)
+	g.input.Reset(hasBIOS)
 
 	if !hasBIOS {
 		g.m.Write(0xFF0F, 0xE1)
@@ -136,7 +139,7 @@ func (g *GB) Screen() []color.RGBA {
 func (g *GB) SetKeyInput(key string, press bool) {
 	for i, b := range buttons {
 		if b == key {
-			g.input.inputs[i] = press
+			g.inputs[i] = press
 		}
 	}
 }

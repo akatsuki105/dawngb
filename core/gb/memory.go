@@ -45,6 +45,10 @@ func (m *Memory) Read(addr uint16) byte {
 		switch addr {
 		case 0xFF00:
 			return m.gb.input.Read(addr)
+		case 0xFF01:
+			return 0 // TODO: serial
+		case 0xFF02:
+			return m.gb.sc
 		case 0xFF04, 0xFF05, 0xFF06, 0xFF07:
 			return m.gb.timer.Read(addr)
 		case 0xFF0F:
@@ -104,6 +108,10 @@ func (m *Memory) Write(addr uint16, val byte) {
 		switch addr {
 		case 0xFF00:
 			m.gb.input.Write(addr, val)
+		case 0xFF01:
+			m.gb.sb = val
+		case 0xFF02:
+			m.gb.sc = val
 		case 0xFF04, 0xFF05, 0xFF06, 0xFF07:
 			m.gb.timer.Write(addr, val)
 		case 0xFF0F:
