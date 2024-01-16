@@ -1,6 +1,7 @@
 package audio
 
 type noise struct {
+	enabled bool
 	ignored bool // Ignore sample output
 }
 

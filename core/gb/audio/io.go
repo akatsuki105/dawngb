@@ -6,11 +6,28 @@ import (
 
 func (a *audio) Read(addr uint16) uint8 {
 	a.CatchUp()
+	if addr == 0xFF26 {
+		val := uint8(0)
+		val = util.SetBit(val, 7, a.enabled)
+		val = util.SetBit(val, 0, a.ch1.enabled)
+		val = util.SetBit(val, 1, a.ch2.enabled)
+		val = util.SetBit(val, 2, a.ch3.enabled)
+		val = util.SetBit(val, 3, a.ch4.enabled)
+		return val
+	}
 	return a.ioreg[addr-0xFF10]
 }
 
 func (a *audio) Write(addr uint16, val uint8) {
 	a.CatchUp()
+
+	if addr == 0xFF26 {
+		a.enabled = util.Bit(val, 7)
+	}
+
+	if !a.enabled {
+		return
+	}
 
 	a.ioreg[addr-0xFF10] = val
 	switch addr {
@@ -102,9 +119,6 @@ func (a *audio) Write(addr uint16, val uint8) {
 		a.ch2.ignored = !util.Bit(val, 1)
 		a.ch3.ignored = !util.Bit(val, 2)
 		a.ch4.ignored = !util.Bit(val, 3)
-
-	case 0xFF26:
-		a.enabled = util.Bit(val, 7)
 
 	case 0xFF30, 0xFF31, 0xFF32, 0xFF33, 0xFF34, 0xFF35, 0xFF36, 0xFF37, 0xFF38, 0xFF39, 0xFF3A, 0xFF3B, 0xFF3C, 0xFF3D, 0xFF3E, 0xFF3F:
 		a.ch3.samples[addr-0xFF30] = val
