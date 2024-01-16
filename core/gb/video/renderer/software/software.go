@@ -29,7 +29,7 @@ type Software struct {
 	bg       *bgLayer
 	win      *windowLayer
 	sprite   *spriteLayer
-	model    int // 0: DMG, 1: CGB
+	model    int // 0: DMG, 1: CGB, 2: SGB
 }
 
 type pixel struct {
