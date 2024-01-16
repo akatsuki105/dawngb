@@ -1,8 +1,6 @@
 package gb
 
 import (
-	"fmt"
-
 	"github.com/akatsuki105/dugb/util"
 )
 
@@ -72,8 +70,25 @@ func (d *dmaController) Write(addr uint16, val uint8) {
 			d.g.s.Schedule(&d.g.dma, period)
 		} else {
 			// Trigger HDMA
-			fmt.Println("Trigger HDMA")
-			d.completed = true
+			d.g.runHDMA = d.runHDMA
 		}
 	}
+}
+
+func (d *dmaController) runHDMA() {
+	d.g.dma.Callback = func(cyclesLate int64) {
+		for i := uint16(0); i < 16; i++ {
+			d.g.video.Write(d.dst, d.g.m.Read(d.src))
+			d.src++
+			d.dst++
+			d.length--
+		}
+		if d.length == 0 {
+			d.g.runHDMA = nil
+			d.completed = true
+		}
+		d.g.blocked = false
+	}
+	d.g.blocked = true
+	d.g.s.Schedule(&d.g.dma, 64)
 }

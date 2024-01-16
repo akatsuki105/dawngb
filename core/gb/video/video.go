@@ -27,13 +27,15 @@ type Video struct {
 	ram             VRAM
 	lcdc, stat, lyc uint8
 	onInterrupt     func(id int)
+	onHBlank        func()
 	oam             [160]uint8
 	ioreg           [0x30]uint8
 }
 
-func New(onInterrupt func(id int)) *Video {
+func New(onInterrupt func(id int), onHBlank func()) *Video {
 	v := &Video{
 		onInterrupt: onInterrupt,
+		onHBlank:    onHBlank,
 		stat:        0x80,
 	}
 	v.r = renderer.New("dummy", v.ram.data[:], v.oam[:], 0)

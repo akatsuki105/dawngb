@@ -40,6 +40,7 @@ type GB struct {
 	sb, sc    uint8
 	inputs    [8]bool // A, B, Select, Start, Right, Left, Up, Down
 	dmac      peripheral
+	runHDMA   func()
 }
 
 func New(audioBuffer io.Writer) *GB {
@@ -50,7 +51,7 @@ func New(audioBuffer io.Writer) *GB {
 	}
 	g.m = newMemory(g)
 	g.cpu = cpu.New(s, g.m, g.halt, g.stop)
-	g.video = video.New(g.requestInterrupt)
+	g.video = video.New(g.requestInterrupt, g.triggerHDMA)
 	g.timer = newTimer(g)
 	g.audio = audio.New(audioBuffer)
 	g.input = newInput(g)
@@ -176,6 +177,12 @@ func (g *GB) triggerOAMDMA(src uint16) {
 	}
 	g.inOAMDMA = true
 	g.s.Schedule(&g.dma, 160*g.cpu.Cycle)
+}
+
+func (g *GB) triggerHDMA() {
+	if g.runHDMA != nil {
+		g.runHDMA()
+	}
 }
 
 func (g *GB) halt() {

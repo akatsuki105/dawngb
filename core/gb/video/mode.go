@@ -14,6 +14,9 @@ func (v *Video) hblank() {
 	if !statIRQAsserted(oldStat) && statIRQAsserted(v.stat) {
 		v.onInterrupt(1)
 	}
+	if v.onHBlank != nil {
+		v.onHBlank()
+	}
 }
 
 // Mode 1
