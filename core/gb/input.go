@@ -14,9 +14,14 @@ func newInput(g *GB) *Input {
 	}
 }
 
-func (i *Input) Reset(_ bool) {
+func (i *Input) Reset(hasBIOS bool) {
 	i.p14 = false
 	i.p15 = false
+	i.joyp = 0x0F
+	if !hasBIOS {
+		i.Write(0xFF00, 0x30)
+		i.Write(0xFF00, 0xCF)
+	}
 }
 
 func (i *Input) poll() {
@@ -50,6 +55,13 @@ func (i *Input) Read(addr uint16) uint8 {
 	val := i.joyp
 	val = util.SetBit(val, 4, i.p14)
 	val = util.SetBit(val, 5, i.p15)
+
+	/*
+		NOTE:
+			ポケモンの赤・緑・青・ピカチュウ版では、上位4ビットが0xCになっている。
+			そうしないと、ポケモンのゲームはハードウェアをスーパゲームボーイとして認識し、上入力が効かなくなる。
+	*/
+	val |= 0xC0
 	return val
 }
 
