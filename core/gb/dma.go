@@ -70,12 +70,13 @@ func (d *dmaController) Write(addr uint16, val uint8) {
 		if wasCompleted && d.mode == GDMA {
 			// Trigger GDMA
 			period := int64(d.length) * 4
-			length := d.length
 			d.g.dma.Callback = func(cyclesLate int64) {
-				for i := uint16(0); i < length; i++ {
-					for j := 0; j < 16; j++ {
+				for d.length > 0 {
+					for i := uint16(0); i < 16; i++ {
 						d.g.video.Write(d.dst+i, d.g.m.Read(d.src+i))
 					}
+					d.src += 16
+					d.dst += 16
 					d.length -= 16
 				}
 				d.g.blocked = false
