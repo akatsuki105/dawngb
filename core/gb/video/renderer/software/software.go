@@ -123,6 +123,27 @@ func (s *Software) SetWX(val uint8) { s.win.wx = int(val) - 7 }
 func (s *Software) SetWY(val uint8) { s.win.wy = int(val) }
 
 func (s *Software) SetBGPI(val uint8) { s.bg.bgpi = val }
+
+func (s *Software) GetBGPD() uint8 {
+	val := uint8(0xFF)
+	if s.model == 1 {
+		palID := int((s.bg.bgpi & 0x3F) / 8)
+		colorID := int(s.bg.bgpi&7) >> 1
+		rgb := &s.bg.palette[palID*4+colorID]
+		isHi := util.Bit(s.bg.bgpi, 0)
+		if isHi {
+			// 0b0BBBBBGG
+			val = (rgb.b << 2)
+			val |= ((rgb.g >> 3) & 0b11)
+		} else {
+			// 0bGGGRRRRR
+			val = rgb.r
+			val |= (rgb.g << 5)
+		}
+	}
+	return val
+}
+
 func (s *Software) SetBGPD(val uint8) uint8 {
 	if s.model == 1 {
 		palID := int((s.bg.bgpi & 0x3F) / 8)

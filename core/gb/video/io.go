@@ -35,6 +35,8 @@ func (v *Video) Read(addr uint16) uint8 {
 		val := uint8(0xFE)
 		val = util.SetBit(val, 0, v.ram.bank == 1)
 		return val
+	case 0xFF69:
+		return v.r.GetBGPD()
 	default:
 		if addr >= 0xFF40 && addr < 0xFF70 {
 			return v.ioreg[addr-0xFF40]

@@ -20,6 +20,7 @@ type Renderer interface {
 	SetWY(val uint8)
 
 	SetBGPI(val uint8)
+	GetBGPD() uint8
 	SetBGPD(val uint8) uint8
 	SetOBPI(val uint8)
 	SetOBPD(val uint8)
