@@ -3,6 +3,7 @@ package cartridge
 import (
 	"fmt"
 
+	"github.com/akatsuki105/dugb/util"
 	. "github.com/akatsuki105/dugb/util/datasize"
 )
 
@@ -26,7 +27,8 @@ type Cartridge struct {
 }
 
 func New(rom []uint8) *Cartridge {
-	isCGB := rom[0x143] == 0x80 || rom[0x143] == 0xC0
+	isCGB := util.Bit(rom[0x143], 7)
+
 	title := string(rom[0x134:0x13F])
 	if !isCGB {
 		title = string(rom[0x134:0x144])
@@ -79,7 +81,7 @@ func (c *Cartridge) Write(addr uint16, val uint8) {
 }
 
 func (c *Cartridge) IsCGB() bool {
-	return c.rom[0x143] == 0x80 || c.rom[0x143] == 0xC0
+	return util.Bit(c.rom[0x143], 7)
 }
 
 func (c *Cartridge) LoadSRAM(data []uint8) error {

@@ -44,6 +44,7 @@ func (c *Cpu) Reset(hasBIOS bool) {
 func (c *Cpu) skipBIOS() {
 	c.r.a = 0x11
 	c.r.f.unpack(0x80)
+	c.r.bc.unpack(0x0000)
 	c.r.de.unpack(0xFF56)
 	c.r.hl.unpack(0x000D)
 

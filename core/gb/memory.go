@@ -135,7 +135,7 @@ func (m *Memory) Write(addr uint16, val byte) {
 			if !m.gb.cartridge.IsCGB() {
 				m.gb.video.Write(addr, val)
 			}
-		case 0xFF4F, 0xFF68, 0xFF69, 0xFF6A, 0xFF6B:
+		case 0xFF4F, 0xFF68, 0xFF69, 0xFF6A, 0xFF6B, 0xFF6C:
 			if m.gb.cartridge.IsCGB() {
 				m.gb.video.Write(addr, val)
 			}
