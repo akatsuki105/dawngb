@@ -116,7 +116,10 @@ func op0F(c *Cpu) {
 	c.r.f.z, c.r.f.n, c.r.f.h = false, false, false
 }
 
-func op10(c *Cpu) { c.stop() }
+func op10(c *Cpu) {
+	c.r.pc++ // NOTE: 遊戯王DM4はこれをしっかりしないと動かない
+	c.stop()
+}
 
 func op11(c *Cpu) {
 	lo := uint16(c.fetch())

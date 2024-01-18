@@ -78,6 +78,11 @@ func (g *GB) Reset(hasBIOS bool) {
 
 	if !hasBIOS {
 		g.m.Write(0xFF0F, 0xE1)
+		g.m.Write(0xFF51, 0xFF)
+		g.m.Write(0xFF52, 0xFF)
+		g.m.Write(0xFF53, 0xFF)
+		g.m.Write(0xFF54, 0xFF)
+		g.m.Write(0xFF55, 0xFF)
 	}
 }
 

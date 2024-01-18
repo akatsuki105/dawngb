@@ -61,10 +61,10 @@ func (v *Video) Write(addr uint16, val uint8) {
 
 	switch addr {
 	case 0xFF40:
-		enable := util.Bit(val, 7)
+		wasEnabled := util.Bit(v.lcdc, 7)
 		v.lcdc = val
 		v.r.SetLCDC(val)
-		if enable && !util.Bit(v.lcdc, 7) {
+		if wasEnabled != util.Bit(v.lcdc, 7) { // Toggle
 			v.stat = (v.stat & 0xFC)
 			v.ly, v.dot = 0, 0
 		}
