@@ -30,6 +30,7 @@ type Video struct {
 	onHBlank        func()
 	oam             [160]uint8
 	ioreg           [0x30]uint8
+	enableLatch     bool // LCDC.7をセットしてPPUを有効にすると、次のフレームから表示が開始される そうじゃないとゴミが表示される
 }
 
 func New(onInterrupt func(id int), onHBlank func()) *Video {
@@ -98,6 +99,7 @@ func (v *Video) incrementLY() {
 		v.vblank()
 	case 154:
 		v.ly = 0
+		v.enableLatch = false
 		v.FrameCounter++
 	}
 	v.compareLYC()

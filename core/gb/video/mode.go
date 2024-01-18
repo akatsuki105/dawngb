@@ -8,7 +8,7 @@ import (
 func (v *Video) hblank() {
 	oldStat := v.stat
 	v.stat = (v.stat & 0xFC)
-	if util.Bit(v.lcdc, 7) {
+	if util.Bit(v.lcdc, 7) && !v.enableLatch {
 		v.r.DrawScanline(v.ly, v.screen[v.ly*160:(v.ly+1)*160])
 	}
 	if !statIRQAsserted(oldStat) && statIRQAsserted(v.stat) {

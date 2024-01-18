@@ -2,4 +2,4 @@
 
 DuGB is GameBoy emulator written in Go.
 
-<img src="./images/demo.png" alt="demo" width="400px" />
+<img src="./images/prism.png" alt="prism" width="360px" />

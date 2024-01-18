@@ -73,6 +73,9 @@ func (v *Video) Write(addr uint16, val uint8) {
 		if wasEnabled != util.Bit(v.lcdc, 7) { // Toggle
 			v.stat = (v.stat & 0xFC)
 			v.ly, v.dot = 0, 0
+			if util.Bit(v.lcdc, 7) {
+				v.enableLatch = true
+			}
 		}
 	case 0xFF41:
 		oldStat := v.stat
