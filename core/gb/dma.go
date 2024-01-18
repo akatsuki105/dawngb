@@ -38,7 +38,6 @@ func (d *dmaController) Reset(hasBIOS bool) {
 func (d *dmaController) Read(addr uint16) uint8 {
 	val := uint8(0xFF)
 	if addr == 0xFF55 {
-		val = uint8(0)
 		val = util.SetBit(val, 7, d.completed)
 		length := uint8(((d.length / 16) - 1) & 0x7F)
 		val |= length
@@ -50,12 +49,18 @@ func (d *dmaController) Write(addr uint16, val uint8) {
 	switch addr {
 	case 0xFF51: // upper src
 		d.src = (d.src & 0x00FF) | (uint16(val) << 8)
+		d.src &= 0b1111_1111_1111_0000
 	case 0xFF52: // lower src
 		d.src = (d.src & 0xFF00) | uint16(val)
+		d.src &= 0b1111_1111_1111_0000
 	case 0xFF53: // upper dst
 		d.dst = (d.dst & 0x00FF) | (uint16(val) << 8)
+		d.dst &= 0b0001_1111_1111_0000
+		d.dst |= 0x8000
 	case 0xFF54: // lower dst
 		d.dst = (d.dst & 0xFF00) | uint16(val)
+		d.dst &= 0b0001_1111_1111_0000
+		d.dst |= 0x8000
 	case 0xFF55: // control
 		wasCompleted := d.completed
 		d.length = (uint16(val&0b111_1111) + 1) * 16 // 16~2048バイトまで指定可能

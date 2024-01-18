@@ -77,7 +77,10 @@ func (g *GB) Reset(hasBIOS bool) {
 	g.dmac.Reset(hasBIOS)
 
 	if !hasBIOS {
+		g.m.Write(0xFF02, 0x7F)
 		g.m.Write(0xFF0F, 0xE1)
+		g.m.Write(0xFF4D, 0xFF)
+		g.m.Write(0xFF4F, 0xFF)
 	}
 }
 

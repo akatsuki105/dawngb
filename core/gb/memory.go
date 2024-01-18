@@ -70,6 +70,10 @@ func (m *Memory) Read(addr uint16) byte {
 			return val
 		case 0xFF50:
 			return 1
+		case 0xFF51, 0xFF52, 0xFF53, 0xFF54, 0xFF55:
+			if m.gb.cartridge.IsCGB() {
+				return m.gb.dmac.Read(addr)
+			}
 		case 0xFF56:
 			return 0x02 // TODO: infrared
 		case 0xFF70:
