@@ -50,6 +50,7 @@ func (l *spriteLayer) drawScanline(y int, scanline []pixel) {
 
 func (l *spriteLayer) drawObjScanline8(spriteIdx int, scanline []pixel, y int) {
 	s := l.getSprite(spriteIdx)
+	z := (s.z + l.z)
 
 	tiledata := l.r.vram[(s.bank * (8 * KB)) : (s.bank*(8*KB))+0x1000]
 	tile := tiledata[s.tileID*16 : (s.tileID+1)*16] // 2bpp = 16byte
@@ -67,8 +68,7 @@ func (l *spriteLayer) drawObjScanline8(spriteIdx int, scanline []pixel, y int) {
 		if colorID != 0 {
 			idx := s.x + util.Flip(8, s.xflip, i)
 			if (0 <= idx) && (idx < 160) {
-				z := (s.z + l.z)
-				if scanline[idx].z <= z || (scanline[idx].colorID == 0) {
+				if z >= scanline[idx].z || (scanline[idx].colorID == 0) {
 					scanline[idx].rgba = palette[colorID].RGBA()
 					scanline[idx].z = z
 					scanline[idx].colorID = colorID
@@ -80,15 +80,13 @@ func (l *spriteLayer) drawObjScanline8(spriteIdx int, scanline []pixel, y int) {
 
 func (l *spriteLayer) drawObjScanline16(spriteIdx int, scanline []pixel, y int) {
 	s := l.getSprite(spriteIdx)
+	z := (s.z + l.z)
 
 	tiledata := l.r.vram[(s.bank * (8 * KB)) : (s.bank*(8*KB))+0x1000]
 	tileID := s.tileID & 0xFE
 	tile := tiledata[tileID*16 : (tileID+2)*16] // 2bpp
 
-	row := y - s.y // (スプライトの一番上を0行目として)上から何行目か
-	if s.yflip {
-		row = 15 - row
-	}
+	row := util.Flip(16, s.yflip, y-s.y) // (スプライトの一番上を0行目として)上から何行目か
 
 	var planes [2]uint8
 	if row < 8 {
@@ -106,9 +104,9 @@ func (l *spriteLayer) drawObjScanline16(spriteIdx int, scanline []pixel, y int) 
 		if colorID != 0 {
 			idx := s.x + util.Flip(8, s.xflip, i)
 			if (0 <= idx) && (idx < 160) {
-				if scanline[idx].z <= s.z || (scanline[idx].colorID == 0) {
+				if z >= scanline[idx].z || (scanline[idx].colorID == 0) {
 					scanline[idx].rgba = palette[colorID].RGBA()
-					scanline[idx].z = s.z
+					scanline[idx].z = z
 					scanline[idx].colorID = colorID
 				}
 			}
