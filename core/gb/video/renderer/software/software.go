@@ -123,7 +123,7 @@ func (s *Software) SetWX(val uint8) { s.win.wx = int(val) - 7 }
 func (s *Software) SetWY(val uint8) { s.win.wy = int(val) }
 
 func (s *Software) SetBGPI(val uint8) { s.bg.bgpi = val }
-func (s *Software) SetBGPD(val uint8) {
+func (s *Software) SetBGPD(val uint8) uint8 {
 	if s.model == 1 {
 		palID := int((s.bg.bgpi & 0x3F) / 8)
 		colorID := int(s.bg.bgpi&7) >> 1
@@ -147,6 +147,7 @@ func (s *Software) SetBGPD(val uint8) {
 			s.bg.bgpi |= bgpi
 		}
 	}
+	return s.bg.bgpi
 }
 
 func (s *Software) SetOBPI(val uint8) { s.sprite.obpi = val }

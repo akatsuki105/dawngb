@@ -99,7 +99,7 @@ func (v *Video) Write(addr uint16, val uint8) {
 	case 0xFF68:
 		v.r.SetBGPI(val)
 	case 0xFF69:
-		v.r.SetBGPD(val)
+		v.ioreg[0x28] = v.r.SetBGPD(val)
 	case 0xFF6A:
 		v.r.SetOBPI(val)
 	case 0xFF6B:
