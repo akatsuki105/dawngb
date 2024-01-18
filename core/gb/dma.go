@@ -25,7 +25,15 @@ func newDMAController(g *GB) *dmaController {
 	}
 }
 
-func (d *dmaController) Reset(hasBIOS bool) {}
+func (d *dmaController) Reset(hasBIOS bool) {
+	if !hasBIOS {
+		d.Write(0xFF51, 0xFF)
+		d.Write(0xFF52, 0xFF)
+		d.Write(0xFF53, 0xFF)
+		d.Write(0xFF54, 0xFF)
+		d.Write(0xFF55, 0xFF)
+	}
+}
 
 func (d *dmaController) Read(addr uint16) uint8 {
 	val := uint8(0xFF)
