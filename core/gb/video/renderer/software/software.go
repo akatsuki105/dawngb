@@ -37,6 +37,7 @@ type pixel struct {
 	rgba    color.RGBA
 	z       int // z-index
 	colorID int
+	isBG    bool
 }
 
 func New(vram, oam []uint8, model int) *Software {
@@ -58,6 +59,7 @@ func (s *Software) DrawScanline(y int, scanline []color.RGBA) {
 	for i := 0; i < 160; i++ {
 		s.scanline[i].z = -1
 		s.scanline[i].colorID = 0
+		s.scanline[i].isBG = false
 	}
 
 	s.bg.drawScanline(y, s.scanline[:])

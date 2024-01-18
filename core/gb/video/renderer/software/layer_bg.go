@@ -67,6 +67,7 @@ func (l *bgLayer) drawScanline(y int, scanline []pixel) {
 							scanline[x].rgba = l.palette[(palID*4)+colorID].RGBA()
 							scanline[x].z = z
 							scanline[x].colorID = colorID
+							scanline[x].isBG = true
 						}
 					}
 				}
