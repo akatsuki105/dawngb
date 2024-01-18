@@ -136,7 +136,9 @@ func (s *Software) SetBGPD(val uint8) {
 		}
 
 		if util.Bit(s.bg.bgpi, 7) {
-			s.bg.bgpi++
+			bgpi := (s.bg.bgpi + 1) & 0x3F
+			s.bg.bgpi &= 0xC0
+			s.bg.bgpi |= bgpi
 		}
 	}
 }
@@ -161,7 +163,9 @@ func (s *Software) SetOBPD(val uint8) {
 		}
 
 		if util.Bit(s.sprite.obpi, 7) {
-			s.sprite.obpi++
+			obpi := (s.sprite.obpi + 1) & 0x3F
+			s.sprite.obpi &= 0xC0
+			s.sprite.obpi |= obpi
 		}
 	}
 }
