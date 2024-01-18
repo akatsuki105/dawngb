@@ -90,24 +90,30 @@ func (s *Software) SetLCDC(val uint8) {
 }
 
 func (s *Software) SetBGP(val uint8) {
-	s.bg.palette[0] = dmgPalette[val&0b11]
-	s.bg.palette[1] = dmgPalette[(val>>2)&0b11]
-	s.bg.palette[2] = dmgPalette[(val>>4)&0b11]
-	s.bg.palette[3] = dmgPalette[(val>>6)&0b11]
+	if s.model != 1 {
+		s.bg.palette[0] = dmgPalette[val&0b11]
+		s.bg.palette[1] = dmgPalette[(val>>2)&0b11]
+		s.bg.palette[2] = dmgPalette[(val>>4)&0b11]
+		s.bg.palette[3] = dmgPalette[(val>>6)&0b11]
+	}
 }
 
 func (s *Software) SetOBP0(val uint8) {
-	s.sprite.palette[0] = dmgPalette[val&0b11]
-	s.sprite.palette[1] = dmgPalette[(val>>2)&0b11]
-	s.sprite.palette[2] = dmgPalette[(val>>4)&0b11]
-	s.sprite.palette[3] = dmgPalette[(val>>6)&0b11]
+	if s.model != 1 {
+		s.sprite.palette[0] = dmgPalette[val&0b11]
+		s.sprite.palette[1] = dmgPalette[(val>>2)&0b11]
+		s.sprite.palette[2] = dmgPalette[(val>>4)&0b11]
+		s.sprite.palette[3] = dmgPalette[(val>>6)&0b11]
+	}
 }
 
 func (s *Software) SetOBP1(val uint8) {
-	s.sprite.palette[4] = dmgPalette[val&0b11]
-	s.sprite.palette[5] = dmgPalette[(val>>2)&0b11]
-	s.sprite.palette[6] = dmgPalette[(val>>4)&0b11]
-	s.sprite.palette[7] = dmgPalette[(val>>6)&0b11]
+	if s.model != 1 {
+		s.sprite.palette[4] = dmgPalette[val&0b11]
+		s.sprite.palette[5] = dmgPalette[(val>>2)&0b11]
+		s.sprite.palette[6] = dmgPalette[(val>>4)&0b11]
+		s.sprite.palette[7] = dmgPalette[(val>>6)&0b11]
+	}
 }
 
 func (s *Software) SetSCX(val uint8) { s.bg.scx = int(val) }
