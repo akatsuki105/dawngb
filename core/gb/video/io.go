@@ -36,7 +36,11 @@ func (v *Video) Read(addr uint16) uint8 {
 		val = util.SetBit(val, 0, v.ram.bank == 1)
 		return val
 	case 0xFF69:
+		// ゲームによってはパレットの値を読み取ることがある(ロックマンX1など)
 		return v.r.GetBGPD()
+	case 0xFF6B:
+		// ゲームによってはパレットの値を読み取ることがある(ロックマンX1など)
+		return v.r.GetOBPD()
 	default:
 		if addr >= 0xFF40 && addr < 0xFF70 {
 			return v.ioreg[addr-0xFF40]

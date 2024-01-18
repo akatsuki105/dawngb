@@ -172,6 +172,27 @@ func (s *Software) SetBGPD(val uint8) uint8 {
 }
 
 func (s *Software) SetOBPI(val uint8) { s.sprite.obpi = val }
+
+func (s *Software) GetOBPD() uint8 {
+	val := uint8(0xFF)
+	if s.model == 1 {
+		palID := int((s.sprite.obpi & 0x3F) / 8)
+		colorID := int(s.sprite.obpi&7) >> 1
+		rgb := &s.sprite.palette[palID*4+colorID]
+		isHi := util.Bit(s.sprite.obpi, 0)
+		if isHi {
+			// 0b0BBBBBGG
+			val = (rgb.b << 2)
+			val |= ((rgb.g >> 3) & 0b11)
+		} else {
+			// 0bGGGRRRRR
+			val = rgb.r
+			val |= (rgb.g << 5)
+		}
+	}
+	return val
+}
+
 func (s *Software) SetOBPD(val uint8) {
 	if s.model == 1 {
 		palID := int((s.sprite.obpi & 0x3F) / 8)
