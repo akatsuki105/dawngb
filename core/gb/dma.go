@@ -53,6 +53,7 @@ func (d *dmaController) Write(addr uint16, val uint8) {
 		d.length = (uint16(val&0b111_1111) + 1) * 16 // 16~2048バイトまで指定可能
 		d.mode = val >> 7
 		d.completed = (d.mode == GDMA)
+		d.g.runHDMA = nil
 		if wasCompleted && d.mode == GDMA {
 			// Trigger GDMA
 			period := int64(d.length) * 4
@@ -69,8 +70,10 @@ func (d *dmaController) Write(addr uint16, val uint8) {
 			d.g.blocked = true
 			d.g.s.Schedule(&d.g.dma, period)
 		} else {
-			// Trigger HDMA
-			d.g.runHDMA = d.runHDMA
+			if d.mode == HDMA {
+				// Trigger HDMA
+				d.g.runHDMA = d.runHDMA
+			}
 		}
 	}
 }
