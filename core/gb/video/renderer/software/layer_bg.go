@@ -46,21 +46,24 @@ func (l *bgLayer) drawScanline(y int, scanline []pixel) {
 				attr := attrmap[(y/8)*32+(x/8)]
 				palID := int(attr & 0b111)
 				tileBank := uint(util.Btou8(util.Bit(attr, 3)))
+				hflip := util.Bit(attr, 5)
 
 				tiledata := l.r.vram[(8*KB)*tileBank:]
 				tile := tiledata[tileID*16 : (tileID+1)*16] // 2bpp = 16byte
 
-				planes := [2]uint8{tile[(y&0b111)*2], tile[(y&0b111)*2+1]}
+				yy := util.Flip(8, util.Bit(attr, 6), (y & 0b111))
+				planes := [2]uint8{tile[yy*2], tile[yy*2+1]}
 
 				for j := 0; j < 8; j++ {
 					lo := (planes[0] >> (7 - uint(j))) & 0b1
 					hi := (planes[1] >> (7 - uint(j))) & 0b1
 					colorID := int((hi << 1) | lo)
-					if (i + j) < len(scanline) {
-						if z >= scanline[i+j].z {
-							scanline[i+j].rgba = l.palette[(palID*4)+colorID].RGBA()
-							scanline[i+j].z = z
-							scanline[i+j].colorID = colorID
+					x := i + util.Flip(8, hflip, j)
+					if x < len(scanline) {
+						if z >= scanline[x].z {
+							scanline[x].rgba = l.palette[(palID*4)+colorID].RGBA()
+							scanline[x].z = z
+							scanline[x].colorID = colorID
 						}
 					}
 				}
