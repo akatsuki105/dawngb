@@ -33,16 +33,27 @@ func newSpriteLayer(r *Software) *spriteLayer {
 
 func (l *spriteLayer) drawScanline(y int, scanline []pixel) {
 	if l.active {
+		// 1行に描画されるスプライトの数は最大10個
+		sprites := [10]int{}
+		amount := 0
 		for i := 0; i < 40; i++ {
-			spriteIdx := 39 - i
+			spriteIdx := i
 			spriteY := int(l.r.oam[spriteIdx*4+0]) - 16
 			if (spriteY <= y) && (y < spriteY+l.height) {
-				switch l.height {
-				case 8:
-					l.drawObjScanline8(spriteIdx, scanline, y)
-				case 16:
-					l.drawObjScanline16(spriteIdx, scanline, y)
+				if amount < 10 {
+					sprites[amount] = spriteIdx
+					amount++
 				}
+			}
+		}
+
+		for i := amount - 1; i >= 0; i-- {
+			spriteIdx := sprites[i]
+			switch l.height {
+			case 8:
+				l.drawObjScanline8(spriteIdx, scanline, y)
+			case 16:
+				l.drawObjScanline16(spriteIdx, scanline, y)
 			}
 		}
 	}
