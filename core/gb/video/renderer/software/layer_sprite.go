@@ -51,7 +51,7 @@ func (l *spriteLayer) drawScanline(y int, scanline []pixel) {
 func (l *spriteLayer) drawObjScanline8(spriteIdx int, scanline []pixel, y int) {
 	s := l.getSprite(spriteIdx)
 
-	tiledata := l.r.vram[:0x1000]
+	tiledata := l.r.vram[(s.bank * (8 * KB)) : (s.bank*(8*KB))+0x1000]
 	tile := tiledata[s.tileID*16 : (s.tileID+1)*16] // 2bpp = 16byte
 
 	row := util.Flip(8, s.yflip, y-s.y) // (スプライトの一番上を0行目として)上から何行目か
