@@ -54,6 +54,9 @@ func (l *windowLayer) drawScanline(y int, scanline []pixel) {
 							palID := int(attr & 0b111)
 							tileBank := uint(util.Btou8(util.Bit(attr, 3)))
 							hflip := util.Bit(attr, 5)
+							if util.Bit(attr, 7) {
+								z += Z_SPR
+							}
 
 							tiledata := l.r.vram[(8*KB)*tileBank:]
 							tile := tiledata[tileID*16 : (tileID+1)*16] // 2bpp = 16byte

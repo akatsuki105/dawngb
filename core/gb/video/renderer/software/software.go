@@ -11,6 +11,7 @@ const (
 	Z_BD = iota
 	Z_BG
 	Z_SPR
+	Z_MASTER_SPR = 100 // CGBモードでLCDC.0が0のときは必ずスプライトが前面に来る
 )
 
 var dmgPalette = [4]rgb555{
@@ -70,6 +71,14 @@ func (s *Software) DrawScanline(y int, scanline []color.RGBA) {
 
 func (s *Software) SetLCDC(val uint8) {
 	s.bg.active = util.Bit(val, 0)
+	if s.model == 1 {
+		s.bg.active = true
+		if util.Bit(val, 0) {
+			s.sprite.z = 0
+		} else {
+			s.sprite.z = Z_MASTER_SPR
+		}
+	}
 	s.bg.tilemap = [2]uint16{0x1800, 0x1C00}[util.Btoi(util.Bit(val, 3))]
 	s.bg.tiledata = [2]int{0x800, 0x0}[util.Btoi(util.Bit(val, 4))]
 

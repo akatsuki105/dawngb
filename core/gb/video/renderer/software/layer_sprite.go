@@ -11,6 +11,7 @@ type spriteLayer struct {
 	height  int // 8 or 16
 	palette [4 * 8]rgb555
 	obpi    uint8
+	z       int // スプライト全体に履かせる下駄となるz-index(CGBのLCDC.0で決定)
 }
 
 type sprite struct {
@@ -69,9 +70,10 @@ func (l *spriteLayer) drawObjScanline8(spriteIdx int, scanline []pixel, y int) {
 		if colorID != 0 {
 			idx := s.x + util.Flip(8, s.xflip, i)
 			if (0 <= idx) && (idx < 160) {
-				if scanline[idx].z <= s.z || (scanline[idx].colorID == 0) {
+				z := (s.z + l.z)
+				if scanline[idx].z <= z || (scanline[idx].colorID == 0) {
 					scanline[idx].rgba = palette[colorID].RGBA()
-					scanline[idx].z = s.z
+					scanline[idx].z = z
 					scanline[idx].colorID = colorID
 				}
 			}
