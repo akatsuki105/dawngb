@@ -114,19 +114,23 @@ func (g *GB) RunFrame() {
 func (g *GB) run() {
 	prev := g.s.Cycle()
 
-	irqID := g.checkInterrupt()
-	if irqID >= 0 {
-		g.halted = false
-		if g.cpu.IME {
-			g.interrupt[irqID] = false
-			g.cpu.Interrupt(irqID)
+	if g.blocked {
+		g.s.Add(max(g.s.UntilNextEvent(), 1))
+	} else {
+		irqID := g.checkInterrupt()
+		if irqID >= 0 {
+			g.halted = false
+			if g.cpu.IME {
+				g.interrupt[irqID] = false
+				g.cpu.Interrupt(irqID)
+			} else {
+				g.cpu.Step()
+			}
+		} else if g.halted {
+			g.s.Add(max(g.s.UntilNextEvent(), 1))
 		} else {
 			g.cpu.Step()
 		}
-	} else if g.halted || g.blocked {
-		g.s.Add(max(g.s.UntilNextEvent(), 1))
-	} else {
-		g.cpu.Step()
 	}
 
 	g.audio.Add(g.s.Cycle() - prev)
