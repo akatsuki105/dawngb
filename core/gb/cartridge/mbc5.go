@@ -10,7 +10,10 @@ type mbc5 struct {
 }
 
 func newMBC5(c *Cartridge) mbc {
-	return &mbc5{c: c}
+	return &mbc5{
+		c:       c,
+		romBank: 1,
+	}
 }
 
 func (m *mbc5) read(addr uint16) uint8 {
