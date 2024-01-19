@@ -38,7 +38,7 @@ func Run() exitCode {
 
 	w, h := e.Layout(0, 0)
 	ebiten.SetWindowSize(w*2, h*2)
-	ebiten.SetWindowTitle(e.Title())
+	ebiten.SetWindowTitle("DuGB")
 	ebiten.SetWindowResizingMode(ebiten.WindowResizingModeEnabled)
 
 	defer func() {

@@ -73,7 +73,7 @@ func createEmu(isDebugMode bool) *Emu {
 	return e
 }
 
-func (e *Emu) Title() string {
+func (e *Emu) title() string {
 	if !e.active {
 		return "DuGB"
 	}
@@ -114,6 +114,9 @@ func (e *Emu) LoadROMFromPath(path string) error {
 func (e *Emu) LoadROM(data []byte) error {
 	err := e.c.LoadROM(data)
 	e.active = err == nil
+	if e.active {
+		ebiten.SetWindowTitle(e.title())
+	}
 	return err
 }
 
