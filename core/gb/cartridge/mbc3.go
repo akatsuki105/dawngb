@@ -1,5 +1,7 @@
 package cartridge
 
+import . "github.com/akatsuki105/dugb/util/datasize"
+
 type rtc struct {
 	latch uint8
 }
@@ -10,10 +12,22 @@ type mbc3 struct {
 	romBank    uint
 	ramBank    uint
 	rtc        rtc
+	ramBankMax uint
 }
 
 func newMBC3(c *Cartridge) mbc {
-	return &mbc3{c: c}
+	m := &mbc3{
+		c:          c,
+		ramBankMax: 4,
+	}
+	if m.isMBC30() {
+		m.ramBankMax = 8
+	}
+	return m
+}
+
+func (m *mbc3) isMBC30() bool {
+	return len(m.c.ram) == int(64*KB)
 }
 
 func (m *mbc3) read(addr uint16) uint8 {
@@ -24,7 +38,7 @@ func (m *mbc3) read(addr uint16) uint8 {
 		return m.c.rom[(m.romBank<<14)|uint(addr&0x3FFF)]
 	case 0xA, 0xB:
 		if m.ramEnabled {
-			if m.ramBank <= 0x03 {
+			if m.ramBank < m.ramBankMax {
 				return m.c.ram[(m.ramBank<<13)|uint(addr&0x1FFF)]
 			}
 
@@ -54,7 +68,7 @@ func (m *mbc3) write(addr uint16, val uint8) {
 		}
 	case 0xA, 0xB:
 		if m.ramEnabled {
-			if m.ramBank <= 0x03 {
+			if m.ramBank < m.ramBankMax {
 				m.c.ram[(m.ramBank<<13)|uint(addr&0x1FFF)] = val
 			}
 		}
