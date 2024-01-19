@@ -76,9 +76,11 @@ func (ch *square) clockTimer() {
 
 func (ch *square) getOutput() int {
 	if !ch.ignored {
-		dutyTable := (squareDutyTable[ch.duty])[:]
-		if dutyTable[ch.dutyCounter] != 0 {
-			return ch.envelope.volume
+		if ch.enabled {
+			dutyTable := (squareDutyTable[ch.duty])[:]
+			if dutyTable[ch.dutyCounter] != 0 {
+				return ch.envelope.volume
+			}
 		}
 	}
 	return 0
