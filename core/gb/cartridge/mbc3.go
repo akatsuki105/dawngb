@@ -37,8 +37,10 @@ func newMBC3(c *Cartridge) mbc {
 	return m
 }
 
+// ポケモンクリスタルなどは、MBC30と呼ばれる特殊なMBC3を使っている
+// これを見分ける方法は今のところ、カートリッジヘッダのROMサイズとRAMサイズを見るしかない
 func (m *mbc3) isMBC30() bool {
-	return len(m.c.ram) == int(64*KB)
+	return (len(m.c.rom) > int(2*MB)) || (len(m.c.ram) > int(32*KB))
 }
 
 func (m *mbc3) read(addr uint16) uint8 {
