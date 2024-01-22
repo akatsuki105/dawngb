@@ -41,6 +41,7 @@ type GB struct {
 	inputs    [8]bool // A, B, Select, Start, Right, Left, Up, Down
 	dmac      peripheral
 	runHDMA   func()
+	serial    sched.Event
 }
 
 func New(audioBuffer io.Writer) *GB {
@@ -56,6 +57,7 @@ func New(audioBuffer io.Writer) *GB {
 	g.audio = audio.New(audioBuffer)
 	g.input = newInput(g)
 	g.dmac = newDMAController(g)
+	g.serial = *sched.NewEvent("GB_SERIAL", g.dummyTransfer)
 	return g
 }
 
@@ -211,4 +213,11 @@ func (g *GB) stop() {
 		}
 		g.key1 = false
 	}
+}
+
+func (g *GB) dummyTransfer(cyclesLate int64) {
+	// ポケモンクリスタルの起動にシリアル通信機能が必要なので暫定措置
+	g.sc &= 0x7F
+	g.sb = 0xFF
+	g.requestInterrupt(3)
 }
