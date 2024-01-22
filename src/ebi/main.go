@@ -20,9 +20,8 @@ const (
 )
 
 var (
-	turbo       = flag.Int("t", 1, "Emulator speed xN")
-	sound       = flag.Bool("s", false, "Enable sound")
-	isDebugMode = flag.Bool("d", false, "Enable debug mode")
+	turbo = flag.Int("t", 1, "Emulator speed xN")
+	sound = flag.Bool("s", false, "Enable sound")
 )
 
 func main() {
@@ -32,7 +31,7 @@ func main() {
 func Run() exitCode {
 	flag.Parse()
 
-	e := createEmu(*isDebugMode)
+	e := createEmu()
 
 	if flag.NArg() > 0 {
 		e.LoadROMFromPath(flag.Arg(0))

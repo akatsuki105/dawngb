@@ -56,16 +56,14 @@ type Emu struct {
 	context      *oto.Context
 	music        *oto.Player
 
-	isDebugMode bool
-	turbo       int
-	taskQueue   []func() // Run at the start of the frame, so safe to access the core
+	turbo     int
+	taskQueue []func() // Run at the start of the frame, so safe to access the core
 }
 
-func createEmu(isDebugMode bool) *Emu {
+func createEmu() *Emu {
 	e := &Emu{
 		samples:      make([]byte, 4096),
 		sampleBuffer: bytes.NewBuffer(make([]byte, 0)),
-		isDebugMode:  isDebugMode,
 		turbo:        1,
 		taskQueue:    make([]func(), 0, 10),
 	}
@@ -174,26 +172,19 @@ func (e *Emu) Update() error {
 
 func (e *Emu) Draw(screen *ebiten.Image) {
 	if e.active {
-		if e.isDebugMode {
-			screen.DrawImage(ebiten.NewImageFromImage(e.c.DebugVRAM()), nil)
-		} else {
-			data := e.c.Screen()
-			w, h := e.c.Resolution()
-			img := image.NewRGBA(image.Rect(0, 0, w, h))
-			for y := 0; y < h; y++ {
-				for x := 0; x < w; x++ {
-					img.Set(x, y, data[y*w+x])
-				}
+		data := e.c.Screen()
+		w, h := e.c.Resolution()
+		img := image.NewRGBA(image.Rect(0, 0, w, h))
+		for y := 0; y < h; y++ {
+			for x := 0; x < w; x++ {
+				img.Set(x, y, data[y*w+x])
 			}
-			screen.DrawImage(ebiten.NewImageFromImage(img), nil)
 		}
+		screen.DrawImage(ebiten.NewImageFromImage(img), nil)
 	}
 }
 
 func (e *Emu) Layout(outsideWidth, outsideHeight int) (screenWidth, screenHeight int) {
-	if e.isDebugMode {
-		return 256, 256
-	}
 	return e.c.Resolution()
 }
 
