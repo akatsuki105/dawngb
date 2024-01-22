@@ -8,6 +8,8 @@ import (
 	"github.com/hajimehoshi/ebiten/v2"
 )
 
+const EXPAND = 2.
+
 // ExitCode represents program's status code
 type exitCode int
 
@@ -37,7 +39,7 @@ func Run() exitCode {
 	}
 
 	w, h := e.Layout(0, 0)
-	ebiten.SetWindowSize(w*2, h*2)
+	ebiten.SetWindowSize(int(float64(w)*EXPAND), int(float64(h)*EXPAND))
 	ebiten.SetWindowTitle("DuGB")
 	ebiten.SetWindowResizingMode(ebiten.WindowResizingModeEnabled)
 
