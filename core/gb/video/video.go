@@ -23,7 +23,6 @@ type Video struct {
 	FrameCounter    uint64
 	ly              int
 	r               renderer.Renderer
-	renderingCycle  int64
 	ram             VRAM
 	lcdc, stat, lyc uint8
 	onInterrupt     func(id int)
@@ -31,6 +30,7 @@ type Video struct {
 	oam             [160]uint8
 	ioreg           [0x30]uint8
 	enableLatch     bool // LCDC.7をセットしてPPUを有効にすると、次のフレームから表示が開始される そうじゃないとゴミが表示される
+	objCount        int
 }
 
 func New(onInterrupt func(id int), onHBlank func()) *Video {
@@ -48,6 +48,7 @@ func (v *Video) Reset(model int, hasBIOS bool) {
 	v.ly, v.dot = 0, 0
 	v.stat = 0x80
 	v.ram.bank = 0
+	v.objCount = 0
 	if !hasBIOS {
 		v.skipBIOS()
 	}
@@ -77,7 +78,7 @@ func (v *Video) CatchUp() {
 					v.scanOAM()
 				case 80:
 					v.drawing()
-				case 252:
+				case 252 + (v.objCount * 6):
 					v.hblank()
 				}
 			}
@@ -93,6 +94,7 @@ func (v *Video) CatchUp() {
 }
 
 func (v *Video) incrementLY() {
+	v.objCount = 0
 	v.ly++
 	switch v.ly {
 	case 144:

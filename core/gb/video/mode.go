@@ -42,5 +42,18 @@ func (v *Video) scanOAM() {
 // Mode 3
 func (v *Video) drawing() {
 	v.stat = (v.stat & 0xFC) | 3
-	v.renderingCycle = 0
+
+	// Count scanline objects
+	h := 8
+	if util.Bit(v.lcdc, 2) {
+		h = 16
+	}
+	o := 0
+	for i := 0; i < 40; i++ {
+		y := int(v.oam[i*4]) - 16
+		if y <= v.ly && v.ly < y+h {
+			o++
+		}
+	}
+	v.objCount = o
 }
