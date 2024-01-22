@@ -43,14 +43,16 @@ func (l *windowLayer) drawScanline(y int, scanline []pixel) {
 						if x&0b111 == 0 {
 							z := Z_BG
 
+							tileOffset := ((y/8)*32 + (x / 8)) % 1024
+
 							var tileID int
 							if l.r.bg.tiledata == 0x0 {
-								tileID = int(tilemap[(y/8)*32+(x/8)])
+								tileID = int(tilemap[tileOffset])
 							} else {
-								tileID = int(int8(tilemap[(y/8)*32+(x/8)])) + 256
+								tileID = int(int8(tilemap[tileOffset])) + 256
 							}
 
-							attr := attrmap[(y/8)*32+(x/8)]
+							attr := attrmap[tileOffset]
 							palID := int(attr & 0b111)
 							tileBank := uint(util.Btou8(util.Bit(attr, 3)))
 							hflip := util.Bit(attr, 5)
