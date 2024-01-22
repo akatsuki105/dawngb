@@ -13,7 +13,7 @@ const CYCLE = 2
 
 type VRAM struct {
 	data [16 * KB]uint8
-	bank int
+	bank uint
 }
 
 type Video struct {

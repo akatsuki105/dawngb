@@ -2,7 +2,6 @@ package video
 
 import (
 	"github.com/akatsuki105/dugb/util"
-	. "github.com/akatsuki105/dugb/util/datasize"
 )
 
 func (v *Video) Read(addr uint16) uint8 {
@@ -12,9 +11,7 @@ func (v *Video) Read(addr uint16) uint8 {
 
 	switch addr >> 12 {
 	case 0x8, 0x9:
-		bank := uint(v.ram.bank) * (8 * KB)
-		vram := v.ram.data[bank : bank+(8*KB)]
-		return vram[addr&0x1FFF]
+		return v.ram.data[(v.ram.bank<<13)|uint(addr&0x1FFF)]
 	}
 
 	v.CatchUp()
@@ -57,9 +54,7 @@ func (v *Video) Write(addr uint16, val uint8) {
 
 	switch addr >> 12 {
 	case 0x8, 0x9:
-		bank := uint(v.ram.bank) * (8 * KB)
-		vram := v.ram.data[bank : bank+(8*KB)]
-		vram[addr&0x1FFF] = val
+		v.ram.data[(v.ram.bank<<13)|uint(addr&0x1FFF)] = val
 		return
 	}
 
@@ -104,7 +99,7 @@ func (v *Video) Write(addr uint16, val uint8) {
 	case 0xFF4B:
 		v.r.SetWX(val)
 	case 0xFF4F:
-		v.ram.bank = int(val & 0b1)
+		v.ram.bank = uint(val & 0b1)
 	case 0xFF68:
 		v.r.SetBGPI(val)
 	case 0xFF69:
