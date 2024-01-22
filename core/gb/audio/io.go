@@ -114,6 +114,31 @@ func (a *audio) Write(addr uint16, val uint8) {
 			a.ch3.window = 0
 		}
 
+	case 0xFF20:
+		a.ch4.length = 64 - int(val&0b11_1111)
+	case 0xFF21:
+		a.ch4.envelope.initialVolume = int(val>>4) & 0b1111
+		a.ch4.envelope.direction = util.Bit(val, 3)
+		a.ch4.envelope.speed = int(val & 0b111)
+	case 0xFF22:
+		a.ch4.octave = int(val >> 4) // ノイズ周波数2(オクターブ指定)
+		a.ch4.divisor = int(val & 0b111)
+		a.ch4.period = a.ch4.calcFreqency()
+		a.ch4.width = 15
+		if util.Bit(val, 3) {
+			a.ch4.width = 7
+		}
+	case 0xFF23:
+		a.ch4.stop = util.Bit(val, 6)
+		if util.Bit(val, 7) {
+			a.ch4.enabled = true
+			a.ch4.envelope.reset()
+			if a.ch4.length == 0 {
+				a.ch4.length = 64
+			}
+			a.ch4.lfsr = 0x7FFF >> (15 - a.ch4.width)
+		}
+
 	case 0xFF25:
 		a.ch1.ignored = !util.Bit(val, 0)
 		a.ch2.ignored = !util.Bit(val, 1)

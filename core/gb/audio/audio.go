@@ -90,6 +90,7 @@ func (a *audio) CatchUp() {
 					a.ch1.clock256Hz()
 					a.ch2.clock256Hz()
 					a.ch3.clock256Hz()
+					a.ch4.clock256Hz()
 				}
 				if is128Hz {
 					a.ch1.clock128Hz()
@@ -97,6 +98,7 @@ func (a *audio) CatchUp() {
 				if is64Hz {
 					a.ch1.clock64Hz()
 					a.ch2.clock64Hz()
+					a.ch4.clock64Hz()
 				}
 
 				a.sequencerStep = (a.sequencerStep + 1) % 8
@@ -106,6 +108,7 @@ func (a *audio) CatchUp() {
 			a.ch1.clockTimer()
 			a.ch2.clockTimer()
 			a.ch3.clockTimer()
+			a.ch4.clockTimer()
 
 			// サンプルを生成
 			if a.sampleTimer <= 0 {
