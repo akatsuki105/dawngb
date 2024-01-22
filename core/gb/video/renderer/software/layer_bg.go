@@ -33,6 +33,13 @@ func (l *bgLayer) drawScanline(y int, scanline []pixel) {
 		for i := 0; i < 160; i++ {
 			x := (i + l.scx) % 256
 
+			end := 8 - (x & 0b111)
+
+			// 左端
+			if i == 0 && (x&0b111 != 0) {
+				x = (x - (x & 0b111)) % 256
+			}
+
 			// 8pxずつ描画
 			if x&0b111 == 0 {
 				z := Z_BG
@@ -59,9 +66,9 @@ func (l *bgLayer) drawScanline(y int, scanline []pixel) {
 				yy := util.Flip(8, util.Bit(attr, 6), (y & 0b111))
 				planes := [2]uint8{tile[yy*2], tile[yy*2+1]}
 
-				for j := 0; j < 8; j++ {
-					lo := (planes[0] >> (7 - uint(j))) & 0b1
-					hi := (planes[1] >> (7 - uint(j))) & 0b1
+				for j := 0; j < end; j++ {
+					lo := (planes[0] >> ((end - 1) - j)) & 0b1
+					hi := (planes[1] >> ((end - 1) - j)) & 0b1
 					colorID := int((hi << 1) | lo)
 					x := i + util.Flip(8, hflip, j)
 					if x < len(scanline) {
