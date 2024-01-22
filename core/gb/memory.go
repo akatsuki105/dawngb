@@ -125,6 +125,11 @@ func (m *Memory) Write(addr uint16, val byte) {
 			m.gb.sb = val
 		case 0xFF02:
 			m.gb.sc = val
+			// ポケモンクリスタルの起動にシリアル通信機能が必要なので暫定措置
+			{
+				m.gb.sc &= 0x7F
+				m.gb.requestInterrupt(3)
+			}
 		case 0xFF04, 0xFF05, 0xFF06, 0xFF07:
 			m.gb.timer.Write(addr, val)
 		case 0xFF0F:
