@@ -4,14 +4,17 @@ import . "github.com/akatsuki105/dugb/util/datasize"
 
 type mbc5 struct {
 	c          *Cartridge
+	hasRam     bool
 	ramEnabled bool
 	romBank    uint
-	ramBank    uint8
+	ramBank    uint
 }
 
 func newMBC5(c *Cartridge) mbc {
+	hasRam := c.rom[0x147] != 0x19 && c.rom[0x147] != 0x1C
 	return &mbc5{
 		c:       c,
+		hasRam:  hasRam,
 		romBank: 1,
 	}
 }
@@ -23,7 +26,7 @@ func (m *mbc5) read(addr uint16) uint8 {
 	case 0x4, 0x5, 0x6, 0x7:
 		return m.c.rom[(uint32(m.romBank)<<14)|(uint32(addr&0x3FFF))]
 	case 0xA, 0xB:
-		if m.ramEnabled {
+		if m.hasRam && m.ramEnabled {
 			bank := m.c.ram[(8*KB)*uint(m.ramBank):]
 			return bank[addr&0x1FFF]
 		}
@@ -46,11 +49,10 @@ func (m *mbc5) write(addr uint16, val uint8) {
 		m.romBank &= 0xFF
 		m.romBank |= uint(val&0b1) << 8
 	case 0x4, 0x5:
-		m.ramBank = val & 0b1111
+		m.ramBank = uint(val & 0b1111)
 	case 0xA, 0xB:
-		if m.ramEnabled {
-			bank := m.c.ram[(8*KB)*uint(m.ramBank):]
-			bank[addr&0x1FFF] = val
+		if m.hasRam && m.ramEnabled {
+			m.c.ram[(m.ramBank<<13)|uint(addr&0x1FFF)] = val
 		}
 	}
 }

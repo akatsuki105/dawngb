@@ -61,7 +61,7 @@ func createMBC(c *Cartridge) mbc {
 		return newMBC1(c)
 	case 16, 19:
 		return newMBC3(c)
-	case 27:
+	case 25, 27:
 		return newMBC5(c)
 	default:
 		panic(fmt.Sprintf("unsupported mbc type: 0x%02X", mbcType))
