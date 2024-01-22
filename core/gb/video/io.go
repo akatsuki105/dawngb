@@ -11,6 +11,9 @@ func (v *Video) Read(addr uint16) uint8 {
 
 	switch addr >> 12 {
 	case 0x8, 0x9:
+		if !v.canAccessVRAM() {
+			return 0xFF
+		}
 		return v.ram.data[(v.ram.bank<<13)|uint(addr&0x1FFF)]
 	}
 
@@ -112,4 +115,17 @@ func (v *Video) Write(addr uint16, val uint8) {
 	if addr >= 0xFF40 && addr < 0xFF70 {
 		v.ioreg[addr-0xFF40] = val
 	}
+}
+
+func (v *Video) canAccessVRAM() bool {
+	if util.Bit(v.lcdc, 7) {
+		mode := v.stat & 0b11
+		switch mode {
+		case 2:
+			return ((v.dot >> 2) != 20)
+		case 3:
+			return false
+		}
+	}
+	return true
 }
