@@ -37,12 +37,10 @@ func (ch *noise) clock64Hz() {
 }
 
 func (ch *noise) clock256Hz() {
-	if ch.enabled {
-		if ch.stop && ch.length > 0 {
-			ch.length--
-			if ch.length <= 0 {
-				ch.enabled = false
-			}
+	if ch.stop && ch.length > 0 {
+		ch.length--
+		if ch.length <= 0 {
+			ch.enabled = false
 		}
 	}
 }
@@ -50,19 +48,21 @@ func (ch *noise) clock256Hz() {
 func (ch *noise) clockTimer() {
 	// ch.enabledに関わらず、乱数は生成される
 	result := 0
-	if ch.enabled {
-		ch.period--
-		if ch.period <= 0 {
-			ch.period = ch.calcFreqency()
-			if ch.octave < 14 {
-				mask := ((ch.lfsr ^ (ch.lfsr >> 1)) & 1)
-				ch.lfsr = ((ch.lfsr >> 1) ^ (mask << (ch.width - 1))) & 0x7FFF
-			}
+	ch.period--
+	if ch.period <= 0 {
+		ch.period = ch.calcFreqency()
+		if ch.octave < 14 {
+			mask := ((ch.lfsr ^ (ch.lfsr >> 1)) & 1)
+			ch.lfsr = ((ch.lfsr >> 1) ^ (mask << (ch.width - 1))) & 0x7FFF
 		}
+	}
 
-		if (ch.lfsr & 1) == 0 {
-			result = ch.envelope.volume
-		}
+	if (ch.lfsr & 1) == 0 {
+		result = ch.envelope.volume
+	}
+
+	if !ch.enabled {
+		result = 0
 	}
 
 	ch.output = result
@@ -96,5 +96,5 @@ func (ch *noise) tryRestart() {
 }
 
 func (ch *noise) dacEnable() bool {
-	return ((ch.envelope.volume != 0) || ch.envelope.direction)
+	return ((ch.envelope.initialVolume != 0) || ch.envelope.direction)
 }

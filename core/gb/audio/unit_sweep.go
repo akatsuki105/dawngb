@@ -21,6 +21,7 @@ func newSweep(ch *square) *sweep {
 
 func (s *sweep) reset() {
 	s.step = s.speed
+	s.up = true
 	s.enabled = (s.speed != 8 || s.shift != 0)
 }
 

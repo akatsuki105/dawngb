@@ -88,11 +88,12 @@ func (ch *square) dutyStepCycle() int {
 }
 
 func (ch *square) dacEnable() bool {
-	return ((ch.envelope.volume != 0) || ch.envelope.direction)
+	return ((ch.envelope.initialVolume != 0) || ch.envelope.direction)
 }
 
 func (ch *square) tryRestart() {
 	ch.enabled = ch.dacEnable()
+	ch.freqCounter = 4 * (2048 - ch.period)
 	ch.envelope.reset()
 	if ch.sweep != nil {
 		ch.sweep.reset()
