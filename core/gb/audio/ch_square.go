@@ -45,32 +45,26 @@ func (ch *square) clock64Hz() {
 }
 
 func (ch *square) clock128Hz() {
-	if ch.enabled {
-		if ch.sweep != nil {
-			ch.enabled = ch.sweep.update()
-		}
+	if ch.sweep != nil {
+		ch.enabled = ch.sweep.update()
 	}
 }
 
 func (ch *square) clock256Hz() {
-	if ch.enabled {
-		if ch.stop && ch.length > 0 {
-			ch.length--
-			if ch.length <= 0 {
-				ch.enabled = false
-			}
+	if ch.stop && ch.length > 0 {
+		ch.length--
+		if ch.length <= 0 {
+			ch.enabled = false
 		}
 	}
 }
 
 func (ch *square) clockTimer() {
-	if ch.enabled {
-		if ch.freqCounter > 0 {
-			ch.freqCounter--
-		} else {
-			ch.freqCounter = ch.dutyStepCycle()
-			ch.dutyCounter = (ch.dutyCounter + 1) % 8
-		}
+	if ch.freqCounter > 0 {
+		ch.freqCounter--
+	} else {
+		ch.freqCounter = ch.dutyStepCycle()
+		ch.dutyCounter = (ch.dutyCounter + 1) % 8
 	}
 }
 
@@ -91,4 +85,19 @@ func (ch *square) dutyStepCycle() int {
 	// hz := (1048576 / (2048 - ch.period)) // freqency
 	// return 4194304 / hz
 	return 4 * (2048 - ch.period)
+}
+
+func (ch *square) dacEnable() bool {
+	return ((ch.envelope.volume != 0) || ch.envelope.direction)
+}
+
+func (ch *square) tryRestart() {
+	ch.enabled = ch.dacEnable()
+	ch.envelope.reset()
+	if ch.sweep != nil {
+		ch.sweep.reset()
+	}
+	if ch.length == 0 {
+		ch.length = 64
+	}
 }

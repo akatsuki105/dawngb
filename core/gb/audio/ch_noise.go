@@ -85,3 +85,16 @@ func (ch *noise) getOutput() int {
 	}
 	return 0
 }
+
+func (ch *noise) tryRestart() {
+	ch.enabled = ch.dacEnable()
+	ch.envelope.reset()
+	if ch.length == 0 {
+		ch.length = 64
+	}
+	ch.lfsr = 0x7FFF >> (15 - ch.width)
+}
+
+func (ch *noise) dacEnable() bool {
+	return ((ch.envelope.volume != 0) || ch.envelope.direction)
+}

@@ -4,6 +4,8 @@ import (
 	"github.com/akatsuki105/dugb/util"
 )
 
+// NOTE: "ゼルダの伝説 ふしぎの木の実" はAPUのNR52を正しく実装しないとタイトル画面から進めない
+
 func (a *audio) Read(addr uint16) uint8 {
 	a.CatchUp()
 	if addr == 0xFF26 {
@@ -48,6 +50,9 @@ func (a *audio) Write(addr uint16, val uint8) {
 		a.ch1.envelope.initialVolume = int(val>>4) & 0b1111
 		a.ch1.envelope.direction = util.Bit(val, 3)
 		a.ch1.envelope.speed = int(val & 0b111)
+		if !a.ch1.dacEnable() {
+			a.ch1.enabled = false
+		}
 
 	case 0xFF13:
 		a.ch1.period = (a.ch1.period & 0xFF00) | int(val)
@@ -58,12 +63,7 @@ func (a *audio) Write(addr uint16, val uint8) {
 		a.ch1.freqCounter = a.ch1.dutyStepCycle()
 		a.ch1.stop = util.Bit(val, 6)
 		if util.Bit(val, 7) {
-			a.ch1.enabled = true
-			a.ch1.envelope.reset()
-			a.ch1.sweep.reset()
-			if a.ch1.length == 0 {
-				a.ch1.length = 64
-			}
+			a.ch1.tryRestart()
 		}
 
 	case 0xFF16:
@@ -74,6 +74,9 @@ func (a *audio) Write(addr uint16, val uint8) {
 		a.ch2.envelope.initialVolume = int(val>>4) & 0b1111
 		a.ch2.envelope.direction = util.Bit(val, 3)
 		a.ch2.envelope.speed = int(val & 0b111)
+		if !a.ch2.dacEnable() {
+			a.ch2.enabled = false
+		}
 
 	case 0xFF18:
 		a.ch2.period = (a.ch2.period & 0xFF00) | int(val)
@@ -84,15 +87,14 @@ func (a *audio) Write(addr uint16, val uint8) {
 		a.ch2.freqCounter = a.ch2.dutyStepCycle()
 		a.ch2.stop = util.Bit(val, 6)
 		if util.Bit(val, 7) {
-			a.ch2.enabled = true
-			a.ch2.envelope.reset()
-			if a.ch2.length == 0 {
-				a.ch2.length = 64
-			}
+			a.ch2.tryRestart()
 		}
 
 	case 0xFF1A:
-		a.ch3.active = util.Bit(val, 7)
+		a.ch3.dacEnable = util.Bit(val, 7)
+		if !a.ch3.dacEnable {
+			a.ch3.enabled = false
+		}
 	case 0xFF1B:
 		a.ch3.length = 256 - int(val)
 	case 0xFF1C:
@@ -107,7 +109,7 @@ func (a *audio) Write(addr uint16, val uint8) {
 		a.ch3.period |= int(val&0b111) << 8
 		a.ch3.freqCounter = a.ch3.windowStepCycle()
 		if util.Bit(val, 7) {
-			a.ch3.enabled = a.ch3.active
+			a.ch3.enabled = a.ch3.dacEnable
 			if a.ch3.length == 0 {
 				a.ch3.length = 256
 			}
@@ -120,6 +122,9 @@ func (a *audio) Write(addr uint16, val uint8) {
 		a.ch4.envelope.initialVolume = int(val>>4) & 0b1111
 		a.ch4.envelope.direction = util.Bit(val, 3)
 		a.ch4.envelope.speed = int(val & 0b111)
+		if !a.ch4.dacEnable() {
+			a.ch4.enabled = false
+		}
 	case 0xFF22:
 		a.ch4.octave = int(val >> 4) // ノイズ周波数2(オクターブ指定)
 		a.ch4.divisor = int(val & 0b111)
@@ -131,12 +136,7 @@ func (a *audio) Write(addr uint16, val uint8) {
 	case 0xFF23:
 		a.ch4.stop = util.Bit(val, 6)
 		if util.Bit(val, 7) {
-			a.ch4.enabled = true
-			a.ch4.envelope.reset()
-			if a.ch4.length == 0 {
-				a.ch4.length = 64
-			}
-			a.ch4.lfsr = 0x7FFF >> (15 - a.ch4.width)
+			a.ch4.tryRestart()
 		}
 
 	case 0xFF25:
