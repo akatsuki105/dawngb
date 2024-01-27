@@ -110,7 +110,7 @@ func (v *Video) Write(addr uint16, val uint8) {
 	case 0xFF6A:
 		v.r.SetOBPI(val)
 	case 0xFF6B:
-		v.r.SetOBPD(val)
+		v.ioreg[0x2A] = v.r.SetOBPD(val)
 	}
 	if addr >= 0xFF40 && addr < 0xFF70 {
 		v.ioreg[addr-0xFF40] = val

@@ -195,7 +195,7 @@ func (s *Software) GetOBPD() uint8 {
 	return val
 }
 
-func (s *Software) SetOBPD(val uint8) {
+func (s *Software) SetOBPD(val uint8) uint8 {
 	if s.model == 1 {
 		palID := int((s.sprite.obpi & 0x3F) / 8)
 		colorID := int(s.sprite.obpi&7) >> 1
@@ -219,6 +219,7 @@ func (s *Software) SetOBPD(val uint8) {
 			s.sprite.obpi |= obpi
 		}
 	}
+	return s.sprite.obpi
 }
 
 func (s *Software) Debug() image.Image {

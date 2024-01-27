@@ -24,7 +24,7 @@ type Renderer interface {
 	SetBGPD(val uint8) uint8
 	SetOBPI(val uint8)
 	GetOBPD() uint8
-	SetOBPD(val uint8)
+	SetOBPD(val uint8) uint8
 
 	Debug() image.Image
 }
