@@ -50,6 +50,8 @@ func (v *Video) Read(addr uint16) uint8 {
 }
 
 func (v *Video) Write(addr uint16, val uint8) {
+	v.CatchUp() // OAMやVRAMへの変更前に今の内容で描画をしておいてもらう
+
 	if addr >= 0xFE00 && addr <= 0xFE9F {
 		v.oam[addr&0xFF] = val
 		return
@@ -60,8 +62,6 @@ func (v *Video) Write(addr uint16, val uint8) {
 		v.ram.data[(v.ram.bank<<13)|uint(addr&0x1FFF)] = val
 		return
 	}
-
-	v.CatchUp()
 
 	switch addr {
 	case 0xFF40:
