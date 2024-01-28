@@ -9,9 +9,13 @@
   <body>
     <script>
       window.addEventListener("message", (event) => {
-        console.log(event);
+        if (event.origin === "http://localhost:5173") {
+          event.source.postMessage(globalThis, event.origin)
+        } else {
+          console.log("Unknown origin: " + event.origin);
+        }
       })
-      
+
       (async () => {
         const resp = await fetch("dugb.wasm");
         const go = new Go();
