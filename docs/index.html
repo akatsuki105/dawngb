@@ -8,6 +8,10 @@
 
   <body>
     <script>
+      window.addEventListener("message", (event) => {
+        console.log(event);
+      })
+      
       (async () => {
         const resp = await fetch("dugb.wasm");
         const go = new Go();
