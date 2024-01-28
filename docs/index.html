@@ -12,7 +12,7 @@
         if (event.origin === "http://localhost:5173") {
           event.source.postMessage(globalThis, event.origin)
         } else {
-          console.log("Unknown origin: " + event.origin);
+          event.source.postMessage(`Unknown origin: ${event.origin}`, event.origin)
         }
       })
 
