@@ -8,14 +8,6 @@
 
   <body>
     <script>
-      window.addEventListener("message", (event) => {
-        if (event.origin === "http://localhost:5173" || event.origin === "https://akatsuki105.github.io") {
-          event.source.postMessage(globalThis, event.origin)
-        } else {
-          event.source.postMessage(`Unknown origin: ${event.origin}`, event.origin)
-        }
-      })
-
       (async () => {
         const resp = await fetch("dugb.wasm");
         const go = new Go();
