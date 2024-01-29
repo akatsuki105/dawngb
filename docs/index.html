@@ -17,6 +17,7 @@
 
         window.addEventListener('message', (e) => {
           if (e.origin.includes('localhost')) {
+            console.log(globalThis.press, e.data);
             globalThis.press(e.data);
           }
         })
