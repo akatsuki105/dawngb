@@ -16,7 +16,9 @@
         go.run(result.instance);
 
         window.addEventListener('message', (e) => {
-          console.log(e.data, e.origin, e.source);
+          if (e.origin.includes('localhost')) {
+            dispatchEvent(new KeyboardEvent('keydown', { key: e.data }));
+          }
         })
       })();
     </script>
