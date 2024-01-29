@@ -3,9 +3,10 @@ package main
 import "syscall/js"
 
 func init() {
-	js.Global().Set("increment", js.FuncOf(increment))
+	js.Global().Set("press", js.FuncOf(press))
 }
 
-func increment(this js.Value, args []js.Value) any {
-	return map[string]any{"message": 1}
+func press(this js.Value, args []js.Value) any {
+	inputMap[args[0].String()] = true
+	return nil
 }
