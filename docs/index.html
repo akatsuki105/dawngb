@@ -18,7 +18,8 @@
         window.addEventListener('message', (e) => {
           console.log(e);
           if (e.origin.includes('localhost')) {
-            e.currentTarget.dispatchEvent(new KeyboardEvent('keydown', { key: e.data }));
+            window.focus();
+            window.dispatchEvent(new KeyboardEvent('keydown', { key: e.data }));
           }
         })
       })();
