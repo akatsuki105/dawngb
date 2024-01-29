@@ -45,6 +45,17 @@ var inputMap = map[string]bool{
 	"RIGHT":  false,
 }
 
+var inputMapWeb = map[string]bool{
+	"A":      false,
+	"B":      false,
+	"START":  false,
+	"SELECT": false,
+	"UP":     false,
+	"DOWN":   false,
+	"LEFT":   false,
+	"RIGHT":  false,
+}
+
 type Emu struct {
 	c      core.Core
 	active bool
@@ -195,6 +206,7 @@ func (e *Emu) pollInput() {
 
 	e.pollKeyInput()
 	e.pollGamepadInput()
+	e.pollBrowserInput()
 
 	for key, input := range inputMap {
 		e.c.SetKeyInput(key, input)
@@ -236,6 +248,18 @@ func (e *Emu) pollGamepadInput() {
 		case -1:
 			inputMap["UP"] = true
 		}
+	}
+}
+
+func (e *Emu) pollBrowserInput() {
+	for key, val := range inputMapWeb {
+		if val {
+			inputMap[key] = true
+		}
+	}
+
+	for key := range inputMapWeb {
+		inputMapWeb[key] = false
 	}
 }
 
