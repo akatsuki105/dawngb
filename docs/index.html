@@ -17,7 +17,7 @@
 
         window.addEventListener('message', (e) => {
           if (e.origin.includes('localhost') || e.origin.includes('dugb') || e.origin.includes('akatsuki105')) {
-            globalThis.press(e.data);
+            globalThis.press(e.data[0], e.data[1]);
           }
         })
       })();
