@@ -27,15 +27,17 @@ type Cpu struct {
 
 func New(s *sched.Sched, m Memory, halt, stop func()) *Cpu {
 	return &Cpu{
-		s:     s,
-		m:     m,
-		halt:  halt,
-		stop:  stop,
-		Cycle: 8,
+		s:    s,
+		m:    m,
+		halt: halt,
+		stop: stop,
 	}
 }
 
 func (c *Cpu) Reset(hasBIOS bool) {
+	c.r = Registers{}
+	c.IME = false
+	c.Cycle = 8
 	if !hasBIOS {
 		c.skipBIOS()
 	}

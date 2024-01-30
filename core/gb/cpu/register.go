@@ -22,11 +22,6 @@ type Registers struct {
 	sp, pc     uint16
 }
 
-func NewRegisters() *Registers {
-	r := &Registers{}
-	return r
-}
-
 // ZNHC----
 type psr struct {
 	z, n, h, c bool
