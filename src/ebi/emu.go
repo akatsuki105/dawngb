@@ -6,6 +6,7 @@ import (
 	"image"
 	"io/fs"
 	"os"
+	"path/filepath"
 
 	"github.com/akatsuki105/dugb/core"
 	"github.com/hajimehoshi/ebiten/v2"
@@ -155,29 +156,13 @@ func (e *Emu) Update() error {
 				e.music.Write(e.samples[:n])
 			}
 		}
-	} else {
-		file := ebiten.DroppedFiles()
-		if file != nil {
-			entries, err := fs.ReadDir(file, ".")
-			if err != nil {
-				return err
-			}
-			for _, entry := range entries {
-				if entry.IsDir() {
-					continue
-				}
-				name := entry.Name()
-				if len(name) < 4 {
-					continue
-				}
-				data, err := fs.ReadFile(file, name)
-				if err != nil {
-					return err
-				}
-				return e.LoadROM(data)
-			}
-		}
 	}
+
+	err := e.handleDropFile()
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
 
@@ -277,4 +262,32 @@ func (e *Emu) initAudio() {
 
 func (e *Emu) muted() bool {
 	return !e.soundEnabled || e.turbo > 1
+}
+
+func (e *Emu) handleDropFile() error {
+	file := ebiten.DroppedFiles()
+	if file != nil {
+		entries, err := fs.ReadDir(file, ".")
+		if err != nil {
+			return err
+		}
+		for _, entry := range entries {
+			if entry.IsDir() {
+				continue
+			}
+			name := entry.Name()
+			ext := filepath.Ext(name)
+			data, err := fs.ReadFile(file, name)
+			if err != nil {
+				return err
+			}
+			switch ext {
+			case ".gb", ".gbc":
+				return e.LoadROM(data)
+			case ".sav":
+				return e.c.LoadSRAM(data)
+			}
+		}
+	}
+	return nil
 }
