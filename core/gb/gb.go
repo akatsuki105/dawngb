@@ -98,7 +98,12 @@ func (g *GB) LoadSRAM(data []byte) error {
 	if g.cartridge == nil {
 		return fmt.Errorf("no cartridge loaded")
 	}
-	return g.cartridge.LoadSRAM(data)
+	err := g.cartridge.LoadSRAM(data)
+	if err != nil {
+		return err
+	}
+	g.Reset(false)
+	return nil
 }
 
 func (g *GB) RunFrame() {
