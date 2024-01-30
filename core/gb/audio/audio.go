@@ -32,15 +32,21 @@ type audio struct {
 
 func New(sampleBuffer io.Writer) Audio {
 	return &audio{
-		ch1:          newSquareChannel(true),
-		ch2:          newSquareChannel(false),
-		ch3:          newWaveChannel(),
-		ch4:          newNoiseChannel(),
 		sampleBuffer: sampleBuffer,
 	}
 }
 
 func (a *audio) Reset(hasBIOS bool) {
+	a.enabled = false
+	a.ch1 = newSquareChannel(true)
+	a.ch2 = newSquareChannel(false)
+	a.ch3 = newWaveChannel()
+	a.ch4 = newNoiseChannel()
+	a.cycles = 0
+	a.sequencerCounter = 0
+	a.sequencerStep = 0
+	a.sampleTimer = 0
+	a.ioreg = [0x30]uint8{}
 	if !hasBIOS {
 		a.skipBIOS()
 	}
