@@ -31,7 +31,7 @@ func (t *timer) Reset(hasBIOS bool) {
 	if !hasBIOS {
 		t.tac = 0xF8
 	}
-	t.g.s.Schedule(&t.updateEvent, 16)
+	t.g.s.Reschedule(&t.updateEvent, 16)
 }
 
 func (t *timer) Read(addr uint16) uint8 {

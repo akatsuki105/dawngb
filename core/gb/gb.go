@@ -71,6 +71,7 @@ func (g *GB) Reset(hasBIOS bool) {
 		model = 1
 	}
 	g.s.Reset()
+	g.m.Reset(hasBIOS)
 	g.cpu.Reset(hasBIOS)
 	g.video.Reset(model, hasBIOS)
 	g.audio.Reset(hasBIOS)

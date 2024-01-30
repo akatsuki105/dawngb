@@ -20,6 +20,19 @@ func newMemory(gb *GB) *Memory {
 	}
 }
 
+func (m *Memory) Reset(hasBIOS bool) {
+	for i := 0; i < len(m.wram); i++ {
+		m.wram[i] = 0
+	}
+	for i := 0; i < len(m.hram); i++ {
+		m.hram[i] = 0
+	}
+	m.wramBank = 1
+	m.ff72 = 0
+	m.ff73 = 0
+	m.ff74 = 0
+}
+
 func (m *Memory) Read(addr uint16) byte {
 	if m.gb.inOAMDMA {
 		if addr < 0xFF80 && addr > 0xFFFE {
