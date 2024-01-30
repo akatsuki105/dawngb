@@ -11,7 +11,7 @@ func init() {
 func press(this js.Value, args []js.Value) any {
 	for key := range inputMapWeb {
 		if key == args[0].String() {
-			inputMapWeb[key] = true
+			inputMapWeb[key] = args[1].Bool()
 			break
 		}
 	}
