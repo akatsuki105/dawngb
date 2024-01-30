@@ -7,6 +7,7 @@ import (
 	"io/fs"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/akatsuki105/dugb/core"
 	"github.com/hajimehoshi/ebiten/v2"
@@ -104,17 +105,17 @@ func (e *Emu) LoadROMFromPath(path string) error {
 		return err
 	}
 
-	// xxxx.gb or xxxx.gbc -> xxxx.sav
-	if len(path) > 4 && path[len(path)-4:] == ".gbc" {
-		path = path[:len(path)-4]
-	} else if len(path) > 3 && path[len(path)-3:] == ".gb" {
-		path = path[:len(path)-3]
-	}
-	savPath := path + ".sav"
-	if _, err := os.Stat(savPath); err == nil {
-		savData, err := os.ReadFile(savPath)
-		if err == nil {
-			e.c.LoadSRAM(savData)
+	// Load Save Data
+	ext := filepath.Ext(path)
+	if ext == ".gbc" || ext == ".gb" {
+		savPath := strings.ReplaceAll(path, ext, ".sav")
+		if _, err := os.Stat(savPath); err == nil {
+			if savData, err := os.ReadFile(savPath); err == nil {
+				err := e.c.LoadSRAM(savData)
+				if err != nil {
+					return err
+				}
+			}
 		}
 	}
 
