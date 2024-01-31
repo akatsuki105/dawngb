@@ -6,7 +6,8 @@ import (
 
 func init() {
 	js.Global().Set("press", js.FuncOf(press))
-	js.Global().Set("save", js.FuncOf(save))
+	js.Global().Set("loadSave", js.FuncOf(loadSave))
+	js.Global().Set("dumpSave", js.FuncOf(dumpSave))
 }
 
 func press(this js.Value, args []js.Value) any {
@@ -19,7 +20,18 @@ func press(this js.Value, args []js.Value) any {
 	return nil
 }
 
-func save(this js.Value, args []js.Value) any {
+func loadSave(this js.Value, args []js.Value) any {
+	if emu != nil {
+		sram := emu.c.SRAM()
+		size := len(sram)
+		newSram := make([]byte, size)
+		js.CopyBytesToGo(newSram, args[0])
+		emu.c.LoadSRAM(newSram)
+	}
+	return nil
+}
+
+func dumpSave(this js.Value, args []js.Value) any {
 	if emu != nil {
 		sram := emu.c.SRAM()
 		dst := js.Global().Get("Uint8Array").New(len(sram))

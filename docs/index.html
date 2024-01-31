@@ -16,22 +16,38 @@
         go.run(result.instance);
 
         window.addEventListener("message", (e) => {
-          if (e.origin.includes("localhost") || e.origin.includes("dugb") || e.origin.includes("akatsuki105")) {
+          if (
+            e.origin.includes("localhost") ||
+            e.origin.includes("dugb") ||
+            e.origin.includes("akatsuki105")
+          ) {
             switch (e.data[0]) {
               case "press":
                 globalThis.press(e.data[1], e.data[2]);
                 break;
               case "save":
-                const sram = globalThis.save(); // Uint8Array
-                if (sram.length > 0) {
-                  // download file
-                  const blob = new Blob([sram], { type: "application/octet-stream" });
-                  const url = URL.createObjectURL(blob);
-                  const a = document.createElement("a");
-                  a.href = url;
-                  a.download = "dugb.sav";
-                  a.click();
-                  a.remove();
+                switch (e.data[1]) {
+                  case "load":
+                    const save = e.data[2]; // Uint8Array
+                    if (save.length > 0) {
+                      globalThis.loadSave(save);
+                    }
+                    break;
+                  case "dump":
+                    const sram = globalThis.dumpSave(); // Uint8Array
+                    if (sram.length > 0) {
+                      // download file
+                      const blob = new Blob([sram], {
+                        type: "application/octet-stream",
+                      });
+                      const url = URL.createObjectURL(blob);
+                      const a = document.createElement("a");
+                      a.href = url;
+                      a.download = "dugb.sav";
+                      a.click();
+                      a.remove();
+                    }
+                    break;
                 }
                 break;
               default:
