@@ -25,6 +25,16 @@
               case "press":
                 globalThis.press(e.data[1], e.data[2]);
                 break;
+              case "rom":
+                switch (e.data[1]) {
+                  case "load":
+                    const rom = e.data[2]; // Uint8Array
+                    if (rom.length > 0) {
+                      globalThis.loadRom(rom);
+                    }
+                    break;
+                }
+                break;
               case "save":
                 switch (e.data[1]) {
                   case "load":
