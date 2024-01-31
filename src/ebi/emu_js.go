@@ -6,6 +6,7 @@ import (
 
 func init() {
 	js.Global().Set("press", js.FuncOf(press))
+	js.Global().Set("loadROM", js.FuncOf(loadROM))
 	js.Global().Set("loadSave", js.FuncOf(loadSave))
 	js.Global().Set("dumpSave", js.FuncOf(dumpSave))
 }
@@ -16,6 +17,16 @@ func press(this js.Value, args []js.Value) any {
 			inputMapWeb[key] = args[1].Bool()
 			break
 		}
+	}
+	return nil
+}
+
+func loadROM(this js.Value, args []js.Value) any {
+	if emu != nil {
+		raw := args[0]
+		rom := make([]byte, raw.Get("length").Int())
+		js.CopyBytesToGo(rom, raw)
+		emu.LoadROM(rom)
 	}
 	return nil
 }
