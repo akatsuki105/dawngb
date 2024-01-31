@@ -21,7 +21,10 @@ func press(this js.Value, args []js.Value) any {
 
 func save(this js.Value, args []js.Value) any {
 	if emu != nil {
-		return emu.c.SRAM()
+		sram := emu.c.SRAM()
+		dst := js.Global().Get("Uint8Array").New(len(sram))
+		js.CopyBytesToJS(dst, sram)
+		return dst
 	}
 	return nil
 }
