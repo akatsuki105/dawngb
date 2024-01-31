@@ -17,14 +17,16 @@
 
         window.addEventListener("message", (e) => {
           if (e.origin.includes("localhost") || e.origin.includes("dugb") || e.origin.includes("akatsuki105")) {
-            const command = e.data[0];
-            switch (command) {
+            switch (e.data[0]) {
               case "press":
                 globalThis.press(e.data[1], e.data[2]);
                 break;
               case "save":
                 const sram = globalThis.save();
                 console.log(sram);
+                break;
+              default:
+                console.log(`Unknown message: ${e.data}`);
                 break;
             }
           }
