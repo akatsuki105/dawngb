@@ -27,6 +27,8 @@ type Core interface {
 
 	LoadSRAM(sramData []byte) error
 
+	SRAM() []byte
+
 	// RunFrame runs emulator until a next frame
 	RunFrame()
 

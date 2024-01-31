@@ -88,3 +88,7 @@ func (c *Cartridge) LoadSRAM(data []uint8) error {
 	copy(c.ram, data)
 	return nil
 }
+
+func (c *Cartridge) SRAM() []uint8 {
+	return c.ram
+}

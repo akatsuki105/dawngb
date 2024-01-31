@@ -14,6 +14,8 @@ import (
 	"github.com/hajimehoshi/oto"
 )
 
+var emu *Emu
+
 var keyMap = map[ebiten.Key]string{
 	ebiten.KeyX:          "A",
 	ebiten.KeyZ:          "B",
@@ -74,6 +76,9 @@ type Emu struct {
 }
 
 func createEmu() *Emu {
+	if emu != nil {
+		return emu
+	}
 	e := &Emu{
 		samples:      make([]byte, 4096),
 		sampleBuffer: bytes.NewBuffer(make([]byte, 0)),
@@ -81,6 +86,7 @@ func createEmu() *Emu {
 		taskQueue:    make([]func(), 0, 10),
 	}
 	e.c = core.New("GB", e.sampleBuffer)
+	emu = e
 	return e
 }
 

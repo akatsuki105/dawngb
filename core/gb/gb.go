@@ -106,6 +106,13 @@ func (g *GB) LoadSRAM(data []byte) error {
 	return nil
 }
 
+func (g *GB) SRAM() []byte {
+	if g.cartridge == nil {
+		return nil
+	}
+	return g.cartridge.SRAM()
+}
+
 func (g *GB) RunFrame() {
 	const FRAME = 70224 * video.CYCLE
 	start := g.s.Cycle()
