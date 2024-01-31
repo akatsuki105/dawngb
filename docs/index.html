@@ -22,8 +22,17 @@
                 globalThis.press(e.data[1], e.data[2]);
                 break;
               case "save":
-                const sram = globalThis.save();
-                console.log(sram);
+                const sram = globalThis.save(); // Uint8Array
+                if (sram.length > 0) {
+                  // download file
+                  const blob = new Blob([sram], { type: "application/octet-stream" });
+                  const url = URL.createObjectURL(blob);
+                  const a = document.createElement("a");
+                  a.href = url;
+                  a.download = "dugb.sav";
+                  a.click();
+                  a.remove();
+                }
                 break;
               default:
                 console.log(`Unknown message: ${e.data}`);
