@@ -4,6 +4,9 @@ type sweep struct {
 	enabled bool
 	square  *square
 
+	// スイープ開始時の周波数(スイープ中に0xFF13と0xFF14に書き込まれて.square.periodが変更されても影響を受けないようにするためのもの)
+	periodShadow int
+
 	interval int // NR10's bit6-4(スイープ間隔)
 	negate   bool
 	shift    int
@@ -20,12 +23,13 @@ func newSweep(ch *square) *sweep {
 }
 
 func (s *sweep) reset() {
+	s.periodShadow = s.square.period
 	s.step = s.interval
 	if s.interval == 0 {
 		s.step = 8
 	}
 	s.negate = false
-	s.enabled = (s.shift != 0)
+	s.enabled = (s.interval != 0 || s.shift != 0)
 }
 
 func (s *sweep) update() bool {
@@ -47,12 +51,13 @@ func (s *sweep) update() bool {
 
 func (s *sweep) updateFrequency(first bool) bool {
 	if !first || s.interval != 0 {
-		period := s.square.period
+		period := s.periodShadow
 
 		if !s.negate {
 			period += (period >> s.shift)
 			if period < 2048 {
 				if first && s.shift != 0 {
+					s.periodShadow = period
 					s.square.period = period
 					s.square.freqCounter = s.square.dutyStepCycle()
 					if !s.updateFrequency(false) {
@@ -65,6 +70,7 @@ func (s *sweep) updateFrequency(first bool) bool {
 		} else {
 			period -= (period >> s.shift)
 			if first && period >= 0 {
+				s.periodShadow = period
 				s.square.period = period
 				s.square.freqCounter = s.square.dutyStepCycle()
 			}

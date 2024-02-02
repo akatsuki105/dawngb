@@ -36,7 +36,7 @@ func (a *audio) Write(addr uint16, val uint8) {
 	case 0xFF10:
 		negate := util.Bit(val, 3)
 		if a.ch1.sweep.enabled && a.ch1.sweep.negate && !negate {
-			a.ch1.enabled = false
+			a.ch1.enabled = false // 下降スイープ中に上昇スイープを設定すると消音される
 		}
 		a.ch1.sweep.shift = int(val & 0b111)
 		a.ch1.sweep.negate = negate
@@ -60,7 +60,7 @@ func (a *audio) Write(addr uint16, val uint8) {
 	case 0xFF14:
 		a.ch1.period = (a.ch1.period & 0x00FF) | (int(val&0b111) << 8)
 		a.ch1.stop = util.Bit(val, 6)
-		if util.Bit(val, 7) {
+		if util.Bit(val, 7) { // キーオン(音が鳴り始める)
 			a.ch1.tryRestart()
 		}
 
@@ -82,7 +82,7 @@ func (a *audio) Write(addr uint16, val uint8) {
 	case 0xFF19:
 		a.ch2.period = (a.ch2.period & 0x00FF) | (int(val&0b111) << 8)
 		a.ch2.stop = util.Bit(val, 6)
-		if util.Bit(val, 7) {
+		if util.Bit(val, 7) { // キーオン(音が鳴り始める)
 			a.ch2.tryRestart()
 		}
 
@@ -104,7 +104,7 @@ func (a *audio) Write(addr uint16, val uint8) {
 		a.ch3.period &= 0b000_1111_1111
 		a.ch3.period |= int(val&0b111) << 8
 		a.ch3.freqCounter = a.ch3.windowStepCycle()
-		if util.Bit(val, 7) {
+		if util.Bit(val, 7) { // キーオン(音が鳴り始める)
 			a.ch3.enabled = a.ch3.dacEnable
 			if a.ch3.length == 0 {
 				a.ch3.length = 256
@@ -131,7 +131,7 @@ func (a *audio) Write(addr uint16, val uint8) {
 		}
 	case 0xFF23:
 		a.ch4.stop = util.Bit(val, 6)
-		if util.Bit(val, 7) {
+		if util.Bit(val, 7) { // キーオン(音が鳴り始める)
 			a.ch4.tryRestart()
 		}
 
