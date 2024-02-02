@@ -49,6 +49,7 @@ func (a *audio) Reset(hasBIOS bool) {
 	a.sequencerCounter = 0
 	a.sequencerStep = 0
 	a.sampleTimer = 0
+	a.volume = 7
 	a.ioreg = [0x30]uint8{}
 	if !hasBIOS {
 		a.skipBIOS()
