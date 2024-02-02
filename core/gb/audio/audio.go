@@ -27,10 +27,8 @@ type audio struct {
 
 	sampleTimer int64 // 1サンプルを生み出すために44100Hzを生み出すためのカウンタ
 
-	ioreg [0x30]uint8
-
-	// NR50, 左出力だけ(手抜き)
-	volume int
+	ioreg  [0x30]uint8
+	volume int // NR50
 }
 
 func New(sampleBuffer io.Writer) Audio {
