@@ -5,7 +5,7 @@ type sweep struct {
 	square  *square
 
 	interval int // NR10's bit6-4(スイープ間隔)
-	up       bool
+	negate   bool
 	shift    int
 
 	step int // スイープ間隔(.interval)をカウントするためのカウンタ
@@ -14,7 +14,6 @@ type sweep struct {
 func newSweep(ch *square) *sweep {
 	return &sweep{
 		square:   ch,
-		up:       true,
 		interval: 0,
 		step:     8,
 	}
@@ -25,7 +24,7 @@ func (s *sweep) reset() {
 	if s.interval == 0 {
 		s.step = 8
 	}
-	s.up = true
+	s.negate = false
 	s.enabled = (s.shift != 0)
 }
 
@@ -50,7 +49,7 @@ func (s *sweep) updateFrequency(first bool) bool {
 	if !first || s.interval != 0 {
 		period := s.square.period
 
-		if s.up {
+		if !s.negate {
 			period += (period >> s.shift)
 			if period < 2048 {
 				if first && s.shift != 0 {

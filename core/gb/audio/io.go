@@ -34,13 +34,12 @@ func (a *audio) Write(addr uint16, val uint8) {
 	a.ioreg[addr-0xFF10] = val
 	switch addr {
 	case 0xFF10:
-		if a.ch1.sweep.enabled {
-			if !a.ch1.sweep.up && !util.Bit(val, 3) {
-				a.ch1.enabled = false
-			}
+		negate := util.Bit(val, 3)
+		if a.ch1.sweep.enabled && a.ch1.sweep.negate && !negate {
+			a.ch1.enabled = false
 		}
 		a.ch1.sweep.shift = int(val & 0b111)
-		a.ch1.sweep.up = !util.Bit(val, 3)
+		a.ch1.sweep.negate = negate
 		a.ch1.sweep.interval = int(val>>4) & 0b111
 
 	case 0xFF11:
