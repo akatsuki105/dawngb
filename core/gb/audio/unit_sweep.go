@@ -28,54 +28,59 @@ func (s *sweep) reset() {
 	if s.interval == 0 {
 		s.step = 8
 	}
-	s.negate = false
 	s.enabled = (s.interval != 0 || s.shift != 0)
+	if s.shift != 0 {
+		s.updateFrequency()
+		s.checkOverflow()
+	}
 }
 
-func (s *sweep) update() bool {
+func (s *sweep) update() {
+	s.step--
+	if s.step <= 0 {
+		s.step = s.interval
+		if s.interval == 0 {
+			s.step = 8
+		}
+		if s.enabled && s.interval != 0 {
+			s.updateFrequency()
+			s.checkOverflow()
+		}
+	}
+}
+
+func (s *sweep) updateFrequency() {
 	if s.enabled {
-		s.step--
-		if s.step <= 0 {
-			if !s.updateFrequency(true) {
-				return false
-			}
-			s.step = s.interval
-			if s.interval == 0 {
-				s.step = 8
-			}
+		delta := s.periodShadow >> s.shift
+		freq := s.periodShadow
+		if !s.negate {
+			freq += delta
+		} else {
+			freq -= delta
+		}
+
+		if freq > 2047 {
+			s.square.enabled = false
+		} else if s.shift != 0 && freq >= 0 {
+			s.periodShadow = freq
+			s.square.period = freq
+			s.square.freqCounter = s.square.dutyStepCycle()
 		}
 	}
-
-	return true
 }
 
-func (s *sweep) updateFrequency(first bool) bool {
-	if !first || s.interval != 0 {
-		period := s.periodShadow
-
+func (s *sweep) checkOverflow() {
+	if s.enabled {
+		delta := s.periodShadow >> s.shift
+		freq := s.periodShadow
 		if !s.negate {
-			period += (period >> s.shift)
-			if period < 2048 {
-				if first && s.shift != 0 {
-					s.periodShadow = period
-					s.square.period = period
-					s.square.freqCounter = s.square.dutyStepCycle()
-					if !s.updateFrequency(false) {
-						return false
-					}
-				}
-			} else {
-				return false
-			}
+			freq += delta
 		} else {
-			period -= (period >> s.shift)
-			if first && period >= 0 {
-				s.periodShadow = period
-				s.square.period = period
-				s.square.freqCounter = s.square.dutyStepCycle()
-			}
+			freq -= delta
+		}
+
+		if freq > 2047 {
+			s.square.enabled = false
 		}
 	}
-
-	return true
 }

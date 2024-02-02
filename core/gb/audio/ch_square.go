@@ -46,7 +46,7 @@ func (ch *square) clock64Hz() {
 
 func (ch *square) clock128Hz() {
 	if ch.sweep != nil {
-		ch.enabled = ch.sweep.update()
+		ch.sweep.update()
 	}
 }
 
