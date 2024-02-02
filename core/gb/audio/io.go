@@ -56,11 +56,9 @@ func (a *audio) Write(addr uint16, val uint8) {
 
 	case 0xFF13:
 		a.ch1.period = (a.ch1.period & 0xFF00) | int(val)
-		a.ch1.freqCounter = a.ch1.dutyStepCycle()
 
 	case 0xFF14:
 		a.ch1.period = (a.ch1.period & 0x00FF) | (int(val&0b111) << 8)
-		a.ch1.freqCounter = a.ch1.dutyStepCycle()
 		a.ch1.stop = util.Bit(val, 6)
 		if util.Bit(val, 7) {
 			a.ch1.tryRestart()
@@ -80,11 +78,9 @@ func (a *audio) Write(addr uint16, val uint8) {
 
 	case 0xFF18:
 		a.ch2.period = (a.ch2.period & 0xFF00) | int(val)
-		a.ch2.freqCounter = a.ch2.dutyStepCycle()
 
 	case 0xFF19:
 		a.ch2.period = (a.ch2.period & 0x00FF) | (int(val&0b111) << 8)
-		a.ch2.freqCounter = a.ch2.dutyStepCycle()
 		a.ch2.stop = util.Bit(val, 6)
 		if util.Bit(val, 7) {
 			a.ch2.tryRestart()

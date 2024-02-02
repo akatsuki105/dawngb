@@ -93,7 +93,7 @@ func (ch *square) dacEnable() bool {
 
 func (ch *square) tryRestart() {
 	ch.enabled = ch.dacEnable()
-	ch.freqCounter = 4 * (2048 - ch.period)
+	ch.freqCounter = ch.dutyStepCycle()
 	ch.envelope.reset()
 	if ch.sweep != nil {
 		ch.sweep.reset()
