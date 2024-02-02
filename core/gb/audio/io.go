@@ -39,13 +39,9 @@ func (a *audio) Write(addr uint16, val uint8) {
 				a.ch1.enabled = false
 			}
 		}
-		a.ch1.sweep.interval = int(val>>4) & 0b111
-		a.ch1.sweep.step = a.ch1.sweep.interval
-		if a.ch1.sweep.step == 0 {
-			a.ch1.sweep.step = 8
-		}
-		a.ch1.sweep.up = !util.Bit(val, 3)
 		a.ch1.sweep.shift = int(val & 0b111)
+		a.ch1.sweep.up = !util.Bit(val, 3)
+		a.ch1.sweep.interval = int(val>>4) & 0b111
 
 	case 0xFF11:
 		a.ch1.duty = int(val >> 6)

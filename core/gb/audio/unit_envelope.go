@@ -43,10 +43,6 @@ func (e *envelope) updateVolume() {
 	if e.direction {
 		e.volume = min(e.volume+1, 15)
 	} else {
-		e.volume--
-	}
-
-	if e.volume <= 0 {
-		e.volume = 0
+		e.volume = max(e.volume-1, 0)
 	}
 }
