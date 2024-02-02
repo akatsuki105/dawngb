@@ -28,6 +28,9 @@ type audio struct {
 	sampleTimer int64 // 1サンプルを生み出すために44100Hzを生み出すためのカウンタ
 
 	ioreg [0x30]uint8
+
+	// NR50, 左出力だけ(手抜き)
+	volume int
 }
 
 func New(sampleBuffer io.Writer) Audio {
@@ -118,9 +121,10 @@ func (a *audio) CatchUp() {
 
 			// サンプルを生成
 			if a.sampleTimer <= 0 {
-				sample := uint8(a.ch1.getOutput() + a.ch2.getOutput() + a.ch3.getOutput() + a.ch4.getOutput()) // 各チャンネルの出力(音量=波)を足し合わせたものがサンプル
+				sample := (a.ch1.getOutput() + a.ch2.getOutput() + a.ch3.getOutput() + a.ch4.getOutput()) // 各チャンネルの出力(音量=波)を足し合わせたものがサンプル
 				if a.sampleBuffer != nil {
-					a.sampleBuffer.Write([]byte{0, sample, 0, sample})
+					sample = (sample * a.volume) / 7
+					a.sampleBuffer.Write([]byte{0, uint8(sample), 0, uint8(sample)})
 				}
 
 				a.sampleTimer = 95 // 44100Hzにダウンサンプリングしたい = 44100Hzごとにサンプルを生成したい = 95APUサイクルごとにサンプルを生成したい(4194304/44100 = 95)

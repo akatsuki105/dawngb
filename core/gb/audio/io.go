@@ -144,6 +144,9 @@ func (a *audio) Write(addr uint16, val uint8) {
 			a.ch4.tryRestart()
 		}
 
+	case 0xFF24:
+		a.volume = int(val>>4) & 0b111 // 手抜き
+
 	case 0xFF25:
 		a.ch1.ignored = !util.Bit(val, 0)
 		a.ch2.ignored = !util.Bit(val, 1)
