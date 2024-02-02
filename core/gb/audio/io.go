@@ -136,7 +136,8 @@ func (a *audio) Write(addr uint16, val uint8) {
 		}
 
 	case 0xFF24:
-		a.volume = ((int(val) & 0b111) + (int(val>>4) & 0b111)) >> 1
+		a.volume[0] = int(val>>4) & 0b111
+		a.volume[1] = int(val & 0b111)
 
 	case 0xFF25:
 		a.ch1.ignored = !util.Bit(val, 0)
