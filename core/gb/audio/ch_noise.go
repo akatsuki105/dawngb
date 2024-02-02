@@ -32,7 +32,7 @@ func newNoiseChannel() *noise {
 
 func (ch *noise) clock64Hz() {
 	if ch.enabled {
-		ch.enabled = ch.envelope.update()
+		ch.envelope.update()
 	}
 }
 

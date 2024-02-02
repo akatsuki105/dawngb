@@ -13,26 +13,30 @@ type envelope struct {
 }
 
 func newEnvelope() *envelope {
-	return &envelope{}
+	return &envelope{
+		step: 8,
+	}
 }
 
 func (e *envelope) reset() {
 	e.volume = e.initialVolume
-	e.step = 0
+	e.step = e.speed
+	if e.speed == 0 {
+		e.step = 8
+	}
 }
 
-func (e *envelope) update() bool {
+func (e *envelope) update() {
 	if e.speed != 0 {
-		e.step++
-		if e.step == e.speed {
+		e.step--
+		if e.step == 0 {
 			e.updateVolume()
-			e.step = 0
-			if e.volume == 0 && !e.direction {
-				return false
+			e.step = e.speed
+			if e.speed == 0 {
+				e.step = 8
 			}
 		}
 	}
-	return true
 }
 
 func (e *envelope) updateVolume() {

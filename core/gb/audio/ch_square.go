@@ -40,7 +40,7 @@ func newSquareChannel(hasSweep bool) *square {
 
 func (ch *square) clock64Hz() {
 	if ch.enabled {
-		ch.enabled = ch.envelope.update()
+		ch.envelope.update()
 	}
 }
 
