@@ -1,8 +1,8 @@
 package gb
 
 import (
-	"github.com/akatsuki105/dugb/util"
-	. "github.com/akatsuki105/dugb/util/datasize"
+	"github.com/akatsuki105/dawngb/util"
+	. "github.com/akatsuki105/dawngb/util/datasize"
 )
 
 type Memory struct {

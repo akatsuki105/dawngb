@@ -2,14 +2,14 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <title>DuGB</title>
+    <title>DawnGB</title>
     <script src="https://cdn.jsdelivr.net/gh/golang/go@go1.21.5/misc/wasm/wasm_exec.js"></script>
   </head>
 
   <body>
     <script>
       (async () => {
-        const resp = await fetch("dugb.wasm");
+        const resp = await fetch("core.wasm");
         const go = new Go();
         const buffer = await resp.arrayBuffer();
         const result = await WebAssembly.instantiate(buffer, go.importObject);
@@ -18,7 +18,7 @@
         window.addEventListener("message", (e) => {
           if (
             e.origin.includes("localhost") ||
-            e.origin.includes("dugb") ||
+            e.origin.includes("dawngb") ||
             e.origin.includes("akatsuki105")
           ) {
             switch (e.data[0]) {
@@ -53,7 +53,7 @@
                       const url = URL.createObjectURL(blob);
                       const a = document.createElement("a");
                       a.href = url;
-                      a.download = "dugb.sav";
+                      a.download = "dawngb.sav";
                       a.click();
                       a.remove();
                     }

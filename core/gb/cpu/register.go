@@ -1,6 +1,6 @@
 package cpu
 
-import "github.com/akatsuki105/dugb/util"
+import "github.com/akatsuki105/dawngb/util"
 
 type pair struct {
 	lo, hi uint8

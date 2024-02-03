@@ -1,4 +1,4 @@
-module github.com/akatsuki105/dugb
+module github.com/akatsuki105/dawngb
 
 go 1.21.5
 

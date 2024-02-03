@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/akatsuki105/dugb/core"
+	"github.com/akatsuki105/dawngb/core"
 	"github.com/pkg/profile"
 )
 

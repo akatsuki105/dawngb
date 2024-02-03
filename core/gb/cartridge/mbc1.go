@@ -1,7 +1,7 @@
 package cartridge
 
 import (
-	. "github.com/akatsuki105/dugb/util/datasize"
+	. "github.com/akatsuki105/dawngb/util/datasize"
 )
 
 type mbc1 struct {

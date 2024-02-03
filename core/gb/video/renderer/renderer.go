@@ -4,8 +4,8 @@ import (
 	"image"
 	"image/color"
 
-	"github.com/akatsuki105/dugb/core/gb/video/renderer/dummy"
-	"github.com/akatsuki105/dugb/core/gb/video/renderer/software"
+	"github.com/akatsuki105/dawngb/core/gb/video/renderer/dummy"
+	"github.com/akatsuki105/dawngb/core/gb/video/renderer/software"
 )
 
 type Renderer interface {

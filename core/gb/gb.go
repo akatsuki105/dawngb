@@ -5,12 +5,12 @@ import (
 	"image/color"
 	"io"
 
-	"github.com/akatsuki105/dugb/core/gb/audio"
-	"github.com/akatsuki105/dugb/core/gb/cartridge"
-	"github.com/akatsuki105/dugb/core/gb/cpu"
-	"github.com/akatsuki105/dugb/core/gb/video"
-	"github.com/akatsuki105/dugb/util"
-	"github.com/akatsuki105/dugb/util/sched"
+	"github.com/akatsuki105/dawngb/core/gb/audio"
+	"github.com/akatsuki105/dawngb/core/gb/cartridge"
+	"github.com/akatsuki105/dawngb/core/gb/cpu"
+	"github.com/akatsuki105/dawngb/core/gb/video"
+	"github.com/akatsuki105/dawngb/util"
+	"github.com/akatsuki105/dawngb/util/sched"
 )
 
 var buttons = [8]string{"A", "B", "SELECT", "START", "RIGHT", "LEFT", "UP", "DOWN"}

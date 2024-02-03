@@ -1,6 +1,6 @@
 package cpu
 
-import "github.com/akatsuki105/dugb/util"
+import "github.com/akatsuki105/dawngb/util"
 
 var cbTable = [256]opcode{
 	/* 0x00 */ cb00, cb01, cb02, cb03, cb04, cb05, cb06, cb07, cb08, cb09, cb0A, cb0B, cb0C, cb0D, cb0E, cb0F,

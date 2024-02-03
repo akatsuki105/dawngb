@@ -1,4 +1,4 @@
-NAME := dugb
+NAME := dawngb
 
 ifeq ($(OS),Windows_NT)
 EXE := .exe
@@ -16,7 +16,7 @@ build:
 	go build -o build/$(NAME)$(EXE) ./src/ebi
 
 wasm:
-	env GOOS=js GOARCH=wasm go build -o docs/$(NAME).wasm ./src/ebi
+	env GOOS=js GOARCH=wasm go build -o docs/core.wasm ./src/ebi
 
 goenv:
 	go env

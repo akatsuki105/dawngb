@@ -9,7 +9,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/akatsuki105/dugb/core"
+	"github.com/akatsuki105/dawngb/core"
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/oto"
 )
@@ -92,9 +92,9 @@ func createEmu() *Emu {
 
 func (e *Emu) title() string {
 	if !e.active {
-		return "DuGB"
+		return "DawnGB"
 	}
-	return fmt.Sprintf("DuGB - %s", e.c.Title())
+	return fmt.Sprintf("DawnGB - %s", e.c.Title())
 }
 
 func (e *Emu) LoadROMFromPath(path string) error {

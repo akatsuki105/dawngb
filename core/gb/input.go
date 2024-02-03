@@ -1,6 +1,6 @@
 package gb
 
-import "github.com/akatsuki105/dugb/util"
+import "github.com/akatsuki105/dawngb/util"
 
 type Input struct {
 	g        *GB

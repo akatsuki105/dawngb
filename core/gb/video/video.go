@@ -4,9 +4,9 @@ import (
 	"image"
 	"image/color"
 
-	"github.com/akatsuki105/dugb/core/gb/video/renderer"
-	"github.com/akatsuki105/dugb/util"
-	. "github.com/akatsuki105/dugb/util/datasize"
+	"github.com/akatsuki105/dawngb/core/gb/video/renderer"
+	"github.com/akatsuki105/dawngb/util"
+	. "github.com/akatsuki105/dawngb/util/datasize"
 )
 
 const CYCLE = 2

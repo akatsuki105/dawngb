@@ -4,7 +4,7 @@ import (
 	"image"
 	"image/color"
 
-	"github.com/akatsuki105/dugb/util"
+	"github.com/akatsuki105/dawngb/util"
 )
 
 const (

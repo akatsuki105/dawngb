@@ -4,7 +4,7 @@ import "C"
 import (
 	"unsafe"
 
-	"github.com/akatsuki105/dugb/src/godot/scene"
+	"github.com/akatsuki105/dawngb/src/godot/scene"
 	"github.com/godot-go/godot-go/pkg/core"
 	"github.com/godot-go/godot-go/pkg/ffi"
 )

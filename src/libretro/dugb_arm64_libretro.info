@@ -1,8 +1,8 @@
 # Software Information
-display_name = "Nintendo - Game Boy (DuGB)"
+display_name = "Nintendo - Game Boy (DawnGB)"
 categories = "Emulator"
 authors = "akatsuki105"
-corename = "DuGB"
+corename = "DawnGB"
 supported_extensions = "gb|gbc"
 license = "MIT"
 permissions = ""
@@ -31,4 +31,4 @@ needs_fullpath = "false"
 disk_control = "false"
 is_experimental = "true"
 
-description = "DuGB is an GB emulator."
+description = "DawnGB is an GB/GBC emulator."

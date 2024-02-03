@@ -1,8 +1,8 @@
 package gb
 
 import (
-	"github.com/akatsuki105/dugb/util"
-	"github.com/akatsuki105/dugb/util/sched"
+	"github.com/akatsuki105/dawngb/util"
+	"github.com/akatsuki105/dawngb/util/sched"
 )
 
 var timaClock = [4]int64{64, 1, 4, 16}

@@ -3,7 +3,7 @@ package cpu
 import (
 	"fmt"
 
-	"github.com/akatsuki105/dugb/util"
+	"github.com/akatsuki105/dawngb/util"
 )
 
 func todo(c *Cpu) {

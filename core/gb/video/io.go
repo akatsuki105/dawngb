@@ -1,7 +1,7 @@
 package video
 
 import (
-	"github.com/akatsuki105/dugb/util"
+	"github.com/akatsuki105/dawngb/util"
 )
 
 func (v *Video) Read(addr uint16) uint8 {

@@ -1,7 +1,7 @@
 package cpu
 
 import (
-	"github.com/akatsuki105/dugb/util"
+	"github.com/akatsuki105/dawngb/util"
 )
 
 type opcode = func(c *Cpu)

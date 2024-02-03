@@ -1,7 +1,7 @@
 package audio
 
 import (
-	"github.com/akatsuki105/dugb/util"
+	"github.com/akatsuki105/dawngb/util"
 )
 
 // NOTE: "ゼルダの伝説 ふしぎの木の実" はAPUのNR52を正しく実装しないとタイトル画面から進めない

@@ -3,7 +3,7 @@ package cpu
 import (
 	"fmt"
 
-	"github.com/akatsuki105/dugb/util/sched"
+	"github.com/akatsuki105/dawngb/util/sched"
 )
 
 type Memory interface {

@@ -21,7 +21,7 @@ const (
 
 var (
 	turbo = flag.Int("t", 1, "Emulator speed xN")
-	sound = flag.Bool("s", false, "Enable sound")
+	sound = flag.Bool("s", true, "Enable sound")
 )
 
 func main() {
@@ -39,7 +39,7 @@ func Run() exitCode {
 
 	w, h := e.Layout(0, 0)
 	ebiten.SetWindowSize(int(float64(w)*EXPAND), int(float64(h)*EXPAND))
-	ebiten.SetWindowTitle("DuGB")
+	ebiten.SetWindowTitle("DawnGB")
 	ebiten.SetWindowResizingMode(ebiten.WindowResizingModeEnabled)
 
 	defer func() {

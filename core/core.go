@@ -5,7 +5,7 @@ import (
 	"image/color"
 	"io"
 
-	"github.com/akatsuki105/dugb/core/gb"
+	"github.com/akatsuki105/dawngb/core/gb"
 )
 
 type ID = string
