@@ -18,6 +18,8 @@ type Core interface {
 	// Get Core ID
 	ID() ID
 
+	Reset(hasBIOS bool)
+
 	// LoadROM loads game rom
 	//
 	// It assumes an environment with enough memory, so it is necessary to pass the complete ROM data in advance.

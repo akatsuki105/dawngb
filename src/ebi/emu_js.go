@@ -5,10 +5,26 @@ import (
 )
 
 func init() {
+	js.Global().Set("reset", js.FuncOf(reset))
+	js.Global().Set("sound", js.FuncOf(enableSound))
 	js.Global().Set("press", js.FuncOf(press))
 	js.Global().Set("loadROM", js.FuncOf(loadROM))
 	js.Global().Set("loadSave", js.FuncOf(loadSave))
 	js.Global().Set("dumpSave", js.FuncOf(dumpSave))
+}
+
+func reset(this js.Value, args []js.Value) any {
+	if emu != nil {
+		emu.c.Reset(false)
+	}
+	return nil
+}
+
+func enableSound(this js.Value, args []js.Value) any {
+	if emu != nil {
+		emu.EnableSound(args[0].Bool())
+	}
+	return nil
 }
 
 func press(this js.Value, args []js.Value) any {

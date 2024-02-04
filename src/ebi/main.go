@@ -21,7 +21,7 @@ const (
 
 var (
 	turbo = flag.Int("t", 1, "Emulator speed xN")
-	sound = flag.Bool("s", true, "Enable sound")
+	sound = flag.Bool("s", false, "Enable sound")
 )
 
 func main() {
