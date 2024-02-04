@@ -22,6 +22,12 @@
             e.origin.includes("akatsuki105")
           ) {
             switch (e.data[0]) {
+              case "reset":
+                globalThis.reset();
+                break;
+              case "sound":
+                globalThis.sound(e.data[1]);
+                break;
               case "press":
                 globalThis.press(e.data[1], e.data[2]);
                 break;
