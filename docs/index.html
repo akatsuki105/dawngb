@@ -22,16 +22,19 @@
             e.origin.includes("akatsuki105")
           ) {
             switch (e.data[0]) {
-              case "reset":
+              case "reset": {
                 globalThis.reset();
                 break;
-              case "sound":
+              }
+              case "sound": {
                 globalThis.sound(e.data[1]);
                 break;
-              case "press":
+              }
+              case "press": {
                 globalThis.press(e.data[1], e.data[2]);
                 break;
-              case "rom":
+              }
+              case "rom": {
                 switch (e.data[1]) {
                   case "load":
                     const rom = e.data[2]; // Uint8Array
@@ -41,7 +44,8 @@
                     break;
                 }
                 break;
-              case "save":
+              }
+              case "save": {
                 switch (e.data[1]) {
                   case "load":
                     const save = e.data[2]; // Uint8Array
@@ -66,9 +70,21 @@
                     break;
                 }
                 break;
-              default:
+              }
+              case "screenshot": {
+                const canvas = document.querySelector("canvas");
+                const data = canvas.toDataURL("image/png");
+                const a = document.createElement("a");
+                a.href = data;
+                a.download = "dawngb.png";
+                a.click();
+                a.remove();
+                break;
+              }
+              default: {
                 console.log(`Unknown message: ${e.data}`);
                 break;
+              }
             }
           }
         });
