@@ -6,6 +6,7 @@ import (
 
 func init() {
 	js.Global().Set("reset", js.FuncOf(reset))
+	js.Global().Set("setPaused", js.FuncOf(setPaused))
 	js.Global().Set("sound", js.FuncOf(enableSound))
 	js.Global().Set("press", js.FuncOf(press))
 	js.Global().Set("loadROM", js.FuncOf(loadROM))
@@ -16,6 +17,13 @@ func init() {
 func reset(this js.Value, args []js.Value) any {
 	if emu != nil {
 		emu.c.Reset(false)
+	}
+	return nil
+}
+
+func setPaused(this js.Value, args []js.Value) any {
+	if emu != nil {
+		emu.setPaused(args[0].Bool())
 	}
 	return nil
 }

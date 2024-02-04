@@ -63,6 +63,7 @@ var inputMapWeb = map[string]bool{
 type Emu struct {
 	c      core.Core
 	active bool
+	paused bool
 
 	// Audio
 	soundEnabled bool
@@ -149,7 +150,7 @@ func (e *Emu) Update() error {
 		e.initAudio()
 	}
 
-	if e.active {
+	if e.active && !e.paused {
 		e.pollInput()
 		for i := 0; i < e.turbo; i++ {
 			e.c.RunFrame()
@@ -174,7 +175,7 @@ func (e *Emu) Update() error {
 }
 
 func (e *Emu) Draw(screen *ebiten.Image) {
-	if e.active {
+	if e.active && !e.paused {
 		data := e.c.Screen()
 		w, h := e.c.Resolution()
 		img := image.NewRGBA(image.Rect(0, 0, w, h))
@@ -297,4 +298,12 @@ func (e *Emu) handleDropFile() error {
 		}
 	}
 	return nil
+}
+
+func (e *Emu) setPaused(paused bool) {
+	e.queueTask(func() {
+		if e.active {
+			e.paused = paused
+		}
+	})
 }
