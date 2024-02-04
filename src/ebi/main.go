@@ -41,6 +41,7 @@ func Run() exitCode {
 	ebiten.SetWindowSize(int(float64(w)*EXPAND), int(float64(h)*EXPAND))
 	ebiten.SetWindowTitle("DawnGB")
 	ebiten.SetWindowResizingMode(ebiten.WindowResizingModeEnabled)
+	ebiten.SetScreenClearedEveryFrame(false)
 
 	defer func() {
 		if e.music != nil {
