@@ -26,6 +26,10 @@
                 globalThis.reset();
                 break;
               }
+              case "pause": {
+                globalThis.setPaused(e.data[1]);
+                break;
+              }
               case "sound": {
                 globalThis.sound(e.data[1]);
                 break;
