@@ -50,7 +50,7 @@ func (m *mbc1) read(addr uint16) uint8 {
 func (m *mbc1) write(addr uint16, val uint8) {
 	switch addr >> 12 {
 	case 0x0, 0x1:
-		m.ramEnabled = (val&0xF == 0xA)
+		m.ramEnabled = (val&0x0F == 0x0A)
 	case 0x2, 0x3:
 		m.romBank = val & 0b11111
 		if m.romBank == 0 {
