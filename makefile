@@ -10,7 +10,7 @@ GOOS?=$(shell go env GOOS)
 GOARCH?=$(shell go env GOARCH)
 GODOT?=$(shell which godot)
 
-.PHONY: build wasm goenv profile godot clean
+.PHONY: build wasm goenv profile godot libretro clean
 
 build:
 	go build -o build/$(NAME)$(EXE) ./src/ebi
@@ -31,6 +31,9 @@ godot: goenv
 	CGO_CFLAGS='-Og -g3 -g -fPIC' \
 	CGO_LDFLAGS='-Og -g3 -g' \
 	go build -gcflags=all="-N -l" -tags tools -buildmode=c-shared -x -trimpath -o "build/libgodotgo-gb-macos-$(GOARCH).dylib" ./src/godot/main.go
+
+libretro: goenv
+	GOARCH=$(GOARCH) CGO_ENABLED=1 go build -buildmode=c-shared -o build/$(NAME)_$(GOARCH)_libretro.dylib ./src/libretro/main.go
 
 clean:
 	rm -rf build
