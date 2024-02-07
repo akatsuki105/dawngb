@@ -3,6 +3,7 @@ package main
 // #include "./libretro.h"
 import "C"
 import (
+	"os"
 	"unsafe"
 
 	"github.com/akatsuki105/dawngb/core"
@@ -16,6 +17,12 @@ const (
 const (
 	RETRO_REGION_NTSC = 0
 	RETRO_REGION_PAL  = 1
+)
+
+const (
+	RETRO_ENVIRONMENT_SET_PIXEL_FORMAT   = 10
+	RETRO_ENVIRONMENT_GET_INPUT_BITMASKS = 51 | RETRO_ENVIRONMENT_EXPERIMENTAL
+	RETRO_ENVIRONMENT_EXPERIMENTAL       = 0x10000
 )
 
 var (
@@ -80,7 +87,9 @@ func retro_set_input_state(cb C.retro_input_state_t) {
 
 //export retro_init
 func retro_init() {
-	e = &emulator{}
+	e = &emulator{
+		c: core.New("GB", nil),
+	}
 }
 
 //export retro_deinit
@@ -145,7 +154,15 @@ func retro_run() {
 }
 
 func renderCheckered() {
-	// TODO
+	screen := e.c.Screen()
+	buf := make([]uint16, len(screen))
+	for i := 0; i < len(screen); i++ {
+		r := uint16(screen[i].R >> 3)
+		g := uint16(screen[i].G >> 3)
+		b := uint16(screen[i].B >> 3)
+		buf[i] = (r << 11) | (g << 6) | b
+	}
+	C.call_video_cb(unsafe.Pointer(&buf[0]), width, height, width*2)
 }
 
 //export retro_serialize_size
@@ -165,6 +182,14 @@ func retro_unserialize(data unsafe.Pointer, size C.size_t) C.bool {
 
 //export retro_load_game
 func retro_load_game(info *C.struct_retro_game_info) C.bool {
+	fmt := C.RETRO_PIXEL_FORMAT_RGB565
+	C.call_environ_cb(RETRO_ENVIRONMENT_SET_PIXEL_FORMAT, unsafe.Pointer(&fmt))
+	useBitmasks = bool(C.call_environ_cb(RETRO_ENVIRONMENT_GET_INPUT_BITMASKS, nil))
+
+	romPath := C.GoString(info.path)
+	rom, _ := os.ReadFile(romPath)
+	e.c.LoadROM(rom)
+
 	return true
 }
 
