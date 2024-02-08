@@ -2,8 +2,6 @@ package cpu
 
 import (
 	"fmt"
-
-	"github.com/akatsuki105/dawngb/util/sched"
 )
 
 type Memory interface {
@@ -19,18 +17,18 @@ type Cpu struct {
 		addr   uint16
 		cb     bool
 	}
-	s          *sched.Sched
 	IME        bool
 	halt, stop func()
+	_tick      func(mastercycles int64)
 	Cycle      int64 // 8 or 4
 }
 
-func New(s *sched.Sched, m Memory, halt, stop func()) *Cpu {
+func New(m Memory, halt, stop func(), tick func(int64)) *Cpu {
 	return &Cpu{
-		s:    s,
-		m:    m,
-		halt: halt,
-		stop: stop,
+		m:     m,
+		halt:  halt,
+		stop:  stop,
+		_tick: tick,
 	}
 }
 
@@ -69,11 +67,17 @@ func (c *Cpu) Step() {
 		panic(fmt.Sprintf("illegal opcode: 0x%02X in 0x%04X", opcode, pc))
 	}
 
-	c.s.Add(opCycles[opcode] * c.Cycle)
+	c.tick(opCycles[opcode] * c.Cycle)
 }
 
 func (c *Cpu) fetch() uint8 {
 	pc := c.r.pc
 	c.r.pc++
 	return c.m.Read(pc)
+}
+
+func (c *Cpu) tick(mastercycles int64) {
+	if c._tick != nil {
+		c._tick(mastercycles)
+	}
 }

@@ -16,13 +16,13 @@ func todo(c *Cpu) {
 
 func (c *Cpu) branch(dst uint16) {
 	c.r.pc = dst
-	c.s.Add(c.Cycle)
+	c.tick(c.Cycle)
 }
 
 func (c *Cpu) push8(val uint8) {
 	c.r.sp--
 	c.m.Write(c.r.sp, val)
-	c.s.Add(c.Cycle)
+	c.tick(c.Cycle)
 }
 
 func (c *Cpu) push16(val uint16) {
@@ -33,7 +33,7 @@ func (c *Cpu) push16(val uint16) {
 func (c *Cpu) pop8() uint8 {
 	val := c.m.Read(c.r.sp)
 	c.r.sp++
-	c.s.Add(c.Cycle)
+	c.tick(c.Cycle)
 	return val
 }
 
@@ -44,7 +44,7 @@ func (c *Cpu) pop16() uint16 {
 }
 
 func (c *Cpu) Interrupt(id int) {
-	c.s.Add(2 * c.Cycle)
+	c.tick(2 * c.Cycle)
 	c.IME = false
 	c.push16(c.r.pc)
 	c.branch([5]uint16{0x40, 0x48, 0x50, 0x58, 0x60}[id])

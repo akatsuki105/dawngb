@@ -51,7 +51,7 @@ func New(audioBuffer io.Writer) *GB {
 		dma: *sched.NewEvent("GB_DMA", func(cycle int64) {}),
 	}
 	g.m = newMemory(g)
-	g.cpu = cpu.New(s, g.m, g.halt, g.stop)
+	g.cpu = cpu.New(g.m, g.halt, g.stop, g.s.Add)
 	g.video = video.New(g.requestInterrupt, g.triggerHDMA)
 	g.timer = newTimer(g)
 	g.audio = audio.New(audioBuffer)

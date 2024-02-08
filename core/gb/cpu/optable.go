@@ -756,7 +756,7 @@ func opCB(c *Cpu) {
 	c.inst.cb = true
 
 	(cbTable[opcode])(c)
-	c.s.Add(cbCycles[opcode] * c.Cycle)
+	c.tick(cbCycles[opcode] * c.Cycle)
 }
 
 func opCC(c *Cpu) {
