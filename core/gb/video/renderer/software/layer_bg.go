@@ -73,7 +73,7 @@ func (l *bgLayer) drawScanline(y int, scanline []pixel) {
 					x := i + util.Flip(8, hflip, j)
 					if x < len(scanline) {
 						if z >= scanline[x].z {
-							scanline[x].rgba = l.palette[(palID*4)+colorID].RGBA()
+							scanline[x].rgba = l.palette[(palID*4)+colorID]
 							scanline[x].z = z
 							scanline[x].colorID = colorID
 							scanline[x].isBG = true

@@ -80,7 +80,7 @@ func (l *spriteLayer) drawObjScanline8(spriteIdx int, scanline []pixel, y int) {
 			idx := s.x + util.Flip(8, s.xflip, i)
 			if (0 <= idx) && (idx < 160) {
 				if z >= scanline[idx].z || (scanline[idx].colorID == 0) {
-					scanline[idx].rgba = palette[colorID].RGBA()
+					scanline[idx].rgba = palette[colorID]
 					scanline[idx].z = z
 					scanline[idx].colorID = colorID
 				}
@@ -116,7 +116,7 @@ func (l *spriteLayer) drawObjScanline16(spriteIdx int, scanline []pixel, y int) 
 			idx := s.x + util.Flip(8, s.xflip, i)
 			if (0 <= idx) && (idx < 160) {
 				if z >= scanline[idx].z || (scanline[idx].colorID == 0) {
-					scanline[idx].rgba = palette[colorID].RGBA()
+					scanline[idx].rgba = palette[colorID]
 					scanline[idx].z = z
 					scanline[idx].colorID = colorID
 				}

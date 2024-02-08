@@ -34,7 +34,7 @@ type Software struct {
 }
 
 type pixel struct {
-	rgba    color.RGBA
+	rgba    rgb555
 	z       int // z-index
 	colorID int
 	isBG    bool
@@ -67,7 +67,7 @@ func (s *Software) DrawScanline(y int, scanline []color.RGBA) {
 	s.sprite.drawScanline(y, s.scanline[:])
 
 	for i := 0; i < 160; i++ {
-		scanline[i] = s.scanline[i].rgba
+		scanline[i] = s.scanline[i].rgba.RGBA()
 	}
 }
 
