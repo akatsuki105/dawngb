@@ -61,15 +61,17 @@ func New(audioBuffer io.Writer) *GB {
 	return g
 }
 
-func (g *GB) ID() string {
-	return "GB"
-}
+func (g *GB) ID() string { return "GB" }
 
 func (g *GB) Reset(hasBIOS bool) {
+	g.ie, g.interrupt = 0, [5]bool{}
+	g.halted, g.blocked, g.key1, g.inOAMDMA = false, false, false, false
+
 	model := 0
 	if g.cartridge != nil && g.cartridge.IsCGB() {
 		model = 1
 	}
+
 	g.s.Reset()
 	g.m.Reset(hasBIOS)
 	g.cpu.Reset(hasBIOS)
@@ -156,13 +158,9 @@ func (g *GB) run() {
 	g.s.Commit()
 }
 
-func (g *GB) Resolution() (w int, h int) {
-	return 160, 144
-}
+func (g *GB) Resolution() (w int, h int) { return 160, 144 }
 
-func (g *GB) Screen() []color.RGBA {
-	return g.video.Screen()
-}
+func (g *GB) Screen() []color.RGBA { return g.video.Screen() }
 
 func (g *GB) SetKeyInput(key string, press bool) {
 	for i, b := range buttons {
@@ -179,9 +177,7 @@ func (g *GB) Title() string {
 	return g.cartridge.Title()
 }
 
-func (g *GB) requestInterrupt(id int) {
-	g.interrupt[id] = true
-}
+func (g *GB) requestInterrupt(id int) { g.interrupt[id] = true }
 
 func (g *GB) checkInterrupt() int {
 	for i := 0; i < 5; i++ {

@@ -15,8 +15,7 @@ func newInput(g *GB) *Input {
 }
 
 func (i *Input) Reset(hasBIOS bool) {
-	i.p14 = false
-	i.p15 = false
+	i.p14, i.p15 = false, false
 	i.joyp = 0x0F
 	if !hasBIOS {
 		i.Write(0xFF00, 0x30)

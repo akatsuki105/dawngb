@@ -28,9 +28,7 @@ func (m *Memory) Reset(hasBIOS bool) {
 		m.hram[i] = 0
 	}
 	m.wramBank = 1
-	m.ff72 = 0
-	m.ff73 = 0
-	m.ff74 = 0
+	m.ff72, m.ff73, m.ff74 = 0, 0, 0
 }
 
 func (m *Memory) Read(addr uint16) byte {

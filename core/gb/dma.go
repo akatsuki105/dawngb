@@ -26,6 +26,9 @@ func newDMAController(g *GB) *dmaController {
 }
 
 func (d *dmaController) Reset(hasBIOS bool) {
+	d.mode = GDMA
+	d.src, d.dst, d.length = 0, 0, 0
+	d.completed = true
 	if !hasBIOS {
 		d.Write(0xFF51, 0xFF)
 		d.Write(0xFF52, 0xFF)

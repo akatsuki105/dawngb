@@ -24,10 +24,7 @@ func newTimer(g *GB) *timer {
 }
 
 func (t *timer) Reset(hasBIOS bool) {
-	t.counter = 0
-	t.tima = 0
-	t.tma = 0
-	t.tac = 0
+	t.counter, t.tima, t.tma, t.tac = 0, 0, 0, 0
 	if !hasBIOS {
 		t.tac = 0xF8
 	}
