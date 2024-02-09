@@ -1,6 +1,9 @@
 package gb
 
 import (
+	"encoding/binary"
+	"io"
+
 	"github.com/akatsuki105/dawngb/util"
 	"github.com/akatsuki105/dawngb/util/sched"
 )
@@ -75,4 +78,19 @@ func (t *timer) update(cyclesLate int64) {
 	}
 
 	t.g.s.Reschedule(&t.updateEvent, 16-cyclesLate) // 524288Hz
+}
+
+func (t *timer) Serialize(s io.Writer) {
+	data := []uint8{t.tima, t.tma, t.tac}
+	binary.LittleEndian.PutUint64(data, uint64(t.counter))
+	binary.LittleEndian.PutUint64(data, uint64(t.g.s.Until(&t.updateEvent)))
+	s.Write(data)
+}
+
+func (t *timer) Deserialize(s io.Reader) {
+	data := make([]uint8, 8)
+	s.Read(data)
+	t.tima, t.tma, t.tac = data[0], data[1], data[2]
+	t.counter = int64(binary.LittleEndian.Uint64(data))
+	t.g.s.Reschedule(&t.updateEvent, int64(binary.LittleEndian.Uint64(data)))
 }

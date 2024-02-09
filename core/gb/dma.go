@@ -1,6 +1,8 @@
 package gb
 
 import (
+	"io"
+
 	"github.com/akatsuki105/dawngb/util"
 )
 
@@ -112,3 +114,7 @@ func (d *dmaController) runHDMA() {
 	d.g.blocked = true
 	d.g.s.Schedule(&d.g.dma, 64)
 }
+
+func (d *dmaController) Serialize(s io.Writer) {}
+
+func (d *dmaController) Deserialize(s io.Reader) {}

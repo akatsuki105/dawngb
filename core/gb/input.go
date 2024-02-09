@@ -1,6 +1,10 @@
 package gb
 
-import "github.com/akatsuki105/dawngb/util"
+import (
+	"io"
+
+	"github.com/akatsuki105/dawngb/util"
+)
 
 type Input struct {
 	g        *GB
@@ -67,4 +71,15 @@ func (i *Input) Read(addr uint16) uint8 {
 func (i *Input) Write(addr uint16, val uint8) {
 	i.p14 = util.Bit(val, 4)
 	i.p15 = util.Bit(val, 5)
+}
+
+func (i *Input) Serialize(s io.Writer) {
+	s.Write([]byte{util.Btou8(i.p14), util.Btou8(i.p15), i.joyp})
+}
+
+func (i *Input) Deserialize(s io.Reader) {
+	buf := make([]byte, 3)
+	s.Read(buf)
+	i.p14, i.p15 = buf[0] != 0, buf[1] != 0
+	i.joyp = buf[2]
 }

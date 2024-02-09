@@ -19,6 +19,9 @@ type peripheral interface {
 	Reset(hasBIOS bool)
 	Read(addr uint16) uint8
 	Write(addr uint16, val uint8)
+
+	Serialize(state io.Writer)
+	Deserialize(state io.Reader)
 }
 
 type GB struct {
@@ -235,8 +238,14 @@ func (g *GB) dummyTransfer(cyclesLate int64) {
 
 func (g *GB) Serialize(state io.Writer) {
 	// TODO: implement
+	g.input.Serialize(state)
+	g.timer.Serialize(state)
+	g.dmac.Serialize(state)
 }
 
 func (g *GB) Deserialize(state io.Reader) {
 	// TODO: implement
+	g.input.Deserialize(state)
+	g.timer.Deserialize(state)
+	g.dmac.Deserialize(state)
 }

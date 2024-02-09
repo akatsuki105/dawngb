@@ -62,6 +62,10 @@ func (s *Sched) Commit() {
 	}
 }
 
+func (s *Sched) Until(event *Event) int64 {
+	return max(event.when-s.cycles, 0)
+}
+
 func (s *Sched) UntilNextEvent() int64 {
 	if len(s.events) == 0 {
 		return 0
