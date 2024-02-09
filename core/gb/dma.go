@@ -72,31 +72,32 @@ func (d *dmaController) Write(addr uint16, val uint8) {
 		d.mode = val >> 7
 		d.completed = (d.mode == GDMA)
 		d.g.runHDMA = nil
-		if wasCompleted && d.mode == GDMA {
-			// Trigger GDMA
-			period := int64(d.length) * 4
-			d.g.dma.Callback = func(cyclesLate int64) {
-				for d.length > 0 {
-					for i := uint16(0); i < 16; i++ {
-						d.g.video.Write(d.dst+i, d.g.m.Read(d.src+i))
-					}
-					d.src += 16
-					d.dst += 16
-					d.length -= 16
-				}
-				d.g.blocked = false
-			}
-			d.g.blocked = true
-			d.g.s.Schedule(&d.g.dma, period)
-		} else {
-			if d.mode == HDMA {
-				// Trigger HDMA
-				d.g.runHDMA = d.runHDMA
-			}
+		if wasCompleted && d.mode == GDMA { // Trigger GDMA
+			d.runGDMA()
+		} else if d.mode == HDMA { // Trigger HDMA
+			d.g.runHDMA = d.runHDMA
 		}
 	}
 }
 
+func (d *dmaController) runGDMA() {
+	period := int64(d.length) * 4
+	d.g.dma.Callback = func(cyclesLate int64) {
+		for d.length > 0 {
+			for i := uint16(0); i < 16; i++ {
+				d.g.video.Write(d.dst+i, d.g.m.Read(d.src+i))
+			}
+			d.src += 16
+			d.dst += 16
+			d.length -= 16
+		}
+		d.g.blocked = false
+	}
+	d.g.blocked = true
+	d.g.s.Schedule(&d.g.dma, period)
+}
+
+// HBlank になるたびに実行される
 func (d *dmaController) runHDMA() {
 	d.g.dma.Callback = func(cyclesLate int64) {
 		for i := uint16(0); i < 16; i++ {
@@ -115,6 +116,15 @@ func (d *dmaController) runHDMA() {
 	d.g.s.Schedule(&d.g.dma, 64)
 }
 
-func (d *dmaController) Serialize(s io.Writer) {}
+func (d *dmaController) Serialize(s io.Writer) {
+	data := []uint8{uint8(d.mode), uint8(d.src >> 8), uint8(d.src), uint8(d.dst >> 8), uint8(d.dst), uint8(d.length >> 8), uint8(d.length), util.Btou8(d.completed)}
+	s.Write(data)
+	// TODO: schedule
+}
 
-func (d *dmaController) Deserialize(s io.Reader) {}
+func (d *dmaController) Deserialize(s io.Reader) {
+	data := make([]uint8, 7)
+	s.Read(data)
+	d.mode, d.src, d.dst, d.length, d.completed = uint8(data[0]), uint16(data[1])<<8|uint16(data[2]), uint16(data[3])<<8|uint16(data[4]), uint16(data[5])<<8|uint16(data[6]), (data[7] != 0)
+	// TODO: schedule
+}
