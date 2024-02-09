@@ -30,7 +30,3 @@ func (r *Renderer) SetBGPD(val uint8) uint8 { return 0 }
 func (r *Renderer) SetOBPI(val uint8)       {}
 func (r *Renderer) GetOBPD() uint8          { return 0 }
 func (r *Renderer) SetOBPD(val uint8) uint8 { return 0 }
-
-func (r *Renderer) Debug() image.Image {
-	return screen
-}

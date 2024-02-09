@@ -232,3 +232,11 @@ func (g *GB) dummyTransfer(cyclesLate int64) {
 	g.sb = 0xFF
 	g.requestInterrupt(3)
 }
+
+func (g *GB) Serialize(state io.Writer) {
+	// TODO: implement
+}
+
+func (g *GB) Deserialize(state io.Reader) {
+	// TODO: implement
+}

@@ -1,7 +1,6 @@
 package renderer
 
 import (
-	"image"
 	"image/color"
 
 	"github.com/akatsuki105/dawngb/core/gb/video/renderer/dummy"
@@ -25,8 +24,6 @@ type Renderer interface {
 	SetOBPI(val uint8)
 	GetOBPD() uint8
 	SetOBPD(val uint8) uint8
-
-	Debug() image.Image
 }
 
 func New(id string, vram, oam []uint8, model int) Renderer {

@@ -221,26 +221,3 @@ func (s *Software) SetOBPD(val uint8) uint8 {
 	}
 	return s.sprite.obpi
 }
-
-func (s *Software) Debug() image.Image {
-	for row := 0; row < 12; row++ {
-		for col := 0; col < 32; col++ {
-			for y := 0; y < 8; y++ {
-				for x := 0; x < 8; x++ {
-					tileID := row*32 + col
-					tile := s.vram[tileID*16 : (tileID+1)*16]
-					for y := 0; y < 8; y++ {
-						for x := 0; x < 8; x++ {
-							planes := [2]uint8{tile[(y&0b111)*2], tile[(y&0b111)*2+1]}
-							lo := (planes[0] >> (7 - uint(x))) & 0b1
-							hi := (planes[1] >> (7 - uint(x))) & 0b1
-							colorID := int((hi << 1) | lo)
-							screen.Set(col*8+x, row*8+y, s.bg.palette[colorID].RGBA())
-						}
-					}
-				}
-			}
-		}
-	}
-	return screen
-}

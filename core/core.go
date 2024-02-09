@@ -1,7 +1,6 @@
 package core
 
 import (
-	"image"
 	"image/color"
 	"io"
 
@@ -43,8 +42,9 @@ type Core interface {
 
 	Title() string
 
-	// debug
-	DebugVRAM() image.Image
+	// Serialize
+	Serialize(state io.Writer)
+	Deserialize(state io.Reader)
 }
 
 func New(id ID, audioBuffer io.Writer) Core {

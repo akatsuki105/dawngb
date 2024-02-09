@@ -1,7 +1,6 @@
 package video
 
 import (
-	"image"
 	"image/color"
 
 	"github.com/akatsuki105/dawngb/core/gb/video/renderer"
@@ -113,10 +112,6 @@ func (v *Video) compareLYC() {
 	if !statIRQAsserted(oldStat) && statIRQAsserted(v.stat) {
 		v.onInterrupt(1)
 	}
-}
-
-func (v *Video) Debug() image.Image {
-	return v.r.Debug()
 }
 
 func statIRQAsserted(stat byte) bool {
