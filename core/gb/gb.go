@@ -121,16 +121,18 @@ func (g *GB) SRAM() []byte {
 }
 
 func (g *GB) RunFrame() {
-	const FRAME = 70224 * video.CYCLE
-	start := g.s.Cycle()
+	if g.cartridge != nil {
+		const FRAME = 70224 * video.CYCLE
+		start := g.s.Cycle()
 
-	frame := g.video.FrameCounter
-	for frame == g.video.FrameCounter && ((g.s.Cycle() - start) < FRAME) {
-		g.run()
+		frame := g.video.FrameCounter
+		for frame == g.video.FrameCounter && ((g.s.Cycle() - start) < FRAME) {
+			g.run()
+			g.video.CatchUp()
+		}
+		g.audio.CatchUp()
 		g.video.CatchUp()
 	}
-	g.audio.CatchUp()
-	g.video.CatchUp()
 }
 
 func (g *GB) run() {
@@ -163,7 +165,12 @@ func (g *GB) run() {
 
 func (g *GB) Resolution() (w int, h int) { return 160, 144 }
 
-func (g *GB) Screen() []color.RGBA { return g.video.Screen() }
+func (g *GB) Screen() []color.RGBA {
+	if g.cartridge != nil {
+		return g.video.Screen()
+	}
+	return []color.RGBA{}
+}
 
 func (g *GB) SetKeyInput(key string, press bool) {
 	for i, b := range buttons {

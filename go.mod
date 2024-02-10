@@ -8,6 +8,8 @@ require (
 	github.com/hajimehoshi/oto v1.0.1
 )
 
+replace github.com/godot-go/godot-go => /Users/akatsuki/Dev/Go/godot-go
+
 require (
 	github.com/CannibalVox/cgoalloc v1.2.1 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
