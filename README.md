@@ -6,8 +6,8 @@ You can play on [web](https://dawngb.vercel.app/)!
 
 ## Screenshots
 
-<img width="352" alt="prism" src="https://gist.github.com/assets/37920078/c55435ed-833a-47cf-b1d8-321bd3dbce76.png" />&nbsp;<img width="352" alt="megaman" src="https://gist.github.com/assets/37920078/50395ae9-b12d-4311-b217-1f11b675ea35.png" />
-<img width="352" alt="shantae" src="https://gist.github.com/assets/37920078/c5ff2de5-a714-4b1f-b4f9-044cf27be7fa.png" />&nbsp;<img width="352" alt="pokered" src="https://gist.github.com/assets/37920078/40754cc3-3da8-4fa1-a823-87d5635fa450.png" />
+<img width="352" alt="prism" src="https://gyazo.com/b8fb82f1c38d618a5693d754e8466bf0.png" />&nbsp;<img width="352" alt="megaman" src="https://gyazo.com/47ab176b9bde4efc2c86f2574fbf250b.png" />
+<img width="352" alt="shantae" src="https://gyazo.com/71477827ab99b7c42908292291ba414b.png" />&nbsp;<img width="352" alt="pokered" src="https://gyazo.com/22e9e6adf186408cc7a2b3c6af630bd1.png" />
 
 ## Features
 
@@ -18,7 +18,7 @@ You can play on [web](https://dawngb.vercel.app/)!
 
 ## Usage
 
-- Desktop: `go run ./src/ebi` and drag and drop a ROM file into the window.
+- Desktop: Run `go run ./src/ebi` and drag and drop a ROM file into the window.
 - Browser: Visit [here](https://dawngb.vercel.app/).
 
 Key mapping is as follows:
