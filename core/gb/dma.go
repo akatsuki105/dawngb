@@ -82,19 +82,15 @@ func (d *dmaController) Write(addr uint16, val uint8) {
 
 func (d *dmaController) runGDMA() {
 	period := int64(d.length) * 4
-	d.g.dma.Callback = func(cyclesLate int64) {
-		for d.length > 0 {
-			for i := uint16(0); i < 16; i++ {
-				d.g.video.Write(d.dst+i, d.g.m.Read(d.src+i))
-			}
-			d.src += 16
-			d.dst += 16
-			d.length -= 16
+	for d.length > 0 {
+		for i := uint16(0); i < 16; i++ {
+			d.g.video.Write(d.dst+i, d.g.m.Read(d.src+i))
 		}
-		d.g.blocked = false
+		d.src += 16
+		d.dst += 16
+		d.length -= 16
 	}
-	d.g.blocked = true
-	d.g.s.Schedule(&d.g.dma, period)
+	d.g.s.Add(period)
 }
 
 // HBlank になるたびに実行される
