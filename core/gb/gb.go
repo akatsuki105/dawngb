@@ -24,6 +24,12 @@ type peripheral interface {
 	Deserialize(state io.Reader)
 }
 
+type oamDmaController struct {
+	active bool
+	src    uint16
+	until  int64
+}
+
 type GB struct {
 	s         *sched.Sched
 	cpu       *cpu.Cpu
@@ -39,11 +45,11 @@ type GB struct {
 	interrupt [5]bool // IF
 	dma       sched.Event
 	halted    bool
-	blocked   bool // DMA
-	key1      bool // FF4D's bit 0
-	inOAMDMA  bool
+	blocked   bool    // DMA
+	key1      bool    // FF4D's bit 0
 	inputs    [8]bool // A, B, Select, Start, Right, Left, Up, Down
 	runHDMA   func()
+	oamDMA    oamDmaController
 }
 
 func New(audioBuffer io.Writer) *GB {
@@ -67,7 +73,7 @@ func (g *GB) ID() string { return "GB" }
 
 func (g *GB) Reset(hasBIOS bool) {
 	g.ie, g.interrupt = 0, [5]bool{}
-	g.halted, g.blocked, g.key1, g.inOAMDMA = false, false, false, false
+	g.halted, g.blocked, g.key1, g.oamDMA.active = false, false, false, false
 
 	model := 0
 	if g.cartridge != nil && g.cartridge.IsCGB() {
@@ -157,10 +163,24 @@ func (g *GB) run() {
 		}
 	}
 
-	g.audio.Add(g.s.Cycle() - prev)
-	g.video.Add(g.s.Cycle() - prev)
-	g.timer.tick(g.s.Cycle() - prev)
-	g.serial.tick(g.s.Cycle() - prev)
+	g.tick(g.s.Cycle() - prev)
+}
+
+func (g *GB) tick(cycles int64) {
+	g.audio.Add(cycles)
+	g.video.Add(cycles)
+	g.timer.tick(cycles)
+	g.serial.tick(cycles)
+
+	if g.oamDMA.active {
+		g.oamDMA.until -= cycles
+		if g.oamDMA.until <= 0 {
+			for i := uint16(0); i < 160; i++ {
+				g.video.Write(0xFE00+i, g.m.Read(g.oamDMA.src+i))
+			}
+			g.oamDMA.active = false
+		}
+	}
 
 	g.s.Commit()
 }
@@ -201,14 +221,11 @@ func (g *GB) checkInterrupt() int {
 }
 
 func (g *GB) triggerOAMDMA(src uint16) {
-	g.dma.Callback = func(cyclesLate int64) {
-		for i := uint16(0); i < 160; i++ {
-			g.video.Write(0xFE00+i, g.m.Read(src+i))
-		}
-		g.inOAMDMA = false
+	if !g.oamDMA.active {
+		g.oamDMA.active = true
+		g.oamDMA.src = src
+		g.oamDMA.until = 160 * g.cpu.Cycle
 	}
-	g.inOAMDMA = true
-	g.s.Schedule(&g.dma, 160*g.cpu.Cycle)
 }
 
 func (g *GB) triggerHDMA() {

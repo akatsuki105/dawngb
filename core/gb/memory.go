@@ -32,7 +32,7 @@ func (m *Memory) Reset(hasBIOS bool) {
 }
 
 func (m *Memory) Read(addr uint16) byte {
-	if m.gb.inOAMDMA {
+	if m.gb.oamDMA.active {
 		if addr < 0xFF80 && addr > 0xFFFE {
 			return 0xFF
 		}
@@ -103,7 +103,7 @@ func (m *Memory) Read(addr uint16) byte {
 }
 
 func (m *Memory) Write(addr uint16, val byte) {
-	if m.gb.inOAMDMA {
+	if m.gb.oamDMA.active {
 		if addr < 0xFF80 && addr > 0xFFFE {
 			return
 		}
