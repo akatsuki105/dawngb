@@ -3,6 +3,7 @@ package main
 // #include "./libretro.h"
 import "C"
 import (
+	"bytes"
 	"os"
 	"unsafe"
 
@@ -50,7 +51,9 @@ var (
 )
 
 type emulator struct {
-	c core.Core
+	c            core.Core
+	samples      []byte
+	sampleBuffer *bytes.Buffer
 }
 
 var e *emulator
@@ -88,8 +91,10 @@ func retro_set_input_state(cb C.retro_input_state_t) {
 //export retro_init
 func retro_init() {
 	e = &emulator{
-		c: core.New("GB", nil),
+		sampleBuffer: bytes.NewBuffer(make([]byte, 0)),
+		samples:      make([]byte, 4096),
 	}
+	e.c = core.New("GB", e.sampleBuffer)
 }
 
 //export retro_deinit
@@ -150,6 +155,7 @@ func retro_run() {
 	}
 
 	e.c.RunFrame()
+	audioBatchCallback()
 	renderCheckered()
 }
 
@@ -191,6 +197,18 @@ func retro_load_game(info *C.struct_retro_game_info) C.bool {
 	e.c.LoadROM(rom)
 
 	return true
+}
+
+func audioBatchCallback() {
+	if e.c != nil {
+		for i := 0; i < len(e.samples); i++ {
+			e.samples[i] = 0
+		}
+		n, err := e.sampleBuffer.Read(e.samples)
+		if err == nil && n >= 4 {
+			C.call_audio_batch_cb((*C.int16_t)(unsafe.Pointer(&e.samples[0])), C.ulong(n/4))
+		}
+	}
 }
 
 //export retro_load_game_special

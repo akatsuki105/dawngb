@@ -35,7 +35,7 @@ godot: goenv
 	cp "build/libgodotgo-gb-macos-$(GOARCH).h" "/Users/akatsuki/Dev/Godot/GameBoy/lib/libgodotgo-gb-macos-$(GOARCH).h"
 
 libretro: goenv
-	GOARCH=$(GOARCH) CGO_ENABLED=1 go build -buildmode=c-shared -o build/$(NAME)_$(GOARCH)_libretro.dylib ./src/libretro/main.go
+	GOARCH=$(GOARCH) CGO_ENABLED=1 go build -buildmode=c-shared -o build/libretro/$(NAME)_$(GOARCH)_libretro.dylib ./src/libretro/main.go
 
 clean:
 	rm -rf build
