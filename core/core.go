@@ -14,33 +14,16 @@ const (
 )
 
 type Core interface {
-	// Get Core ID
-	ID() ID
-
+	ID() ID // Get Core ID
 	Reset(hasBIOS bool)
-
-	// LoadROM loads game rom
-	//
-	// It assumes an environment with enough memory, so it is necessary to pass the complete ROM data in advance.
-	//
-	// NOTE: romData is mutable(not copied).
-	LoadROM(romData []byte) error
-
-	LoadSRAM(sramData []byte) error
-
+	LoadROM(romData []byte) error // romData is mutable(not copied).
 	SRAM() []byte
-
-	// RunFrame runs emulator until a next frame
+	LoadSRAM(sramData []byte) error
 	RunFrame()
-
-	// Get display resolution
-	Resolution() (w int, h int)
-
+	Resolution() (w int, h int) // Get display resolution
 	Screen() []color.RGBA
-
 	SetKeyInput(key string, press bool)
-
-	Title() string
+	Title() string // Get title of the game
 
 	// Serialize
 	Serialize(state io.Writer)
