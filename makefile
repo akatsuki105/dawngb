@@ -31,6 +31,8 @@ godot: goenv
 	CGO_CFLAGS='-Og -g3 -g -fPIC' \
 	CGO_LDFLAGS='-Og -g3 -g' \
 	go build -gcflags=all="-N -l" -tags tools -buildmode=c-shared -x -trimpath -o "build/libgodotgo-gb-macos-$(GOARCH).dylib" ./src/godot/main.go
+	cp "build/libgodotgo-gb-macos-$(GOARCH).dylib" "/Users/akatsuki/Dev/Godot/GameBoy/lib/libgodotgo-gb-macos-$(GOARCH).dylib"
+	cp "build/libgodotgo-gb-macos-$(GOARCH).h" "/Users/akatsuki/Dev/Godot/GameBoy/lib/libgodotgo-gb-macos-$(GOARCH).h"
 
 libretro: goenv
 	GOARCH=$(GOARCH) CGO_ENABLED=1 go build -buildmode=c-shared -o build/$(NAME)_$(GOARCH)_libretro.dylib ./src/libretro/main.go
