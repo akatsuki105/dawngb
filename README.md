@@ -19,8 +19,8 @@ You can play on [web](https://dawngb.vercel.app/)!
 
 - GB(DMG) and GBC(CGB) support
 - MBC1, MBC3, MBC5, MBC30 support
-- Sound support
-- Libretro support
+- Sound(APU) support
+- Libretro support(run `make libretro`)
 - Multiplatform support
 - Work on Browser([here](https://dawngb.vercel.app/))
 
@@ -48,6 +48,6 @@ Key mapping is as follows:
 
 ## Accuracy
 
-Keep the code as simple as possible, so synchronization is done at each instruction, and drawing is done at once on HBlank.
+Keep the code as simple as possible, so synchronization is done at each instruction, and line-rendering is done at once on HBlank.
 
 So game like "Prehistorik Man", which modifies the PPU registers during mid-frame, may not draw correctly.
