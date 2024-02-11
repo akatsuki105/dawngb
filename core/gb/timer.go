@@ -10,8 +10,8 @@ import (
 var timaClock = [4]int64{64, 1, 4, 16}
 
 type timer struct {
-	cycles         int64
 	g              *GB
+	cycles         int64 // CPUから見て遅れているマスターサイクル数
 	tima, tma, tac uint8
 	counter        int64 // 524288Hz(一番細かいのが524288Hzなのであとはそれの倍数で数えれば良い)
 }
