@@ -5,33 +5,33 @@ import (
 	"io"
 
 	"github.com/akatsuki105/dawngb/util"
-	"github.com/akatsuki105/dawngb/util/sched"
 )
 
 var timaClock = [4]int64{64, 1, 4, 16}
 
 type timer struct {
+	cycles         int64
 	g              *GB
 	tima, tma, tac uint8
-
-	updateEvent sched.Event
-	counter     int64 // 524288Hz(一番細かいのが524288Hzなのであとはそれの倍数で数えれば良い)
+	counter        int64 // 524288Hz(一番細かいのが524288Hzなのであとはそれの倍数で数えれば良い)
 }
 
-func newTimer(g *GB) *timer {
-	t := &timer{
-		g: g,
-	}
-	t.updateEvent = *sched.NewEvent("GB_TIMER_UPDATE", t.update)
-	return t
-}
+func newTimer(g *GB) *timer { return &timer{g: g} }
 
 func (t *timer) Reset(hasBIOS bool) {
+	t.cycles = 0
 	t.counter, t.tima, t.tma, t.tac = 0, 0, 0, 0
 	if !hasBIOS {
 		t.tac = 0xF8
 	}
-	t.g.s.Reschedule(&t.updateEvent, 16)
+}
+
+func (t *timer) Add(cycles int64) {
+	t.cycles += cycles
+	for t.cycles >= 16 {
+		t.update()
+		t.cycles -= 16
+	}
 }
 
 func (t *timer) Read(addr uint16) uint8 {
@@ -63,7 +63,8 @@ func (t *timer) Write(addr uint16, val uint8) {
 	}
 }
 
-func (t *timer) update(cyclesLate int64) {
+// 524288Hz
+func (t *timer) update() {
 	x := t.g.cpu.Cycle / 4
 
 	t.counter++
@@ -76,21 +77,20 @@ func (t *timer) update(cyclesLate int64) {
 			}
 		}
 	}
-
-	t.g.s.Reschedule(&t.updateEvent, 16-cyclesLate) // 524288Hz
 }
 
 func (t *timer) Serialize(s io.Writer) {
-	data := []uint8{t.tima, t.tma, t.tac}
-	binary.LittleEndian.PutUint64(data, uint64(t.counter))
-	binary.LittleEndian.PutUint64(data, uint64(t.g.s.Until(&t.updateEvent)))
+	data := []uint8{}
+	binary.LittleEndian.PutUint64(data, uint64(t.cycles))  // 8
+	data = append(data, t.tima, t.tma, t.tac)              // 3
+	binary.LittleEndian.PutUint64(data, uint64(t.counter)) // 8
 	s.Write(data)
 }
 
 func (t *timer) Deserialize(s io.Reader) {
-	data := make([]uint8, 8)
+	data := make([]uint8, 19)
 	s.Read(data)
-	t.tima, t.tma, t.tac = data[0], data[1], data[2]
-	t.counter = int64(binary.LittleEndian.Uint64(data))
-	t.g.s.Reschedule(&t.updateEvent, int64(binary.LittleEndian.Uint64(data)))
+	t.cycles = int64(binary.LittleEndian.Uint64(data[0:8]))
+	t.tima, t.tma, t.tac = data[8], data[9], data[10]
+	t.counter = int64(binary.LittleEndian.Uint64(data[11:19]))
 }

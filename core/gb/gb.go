@@ -31,7 +31,7 @@ type GB struct {
 	s         *sched.Sched
 	cartridge *cartridge.Cartridge
 	input     peripheral
-	timer     peripheral
+	timer     *timer
 	audio     audio.Audio
 	ie        uint8
 	interrupt [5]bool // IF
@@ -159,6 +159,7 @@ func (g *GB) run() {
 
 	g.audio.Add(g.s.Cycle() - prev)
 	g.video.Add(g.s.Cycle() - prev)
+	g.timer.Add(g.s.Cycle() - prev)
 
 	g.s.Commit()
 }
