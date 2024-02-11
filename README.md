@@ -6,8 +6,8 @@ You can play on [web](https://dawngb.vercel.app/)!
 
 ## Screenshots
 
-<img width="352" alt="prism" src="https://gist.github.com/assets/37920078/c55435ed-833a-47cf-b1d8-321bd3dbce76" />&nbsp;<img width="352" alt="megaman" src="https://gist.github.com/assets/37920078/50395ae9-b12d-4311-b217-1f11b675ea35" />
-<img width="352" alt="shantae" src="https://gist.github.com/assets/37920078/c5ff2de5-a714-4b1f-b4f9-044cf27be7fa" />&nbsp;<img width="352" alt="pokered" src="https://gist.github.com/assets/37920078/40754cc3-3da8-4fa1-a823-87d5635fa450" />
+<img width="352" alt="prism" src="https://gist.github.com/assets/37920078/c55435ed-833a-47cf-b1d8-321bd3dbce76.png" />&nbsp;<img width="352" alt="megaman" src="https://gist.github.com/assets/37920078/50395ae9-b12d-4311-b217-1f11b675ea35.png" />
+<img width="352" alt="shantae" src="https://gist.github.com/assets/37920078/c5ff2de5-a714-4b1f-b4f9-044cf27be7fa.png" />&nbsp;<img width="352" alt="pokered" src="https://gist.github.com/assets/37920078/40754cc3-3da8-4fa1-a823-87d5635fa450.png" />
 
 ## Features
 
