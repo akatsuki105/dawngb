@@ -164,8 +164,8 @@ func (g *GB) tick(cycles int64) {
 }
 
 func (g *GB) catchUp(cycles int64) {
-	g.audio.Add(cycles)
-	g.video.Add(cycles)
+	g.audio.Tick(cycles)
+	g.video.Tick(cycles)
 	g.timer.tick(cycles)
 	g.serial.tick(cycles)
 

@@ -5,7 +5,7 @@ import "io"
 type Audio interface {
 	Reset(hasBIOS bool)
 
-	Add(cycles int64)
+	Tick(cycles int64)
 	CatchUp()
 
 	Read(addr uint16) uint8
@@ -78,7 +78,7 @@ func (a *audio) skipBIOS() {
 	a.Write(0xFF26, 0xF1)
 }
 
-func (a *audio) Add(cycles int64) {
+func (a *audio) Tick(cycles int64) {
 	a.cycles += cycles
 }
 

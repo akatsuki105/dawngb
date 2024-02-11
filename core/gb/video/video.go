@@ -62,7 +62,7 @@ func (v *Video) Screen() []color.RGBA {
 	return v.screen[:]
 }
 
-func (v *Video) Add(cycles int64) {
+func (v *Video) Tick(cycles int64) {
 	v.cycles += cycles
 }
 
