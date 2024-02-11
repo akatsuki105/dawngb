@@ -2,4 +2,5 @@ build/
 dawngb
 dawngb.exe
 rom/
-
+src/godot/**/*.gb
+!src/godot/**/hello.gb

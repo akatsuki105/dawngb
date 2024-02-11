@@ -10,6 +10,10 @@ import (
 	"github.com/godot-go/godot-go/pkg/gdclassimpl"
 )
 
+const (
+	SCALE = 1.
+)
+
 var counter = 0
 
 //go:embed hello.gb
@@ -23,7 +27,7 @@ func RegisterClassScreen() {
 		// V_Readyと_ready、V_Processと_processを紐付ける
 		ClassDBBindMethodVirtual(t, "V_Ready", "_ready", nil, nil)
 		ClassDBBindMethodVirtual(t, "V_Draw", "_draw", nil, nil)
-		ClassDBBindMethodVirtual(t, "V_PhysicsProcess", "_physics_process", nil, nil)
+		ClassDBBindMethodVirtual(t, "V_Process", "_process", []string{"delta"}, nil)
 	})
 }
 
@@ -53,16 +57,14 @@ func (s *Screen) V_Draw() {
 			x := i % 160
 			y := i / 160
 			r, g, b := float32(data[i].R)/255.0, float32(data[i].G)/255.0, float32(data[i].B)/255.0
-			s.DrawRect(NewRect2WithFloat32Float32Float32Float32(float32(x), float32(y), 1.0, 1.0), NewColorWithFloat32Float32Float32(r, g, b), false, 1.0)
+			s.DrawRect(NewRect2WithFloat32Float32Float32Float32(float32(x)*SCALE, float32(y)*SCALE, SCALE, SCALE), NewColorWithFloat32Float32Float32(r, g, b), true, -1.0)
 		}
 	}
 }
 
-func (s *Screen) V_PhysicsProcess() {
-	if counter < 180 {
-		gb.RunFrame()
-	}
-	if counter == 180 {
+func (s *Screen) V_Process(delta float32) {
+	gb.RunFrame()
+	if counter%3 == 0 {
 		s.QueueRedraw()
 	}
 	counter++

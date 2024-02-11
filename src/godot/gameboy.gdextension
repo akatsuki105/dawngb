@@ -1,0 +1,10 @@
+[configuration]
+
+entry_symbol = "GameBoyInit"
+compatibility_minimum = 4.1
+
+[libraries]
+
+macos.debug = "res://lib/libgodotgo-gb-macos-arm64.dylib"
+macos.release = "res://lib/libgodotgo-gb-macos-arm64.dylib"
+
