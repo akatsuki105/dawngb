@@ -64,8 +64,9 @@ func (s *Screen) V_Draw() {
 			r, g, b := float32(data[y*160+x].R)/255.0, float32(data[y*160+x].G)/255.0, float32(data[y*160+x].B)/255.0
 			points.SetIndexed(int64(x), NewVector2WithFloat32Float32(float32(x)*SCALE, float32(y)*SCALE))
 			colors.SetIndexed(int64(x), NewColorWithFloat32Float32Float32(r, g, b))
+			s.DrawRect(NewRect2WithFloat32Float32Float32Float32(float32(x)*SCALE, float32(y)*SCALE, SCALE, SCALE), NewColorWithFloat32Float32Float32(r, g, b), false, -1)
 		}
-		s.DrawPolylineColors(points, colors, 1, false)
+		// s.getFrameBuffer().DrawMultilineColors(points, colors, -1)
 		// s.DrawPolygon(points, colors, NewPackedVector2Array(), nil)
 	}
 	// s.DrawTextureRect(s.getFrameBuffer().GetTexture(), NewRect2WithFloat32Float32Float32Float32(0, 0, 160*SCALE, 144*SCALE), false, NewColorWithFloat32Float32Float32(1, 1, 1), false)
