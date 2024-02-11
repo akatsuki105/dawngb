@@ -25,14 +25,16 @@ type peripheral interface {
 }
 
 type GB struct {
+	s         *sched.Sched
 	cpu       *cpu.Cpu
 	m         *Memory
 	video     *video.Video
-	s         *sched.Sched
+	audio     audio.Audio
 	cartridge *cartridge.Cartridge
 	input     peripheral
 	timer     *timer
-	audio     audio.Audio
+	serial    *serial
+	dmac      peripheral
 	ie        uint8
 	interrupt [5]bool // IF
 	dma       sched.Event
@@ -40,11 +42,8 @@ type GB struct {
 	blocked   bool // DMA
 	key1      bool // FF4D's bit 0
 	inOAMDMA  bool
-	sb, sc    uint8
 	inputs    [8]bool // A, B, Select, Start, Right, Left, Up, Down
-	dmac      peripheral
 	runHDMA   func()
-	serial    sched.Event
 }
 
 func New(audioBuffer io.Writer) *GB {
@@ -60,7 +59,7 @@ func New(audioBuffer io.Writer) *GB {
 	g.audio = audio.New(audioBuffer)
 	g.input = newInput(g)
 	g.dmac = newDMAController(g)
-	g.serial = *sched.NewEvent("GB_SERIAL", g.dummyTransfer)
+	g.serial = newSerial(g)
 	return g
 }
 
@@ -83,6 +82,7 @@ func (g *GB) Reset(hasBIOS bool) {
 	g.timer.Reset(hasBIOS)
 	g.input.Reset(hasBIOS)
 	g.dmac.Reset(hasBIOS)
+	g.serial.Reset(hasBIOS)
 
 	if !hasBIOS {
 		g.m.Write(0xFF02, 0x7F)
@@ -159,7 +159,8 @@ func (g *GB) run() {
 
 	g.audio.Add(g.s.Cycle() - prev)
 	g.video.Add(g.s.Cycle() - prev)
-	g.timer.Add(g.s.Cycle() - prev)
+	g.timer.tick(g.s.Cycle() - prev)
+	g.serial.tick(g.s.Cycle() - prev)
 
 	g.s.Commit()
 }
@@ -235,13 +236,6 @@ func (g *GB) stop() {
 		}
 		g.key1 = false
 	}
-}
-
-func (g *GB) dummyTransfer(cyclesLate int64) {
-	// ポケモンクリスタルの起動にシリアル通信機能が必要なので暫定措置
-	g.sc &= 0x7F
-	g.sb = 0xFF
-	g.requestInterrupt(3)
 }
 
 func (g *GB) Serialize(state io.Writer) {

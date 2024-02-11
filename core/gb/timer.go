@@ -26,7 +26,7 @@ func (t *timer) Reset(hasBIOS bool) {
 	}
 }
 
-func (t *timer) Add(cycles int64) {
+func (t *timer) tick(cycles int64) {
 	t.cycles += cycles
 	for t.cycles >= 16 {
 		t.update()

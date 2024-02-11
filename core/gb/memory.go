@@ -57,10 +57,8 @@ func (m *Memory) Read(addr uint16) byte {
 		switch addr {
 		case 0xFF00:
 			return m.gb.input.Read(addr)
-		case 0xFF01:
-			return m.gb.sb // TODO: serial
-		case 0xFF02:
-			return m.gb.sc
+		case 0xFF01, 0xFF02:
+			return m.gb.serial.Read(addr)
 		case 0xFF04, 0xFF05, 0xFF06, 0xFF07:
 			return m.gb.timer.Read(addr)
 		case 0xFF0F:
@@ -132,17 +130,8 @@ func (m *Memory) Write(addr uint16, val byte) {
 		switch addr {
 		case 0xFF00:
 			m.gb.input.Write(addr, val)
-		case 0xFF01:
-			m.gb.sb = val
-		case 0xFF02:
-			m.gb.sc = val
-			// 一部のソフト(ポケモンクリスタル など)は起動時にシリアル通信を実装してないと動かないのでダミーで実装
-			if util.Bit(val, 7) {
-				m.gb.s.Cancel(&m.gb.serial)
-				if util.Bit(val, 0) {
-					m.gb.s.Schedule(&m.gb.serial, 512*8)
-				}
-			}
+		case 0xFF01, 0xFF02:
+			m.gb.serial.Write(addr, val)
 		case 0xFF04, 0xFF05, 0xFF06, 0xFF07:
 			m.gb.timer.Write(addr, val)
 		case 0xFF0F:
