@@ -1,6 +1,6 @@
 # DawnGB
 
-DawnGB is "cycle-count" accurate GameBoy Color emulator written in Go.
+DawnGB is GameBoy Color emulator written in Go.
 
 You can play on [web](https://dawngb.vercel.app/)!
 
@@ -8,8 +8,8 @@ You can play on [web](https://dawngb.vercel.app/)!
 
 ### Desktop
 
-<img width="352" alt="prism" src="https://gyazo.com/b8fb82f1c38d618a5693d754e8466bf0.png" />&nbsp;<img width="352" alt="megaman" src="https://gyazo.com/47ab176b9bde4efc2c86f2574fbf250b.png" />
-<img width="352" alt="shantae" src="https://gyazo.com/71477827ab99b7c42908292291ba414b.png" />&nbsp;<img width="352" alt="pokered" src="https://gyazo.com/22e9e6adf186408cc7a2b3c6af630bd1.png" />
+<img width="300" alt="prism" src="https://gyazo.com/82888eedb9501fb6a7c83c2b76f1fe8a.webp" />&nbsp;<img width="300" alt="megaman" src="https://gyazo.com/6a65b22547c7cddeb07a77ad5400afc4.webp" />
+<img width="300" alt="shantae" src="https://gyazo.com/d0293d5fc976614a0322f44b3e6c8130.webp" />&nbsp;<img width="300" alt="pokered" src="https://gyazo.com/043aa023624a1da45f6e8487cf33143d.webp" />
 
 ### Browser(Web)
 
