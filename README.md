@@ -19,7 +19,9 @@ You can play on [web](https://dawngb.vercel.app/)!
 
 - GB(DMG) and GBC(CGB) support
 - MBC1, MBC3, MBC5, MBC30 support
+- Sound support
 - Libretro support
+- Multiplatform support
 - Work on Browser([here](https://dawngb.vercel.app/))
 
 ## Usage
@@ -34,6 +36,15 @@ Key mapping is as follows:
 - `Start`: Enter
 - `Select`: Backspace
 - `↑` `↓` `←` `→`: Arrow keys
+
+## Internal
+
+```sh
+.
+├── core  # Emulator core
+├── src   # Frontend
+└── util  # Utility (should be renamed to "internal" in the future)
+```
 
 ## Accuracy
 
