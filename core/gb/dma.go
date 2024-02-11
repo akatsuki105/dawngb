@@ -18,6 +18,7 @@ type dmaController struct {
 	src, dst  uint16
 	length    uint16
 	completed bool
+	doHDMA    bool
 }
 
 func newDMAController(g *GB) *dmaController {
@@ -95,21 +96,17 @@ func (d *dmaController) runGDMA() {
 
 // HBlank になるたびに実行される
 func (d *dmaController) runHDMA() {
-	d.g.dma.Callback = func(cyclesLate int64) {
-		for i := uint16(0); i < 16; i++ {
-			d.g.video.Write(d.dst, d.g.m.Read(d.src))
-			d.src++
-			d.dst++
-			d.length--
-		}
-		if d.length == 0 {
-			d.g.runHDMA = nil
-			d.completed = true
-		}
-		d.g.blocked = false
+	for i := uint16(0); i < 16; i++ {
+		d.g.video.Write(d.dst, d.g.m.Read(d.src))
+		d.src++
+		d.dst++
+		d.length--
 	}
-	d.g.blocked = true
-	d.g.s.Schedule(&d.g.dma, 64)
+	if d.length == 0 {
+		d.g.runHDMA = nil
+		d.completed = true
+	}
+	d.g.s.Add(64)
 }
 
 func (d *dmaController) Serialize(s io.Writer) {

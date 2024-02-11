@@ -40,12 +40,10 @@ type GB struct {
 	input     peripheral
 	timer     *timer
 	serial    *serial
-	dmac      peripheral
+	dmac      *dmaController
 	ie        uint8
 	interrupt [5]bool // IF
-	dma       sched.Event
 	halted    bool
-	blocked   bool    // DMA
 	key1      bool    // FF4D's bit 0
 	inputs    [8]bool // A, B, Select, Start, Right, Left, Up, Down
 	runHDMA   func()
@@ -55,8 +53,7 @@ type GB struct {
 func New(audioBuffer io.Writer) *GB {
 	s := sched.New()
 	g := &GB{
-		s:   s,
-		dma: *sched.NewEvent("GB_DMA", func(cycle int64) {}),
+		s: s,
 	}
 	g.m = newMemory(g)
 	g.cpu = cpu.New(g.m, g.halt, g.stop, g.s.Add)
@@ -73,7 +70,7 @@ func (g *GB) ID() string { return "GB" }
 
 func (g *GB) Reset(hasBIOS bool) {
 	g.ie, g.interrupt = 0, [5]bool{}
-	g.halted, g.blocked, g.key1, g.oamDMA.active = false, false, false, false
+	g.halted, g.key1, g.oamDMA.active = false, false, false
 
 	model := 0
 	if g.cartridge != nil && g.cartridge.IsCGB() {
@@ -144,8 +141,9 @@ func (g *GB) RunFrame() {
 func (g *GB) run() {
 	prev := g.s.Cycle()
 
-	if g.blocked {
-		g.s.Add(max(g.s.UntilNextEvent(), 1))
+	if g.dmac.doHDMA {
+		g.dmac.doHDMA = false
+		g.dmac.runHDMA()
 	} else {
 		irqID := g.checkInterrupt()
 		if irqID >= 0 {
@@ -181,8 +179,6 @@ func (g *GB) tick(cycles int64) {
 			g.oamDMA.active = false
 		}
 	}
-
-	g.s.Commit()
 }
 
 func (g *GB) Resolution() (w int, h int) { return 160, 144 }
@@ -230,7 +226,7 @@ func (g *GB) triggerOAMDMA(src uint16) {
 
 func (g *GB) triggerHDMA() {
 	if g.runHDMA != nil {
-		g.runHDMA()
+		g.dmac.doHDMA = true
 	}
 }
 
