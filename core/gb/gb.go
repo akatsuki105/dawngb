@@ -10,7 +10,6 @@ import (
 	"github.com/akatsuki105/dawngb/core/gb/cpu"
 	"github.com/akatsuki105/dawngb/core/gb/video"
 	"github.com/akatsuki105/dawngb/util"
-	"github.com/akatsuki105/dawngb/util/sched"
 )
 
 var buttons = [8]string{"A", "B", "SELECT", "START", "RIGHT", "LEFT", "UP", "DOWN"}
@@ -31,7 +30,7 @@ type oamDmaController struct {
 }
 
 type GB struct {
-	s         *sched.Sched
+	cycles    int64
 	cpu       *cpu.Cpu
 	m         *Memory
 	video     *video.Video
@@ -51,12 +50,9 @@ type GB struct {
 }
 
 func New(audioBuffer io.Writer) *GB {
-	s := sched.New()
-	g := &GB{
-		s: s,
-	}
+	g := &GB{}
 	g.m = newMemory(g)
-	g.cpu = cpu.New(g.m, g.halt, g.stop, g.s.Add)
+	g.cpu = cpu.New(g.m, g.halt, g.stop, g.tick)
 	g.video = video.New(g.requestInterrupt, g.triggerHDMA)
 	g.timer = newTimer(g)
 	g.audio = audio.New(audioBuffer)
@@ -77,7 +73,6 @@ func (g *GB) Reset(hasBIOS bool) {
 		model = 1
 	}
 
-	g.s.Reset()
 	g.m.Reset(hasBIOS)
 	g.cpu.Reset(hasBIOS)
 	g.video.Reset(model, hasBIOS)
@@ -126,10 +121,10 @@ func (g *GB) SRAM() []byte {
 func (g *GB) RunFrame() {
 	if g.cartridge != nil {
 		const FRAME = 70224 * video.CYCLE
-		start := g.s.Cycle()
+		start := g.cycles
 
 		frame := g.video.FrameCounter
-		for frame == g.video.FrameCounter && ((g.s.Cycle() - start) < FRAME) {
+		for frame == g.video.FrameCounter && ((g.cycles - start) < FRAME) {
 			g.run()
 			g.video.CatchUp()
 		}
@@ -139,7 +134,7 @@ func (g *GB) RunFrame() {
 }
 
 func (g *GB) run() {
-	prev := g.s.Cycle()
+	prev := g.cycles
 
 	if g.dmac.doHDMA {
 		g.dmac.doHDMA = false
@@ -155,16 +150,20 @@ func (g *GB) run() {
 				g.cpu.Step()
 			}
 		} else if g.halted {
-			g.s.Add(max(g.s.UntilNextEvent(), 1))
+			g.tick(1)
 		} else {
 			g.cpu.Step()
 		}
 	}
 
-	g.tick(g.s.Cycle() - prev)
+	g.catchUp(g.cycles - prev)
 }
 
 func (g *GB) tick(cycles int64) {
+	g.cycles += cycles
+}
+
+func (g *GB) catchUp(cycles int64) {
 	g.audio.Add(cycles)
 	g.video.Add(cycles)
 	g.timer.tick(cycles)

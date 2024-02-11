@@ -91,7 +91,7 @@ func (d *dmaController) runGDMA() {
 		d.dst += 16
 		d.length -= 16
 	}
-	d.g.s.Add(period)
+	d.g.tick(period)
 }
 
 // HBlank になるたびに実行される
@@ -106,7 +106,7 @@ func (d *dmaController) runHDMA() {
 		d.g.runHDMA = nil
 		d.completed = true
 	}
-	d.g.s.Add(64)
+	d.g.tick(64)
 }
 
 func (d *dmaController) Serialize(s io.Writer) {
