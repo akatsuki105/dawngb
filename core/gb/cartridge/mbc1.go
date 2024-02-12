@@ -30,8 +30,7 @@ func (m *mbc1) read(addr uint16) uint8 {
 				romBank |= (uint(m.ramBank) << 5)
 			}
 		}
-		bank := m.c.rom[(16*KB)*romBank:]
-		return bank[addr&0x3FFF]
+		return m.c.rom[(romBank<<14)|uint(addr&0x3FFF)]
 	case 0xA, 0xB:
 		if m.ramEnabled {
 			ramBank := uint(0)
@@ -40,8 +39,7 @@ func (m *mbc1) read(addr uint16) uint8 {
 					ramBank = uint(m.ramBank)
 				}
 			}
-			bank := m.c.ram[(8*KB)*ramBank:]
-			return bank[addr&0x1FFF]
+			return m.c.ram[(ramBank<<13)|uint(addr&0x1FFF)]
 		}
 	}
 	return 0xFF
