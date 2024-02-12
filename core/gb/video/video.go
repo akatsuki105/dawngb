@@ -17,10 +17,9 @@ type VRAM struct {
 
 type Video struct {
 	cycles          int64 // 遅れているサイクル数(8.38MHzのマスターサイクル単位)
-	dot             int
 	screen          [160 * 144]color.RGBA
 	FrameCounter    uint64
-	ly              int
+	lx, ly          int
 	r               renderer.Renderer
 	ram             VRAM
 	lcdc, stat, lyc uint8
@@ -44,7 +43,7 @@ func New(onInterrupt func(id int), onHBlank func()) *Video {
 
 func (v *Video) Reset(model int, hasBIOS bool) {
 	v.r = renderer.New("software", v.ram.data[:], v.oam[:], model)
-	v.ly, v.dot = 0, 0
+	v.lx, v.ly = 0, 0
 	v.stat = 0x80
 	v.ram.bank = 0
 	v.objCount = 0
@@ -72,7 +71,7 @@ func (v *Video) CatchUp() {
 	for i := 0; i < int(dotCycles); i++ {
 		if util.Bit(v.lcdc, 7) {
 			if v.ly < 144 {
-				switch v.dot {
+				switch v.lx {
 				case 0:
 					v.scanOAM()
 				case 80:
@@ -81,9 +80,9 @@ func (v *Video) CatchUp() {
 					v.hblank()
 				}
 			}
-			v.dot++
-			if v.dot == 456 {
-				v.dot = 0
+			v.lx++
+			if v.lx == 456 {
+				v.lx = 0
 				v.incrementLY()
 			}
 		}

@@ -9,9 +9,9 @@ type noise struct {
 
 	envelope *envelope
 
-	lfsr uint16 // シフトレジスタ(Noiseの疑似乱数)
+	lfsr uint16 // Noiseの疑似乱数(lfsr: Linear Feedback Shift Register = 疑似乱数生成アルゴリズム)
 
-	// この2つでノイズの周波数(乱数の生成頻度)を決める
+	// この2つでノイズの周波数(疑似乱数の生成頻度)を決める
 	octave  int // ノイズ周波数2(オクターブ指定)
 	divisor int // ノイズ周波数1(カウント指定)
 	period  int

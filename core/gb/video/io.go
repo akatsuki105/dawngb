@@ -70,7 +70,7 @@ func (v *Video) Write(addr uint16, val uint8) {
 		v.r.SetLCDC(val)
 		if wasEnabled != util.Bit(v.lcdc, 7) { // Toggle
 			v.stat = (v.stat & 0xFC)
-			v.ly, v.dot = 0, 0
+			v.lx, v.ly = 0, 0
 			if util.Bit(v.lcdc, 7) {
 				v.enableLatch = true
 			}
@@ -122,7 +122,7 @@ func (v *Video) canAccessVRAM() bool {
 		mode := v.stat & 0b11
 		switch mode {
 		case 2:
-			return ((v.dot >> 2) != 20)
+			return ((v.lx >> 2) != 20)
 		case 3:
 			return false
 		}
