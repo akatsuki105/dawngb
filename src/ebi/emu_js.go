@@ -30,7 +30,7 @@ func setPaused(this js.Value, args []js.Value) any {
 
 func enableSound(this js.Value, args []js.Value) any {
 	if emu != nil {
-		emu.EnableSound(args[0].Bool())
+		emu.enableSound(args[0].Bool())
 	}
 	return nil
 }

@@ -51,9 +51,9 @@ func Run() exitCode {
 	}()
 
 	if *turbo > 1 {
-		e.Turbo(*turbo)
+		e.setTurbo(*turbo)
 	}
-	e.EnableSound(*sound)
+	e.enableSound(*sound)
 
 	if err := ebiten.RunGame(e); err != nil {
 		fmt.Fprintln(os.Stderr, err)

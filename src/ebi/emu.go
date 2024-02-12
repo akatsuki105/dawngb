@@ -87,6 +87,15 @@ func createEmu() *Emu {
 		taskQueue:    make([]func(), 0, 10),
 	}
 	e.c = core.New("GB", e.sampleBuffer)
+
+	// init Audio
+	context, err := oto.NewContext(44100, 2, 2, len(e.samples))
+	if err != nil {
+		panic("oto.NewContext failed: " + err.Error())
+	}
+	e.context = context
+	e.music = context.NewPlayer()
+
 	emu = e
 	return e
 }
@@ -146,24 +155,13 @@ func (e *Emu) Update() error {
 		e.taskQueue = e.taskQueue[:0]
 	}
 
-	if !e.muted() && e.context == nil {
-		e.initAudio()
-	}
-
 	if e.active && !e.paused {
 		e.pollInput()
 		for i := 0; i < e.turbo; i++ {
 			e.c.RunFrame()
 		}
-		if !e.muted() {
-			for i := 0; i < len(e.samples); i++ {
-				e.samples[i] = 0
-			}
-			n, err := e.sampleBuffer.Read(e.samples)
-			if err == nil && n > 0 {
-				e.music.Write(e.samples[:n])
-			}
-		}
+
+		e.playSound()
 	}
 
 	err := e.handleDropFile()
@@ -243,13 +241,23 @@ func (e *Emu) pollGamepadInput() {
 	}
 }
 
-func (e *Emu) Turbo(speed int) {
+func (e *Emu) playSound() {
+	for i := 0; i < len(e.samples); i++ {
+		e.samples[i] = 0
+	}
+	n, err := e.sampleBuffer.Read(e.samples)
+	if e.soundEnabled && err == nil && n > 0 {
+		e.music.Write(e.samples[:n])
+	}
+}
+
+func (e *Emu) setTurbo(speed int) {
 	e.queueTask(func() {
 		e.turbo = speed
 	})
 }
 
-func (e *Emu) EnableSound(enabled bool) {
+func (e *Emu) enableSound(enabled bool) {
 	e.queueTask(func() {
 		e.soundEnabled = enabled
 	})
@@ -257,19 +265,6 @@ func (e *Emu) EnableSound(enabled bool) {
 
 func (e *Emu) queueTask(f func()) {
 	e.taskQueue = append(e.taskQueue, f)
-}
-
-func (e *Emu) initAudio() {
-	context, err := oto.NewContext(44100, 2, 2, len(e.samples))
-	if err != nil {
-		panic("oto.NewContext failed: " + err.Error())
-	}
-	e.context = context
-	e.music = context.NewPlayer()
-}
-
-func (e *Emu) muted() bool {
-	return !e.soundEnabled || e.turbo > 1
 }
 
 func (e *Emu) handleDropFile() error {
