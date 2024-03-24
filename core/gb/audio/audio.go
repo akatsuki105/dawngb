@@ -18,6 +18,7 @@ type Audio interface {
 
 type audio struct {
 	enabled bool
+	isGBA   bool
 
 	ch1, ch2 *square
 	ch3      *wave
@@ -35,9 +36,10 @@ type audio struct {
 	volume [2]int // NR50(Left, Right)
 }
 
-func New(sampleBuffer io.Writer) Audio {
+func New(sampleBuffer io.Writer, isGBA bool) Audio {
 	return &audio{
 		sampleBuffer: sampleBuffer,
+		isGBA:        isGBA,
 	}
 }
 
@@ -122,6 +124,9 @@ func (a *audio) Step() {
 
 			a.sequencerStep = (a.sequencerStep + 1) % 8
 			a.sequencerCounter = 8192 // 512Hz = 4194304/8192
+			if a.isGBA {
+				a.sequencerCounter = 4096 // 2097152/512 = 4096
+			}
 		}
 
 		a.ch1.clockTimer()
