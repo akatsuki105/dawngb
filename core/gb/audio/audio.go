@@ -14,13 +14,14 @@ type Audio interface {
 
 type audio struct {
 	enabled bool
+	isGBA   bool
 
 	ch1, ch2 *square
 	ch3      *wave
 	ch4      *noise
 
 	sampleBuffer io.Writer
-	cycles       int64 // 遅れているサイクル数(8.3MHzのマスターサイクル単位)
+	cycles       int64 // 遅れているサイクル数(8.3MHzのマスターサイクル単位, GBAの場合は16.78MHzのマスターサイクル単位)
 
 	sequencerCounter int64 // (フレームシーケンサの)512Hzを生み出すためのカウンタ (ref: https://gbdev.io/pandocs/Audio_details.html#div-apu)
 	sequencerStep    int64 // 512Hzから 64, 128, 256Hzなどの生み出すためのカウンタ
@@ -31,9 +32,10 @@ type audio struct {
 	volume [2]int // NR50(Left, Right)
 }
 
-func New(sampleBuffer io.Writer) Audio {
+func New(sampleBuffer io.Writer, isGBA bool) Audio {
 	return &audio{
 		sampleBuffer: sampleBuffer,
+		isGBA:        isGBA,
 	}
 }
 
@@ -84,6 +86,9 @@ func (a *audio) Tick(cycles int64) {
 
 func (a *audio) CatchUp() {
 	apuCycles := a.cycles / 2 // APU　は 4.19MHz で動作する, マスターサイクルを 8.3MHz とすると 8.3MHz / 4.19MHz = 2
+	if a.isGBA {
+		apuCycles = a.cycles / 4
+	}
 
 	for i := int64(0); i < apuCycles; i++ {
 		if a.enabled {
@@ -133,5 +138,9 @@ func (a *audio) CatchUp() {
 		}
 	}
 
-	a.cycles -= apuCycles * 2
+	if a.isGBA {
+		a.cycles -= apuCycles * 4
+	} else {
+		a.cycles -= apuCycles * 2
+	}
 }
