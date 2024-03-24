@@ -10,6 +10,8 @@ type Audio interface {
 
 	Read(addr uint16) uint8
 	Write(addr uint16, val uint8)
+
+	Sample() (lsample, rsample uint8)
 }
 
 type audio struct {
@@ -125,10 +127,8 @@ func (a *audio) CatchUp() {
 
 			// サンプルを生成
 			if a.sampleTimer <= 0 {
-				sample := (a.ch1.getOutput() + a.ch2.getOutput() + a.ch3.getOutput() + a.ch4.getOutput()) // 各チャンネルの出力(音量=波)を足し合わせたものがサンプル
 				if a.sampleBuffer != nil {
-					left := uint8((sample * a.volume[0]) / 7)
-					right := uint8((sample * a.volume[1]) / 7)
+					left, right := a.Sample()
 					a.sampleBuffer.Write([]byte{0, left, 0, right})
 				}
 
@@ -143,4 +143,11 @@ func (a *audio) CatchUp() {
 	} else {
 		a.cycles -= apuCycles * 2
 	}
+}
+
+func (a *audio) Sample() (lsample, rsample uint8) {
+	sample := (a.ch1.getOutput() + a.ch2.getOutput() + a.ch3.getOutput() + a.ch4.getOutput()) // 各チャンネルの出力(音量=波)を足し合わせたものがサンプル
+	left := uint8((sample * a.volume[0]) / 7)
+	right := uint8((sample * a.volume[1]) / 7)
+	return left, right
 }
