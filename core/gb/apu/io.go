@@ -1,4 +1,4 @@
-package audio
+package apu
 
 import (
 	"github.com/akatsuki105/dawngb/util"
@@ -6,8 +6,7 @@ import (
 
 // NOTE: "ゼルダの伝説 ふしぎの木の実" はAPUのNR52を正しく実装しないとタイトル画面から進めない
 
-func (a *audio) Read(addr uint16) uint8 {
-	a.CatchUp()
+func (a *apu) Read(addr uint16) uint8 {
 	switch addr {
 	case 0xFF26:
 		val := uint8(0)
@@ -18,7 +17,7 @@ func (a *audio) Read(addr uint16) uint8 {
 		val = util.SetBit(val, 3, a.ch4.enabled)
 		return val
 	case 0xFF30, 0xFF31, 0xFF32, 0xFF33, 0xFF34, 0xFF35, 0xFF36, 0xFF37, 0xFF38, 0xFF39, 0xFF3A, 0xFF3B, 0xFF3C, 0xFF3D, 0xFF3E, 0xFF3F:
-		if a.model == APU_GBA {
+		if a.model == MODEL_GBA {
 			if a.ch3.bank == 0 {
 				return a.ch3.samples[16+addr-0xFF30]
 			} else {
@@ -29,9 +28,7 @@ func (a *audio) Read(addr uint16) uint8 {
 	return a.ioreg[addr-0xFF10]
 }
 
-func (a *audio) Write(addr uint16, val uint8) {
-	a.CatchUp()
-
+func (a *apu) Write(addr uint16, val uint8) {
 	if addr == 0xFF26 {
 		a.enabled = util.Bit(val, 7)
 	}
@@ -100,7 +97,7 @@ func (a *audio) Write(addr uint16, val uint8) {
 		if !a.ch3.dacEnable {
 			a.ch3.enabled = false
 		}
-		if a.model == APU_GBA {
+		if a.model == MODEL_GBA {
 			a.ch3.mode = int(val>>5) & 0b1
 			a.ch3.bank = int(val>>6) & 0b1
 		}
@@ -123,7 +120,7 @@ func (a *audio) Write(addr uint16, val uint8) {
 				a.ch3.length = 256
 			}
 			a.ch3.window = 0
-			if a.model == APU_GBA {
+			if a.model == MODEL_GBA {
 				if a.ch3.mode == 1 {
 					a.ch3.usedBank = 0
 				} else {
@@ -166,7 +163,7 @@ func (a *audio) Write(addr uint16, val uint8) {
 		a.ch4.ignored = !util.Bit(val, 3)
 
 	case 0xFF30, 0xFF31, 0xFF32, 0xFF33, 0xFF34, 0xFF35, 0xFF36, 0xFF37, 0xFF38, 0xFF39, 0xFF3A, 0xFF3B, 0xFF3C, 0xFF3D, 0xFF3E, 0xFF3F:
-		if a.model == APU_GBA {
+		if a.model == MODEL_GBA {
 			if a.ch3.bank == 0 {
 				a.ch3.samples[16+addr-0xFF30] = val
 			} else {

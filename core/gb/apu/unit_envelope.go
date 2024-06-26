@@ -1,4 +1,4 @@
-package audio
+package apu
 
 // 音の三要素 のうち、 音の大きさ (振幅)
 type envelope struct {

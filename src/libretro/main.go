@@ -118,7 +118,7 @@ func retro_get_system_info(info *C.struct_retro_system_info) {
 //export retro_get_system_av_info
 func retro_get_system_av_info(info *C.struct_retro_system_av_info) {
 	info.timing.fps = C.double(60.0)
-	info.timing.sample_rate = C.double(44100.0) // TODO
+	info.timing.sample_rate = C.double(32768.0)
 
 	info.geometry.base_width = width
 	info.geometry.base_height = height

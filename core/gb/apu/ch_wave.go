@@ -1,4 +1,4 @@
-package audio
+package apu
 
 type wave struct {
 	enabled bool

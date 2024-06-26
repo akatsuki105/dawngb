@@ -5,7 +5,6 @@ import (
 	"image/color"
 	"io"
 
-	"github.com/akatsuki105/dawngb/core/gb/audio"
 	"github.com/akatsuki105/dawngb/core/gb/cartridge"
 	"github.com/akatsuki105/dawngb/core/gb/cpu"
 	"github.com/akatsuki105/dawngb/core/gb/video"
@@ -30,11 +29,10 @@ type oamDmaController struct {
 }
 
 type GB struct {
-	cycles    int64
+	cycles    int64 // 8.3MHzのマスターサイクル単位
 	cpu       *cpu.Cpu
 	m         *Memory
 	video     *video.Video
-	audio     audio.Audio
 	cartridge *cartridge.Cartridge
 	input     peripheral
 	timer     *timer
@@ -47,6 +45,9 @@ type GB struct {
 	inputs    [8]bool // A, B, Select, Start, Right, Left, Up, Down
 	runHDMA   func()
 	oamDMA    oamDmaController
+
+	// for audio
+	audio *audio
 }
 
 func New(audioBuffer io.Writer) *GB {
@@ -55,7 +56,7 @@ func New(audioBuffer io.Writer) *GB {
 	g.cpu = cpu.New(g.m, g.halt, g.stop, g.tick)
 	g.video = video.New(g.requestInterrupt, g.triggerHDMA)
 	g.timer = newTimer(g)
-	g.audio = audio.New(audioBuffer, audio.APU_GB)
+	g.audio = newAudio(audioBuffer)
 	g.input = newInput(g)
 	g.dmac = newDMAController(g)
 	g.serial = newSerial(g)
@@ -76,7 +77,7 @@ func (g *GB) Reset(hasBIOS bool) {
 	g.m.Reset(hasBIOS)
 	g.cpu.Reset(hasBIOS)
 	g.video.Reset(model, hasBIOS)
-	g.audio.Reset(hasBIOS)
+	g.audio.reset(hasBIOS)
 	g.timer.Reset(hasBIOS)
 	g.input.Reset(hasBIOS)
 	g.dmac.Reset(hasBIOS)
@@ -128,7 +129,6 @@ func (g *GB) RunFrame() {
 			g.run()
 			g.video.CatchUp()
 		}
-		g.audio.CatchUp()
 		g.video.CatchUp()
 	}
 }
@@ -164,7 +164,7 @@ func (g *GB) tick(cycles int64) {
 }
 
 func (g *GB) catchUp(cycles int64) {
-	g.audio.Tick(cycles)
+	g.audio.tick(cycles)
 	g.video.Tick(cycles)
 	g.timer.tick(cycles)
 	g.serial.tick(cycles)

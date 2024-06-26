@@ -1,4 +1,4 @@
-package audio
+package apu
 
 type sweep struct {
 	enabled bool

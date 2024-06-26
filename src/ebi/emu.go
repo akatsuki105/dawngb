@@ -89,7 +89,7 @@ func createEmu() *Emu {
 	e.c = core.New("GB", e.sampleBuffer)
 
 	// init Audio
-	context, err := oto.NewContext(44100, 2, 2, len(e.samples))
+	context, err := oto.NewContext(32768, 2, 2, len(e.samples))
 	if err != nil {
 		panic("oto.NewContext failed: " + err.Error())
 	}

@@ -1,4 +1,4 @@
-package audio
+package apu
 
 var squareDutyTable = [4][8]int{
 	{0, 0, 0, 0, 0, 0, 0, 1}, // 12.5%

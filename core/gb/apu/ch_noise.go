@@ -1,4 +1,4 @@
-package audio
+package apu
 
 type noise struct {
 	enabled bool
