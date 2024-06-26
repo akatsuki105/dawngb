@@ -2,6 +2,11 @@ package audio
 
 import "io"
 
+const (
+	APU_GB = iota
+	APU_GBA
+)
+
 type Audio interface {
 	Reset(hasBIOS bool)
 
@@ -10,10 +15,15 @@ type Audio interface {
 
 	Read(addr uint16) uint8
 	Write(addr uint16, val uint8)
+
+	// For GBA
+	Step() // step 1 APU cycle (4.19MHz)
+	Sample() (lsample, rsample uint8)
 }
 
 type audio struct {
 	enabled bool
+	model   int
 
 	ch1, ch2 *square
 	ch3      *wave
@@ -31,9 +41,10 @@ type audio struct {
 	volume [2]int // NR50(Left, Right)
 }
 
-func New(sampleBuffer io.Writer) Audio {
+func New(sampleBuffer io.Writer, model int) Audio {
 	return &audio{
 		sampleBuffer: sampleBuffer,
+		model:        model,
 	}
 }
 
@@ -86,52 +97,61 @@ func (a *audio) CatchUp() {
 	apuCycles := a.cycles / 2 // APU　は 4.19MHz で動作する, マスターサイクルを 8.3MHz とすると 8.3MHz / 4.19MHz = 2
 
 	for i := int64(0); i < apuCycles; i++ {
-		if a.enabled {
-			if a.sequencerCounter > 0 {
-				a.sequencerCounter--
-			} else {
-				is64Hz := a.sequencerStep == 7                                                                          // Envelope sweep
-				is128Hz := a.sequencerStep == 2 || a.sequencerStep == 6                                                 // CH1 freq sweep
-				is256Hz := a.sequencerStep == 0 || a.sequencerStep == 2 || a.sequencerStep == 4 || a.sequencerStep == 6 // Sound length
+		a.Step()
+	}
 
-				if is256Hz {
-					a.ch1.clock256Hz()
-					a.ch2.clock256Hz()
-					a.ch3.clock256Hz()
-					a.ch4.clock256Hz()
-				}
-				if is128Hz {
-					a.ch1.clock128Hz()
-				}
-				if is64Hz {
-					a.ch1.clock64Hz()
-					a.ch2.clock64Hz()
-					a.ch4.clock64Hz()
-				}
+	a.cycles -= apuCycles * 2
+}
 
-				a.sequencerStep = (a.sequencerStep + 1) % 8
-				a.sequencerCounter = 8192 // 512Hz = 4194304/8192
+func (a *audio) Step() {
+	if a.enabled {
+		if a.sequencerCounter > 0 {
+			a.sequencerCounter--
+		} else {
+			is64Hz := a.sequencerStep == 7                                                                          // Envelope sweep
+			is128Hz := a.sequencerStep == 2 || a.sequencerStep == 6                                                 // CH1 freq sweep
+			is256Hz := a.sequencerStep == 0 || a.sequencerStep == 2 || a.sequencerStep == 4 || a.sequencerStep == 6 // Sound length
+
+			if is256Hz {
+				a.ch1.clock256Hz()
+				a.ch2.clock256Hz()
+				a.ch3.clock256Hz()
+				a.ch4.clock256Hz()
+			}
+			if is128Hz {
+				a.ch1.clock128Hz()
+			}
+			if is64Hz {
+				a.ch1.clock64Hz()
+				a.ch2.clock64Hz()
+				a.ch4.clock64Hz()
 			}
 
-			a.ch1.clockTimer()
-			a.ch2.clockTimer()
-			a.ch3.clockTimer()
-			a.ch4.clockTimer()
+			a.sequencerStep = (a.sequencerStep + 1) % 8
+			a.sequencerCounter = 8192 // 512Hz = 4194304/8192
+		}
 
-			// サンプルを生成
+		a.ch1.clockTimer()
+		a.ch2.clockTimer()
+		a.ch3.clockTimer()
+		a.ch4.clockTimer()
+
+		// サンプルを生成
+		if a.sampleBuffer != nil {
 			if a.sampleTimer <= 0 {
-				sample := (a.ch1.getOutput() + a.ch2.getOutput() + a.ch3.getOutput() + a.ch4.getOutput()) // 各チャンネルの出力(音量=波)を足し合わせたものがサンプル
-				if a.sampleBuffer != nil {
-					left := uint8((sample * a.volume[0]) / 7)
-					right := uint8((sample * a.volume[1]) / 7)
-					a.sampleBuffer.Write([]byte{0, left, 0, right})
-				}
+				left, right := a.Sample()
+				a.sampleBuffer.Write([]byte{0, left, 0, right})
 
 				a.sampleTimer = 95 // 44100Hzにダウンサンプリングしたい = 44100Hzごとにサンプルを生成したい = 95APUサイクルごとにサンプルを生成したい(4194304/44100 = 95)
 			}
 			a.sampleTimer--
 		}
 	}
+}
 
-	a.cycles -= apuCycles * 2
+func (a *audio) Sample() (lsample, rsample uint8) {
+	sample := (a.ch1.getOutput() + a.ch2.getOutput() + a.ch3.getOutput() + a.ch4.getOutput()) // 各チャンネルの出力(音量=波)を足し合わせたものがサンプル
+	left := uint8((sample * a.volume[0]) / 7)
+	right := uint8((sample * a.volume[1]) / 7)
+	return left, right
 }

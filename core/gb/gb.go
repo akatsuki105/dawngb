@@ -55,7 +55,7 @@ func New(audioBuffer io.Writer) *GB {
 	g.cpu = cpu.New(g.m, g.halt, g.stop, g.tick)
 	g.video = video.New(g.requestInterrupt, g.triggerHDMA)
 	g.timer = newTimer(g)
-	g.audio = audio.New(audioBuffer)
+	g.audio = audio.New(audioBuffer, audio.APU_GB)
 	g.input = newInput(g)
 	g.dmac = newDMAController(g)
 	g.serial = newSerial(g)

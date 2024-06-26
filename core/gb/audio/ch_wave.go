@@ -12,8 +12,13 @@ type wave struct {
 	period      int // GBでは周波数を指定するのではなく、周期の長さを指定する
 	freqCounter int
 
-	samples [16]uint8 // 4bit sample
+	samples [32]uint8 // 4bit sample
 	window  int       // 0 ~ 31
+
+	// For GBA
+	bank     int // 0 or 1 (NR30's bit6)
+	usedBank int // 現在演奏中のバンク、modeが1の場合は、 .bank の値と必ずしも一致しないので
+	mode     int //　 0: 16バイト(32サンプル)を演奏に使い、裏のバンクでは読み書きを行う、 1: 32バイト(64サンプル)を全部演奏に使う
 }
 
 func newWaveChannel() *wave {
@@ -37,6 +42,9 @@ func (ch *wave) clockTimer() {
 	} else {
 		ch.freqCounter = ch.windowStepCycle()
 		ch.window = (ch.window + 1) & 0x1F
+		if ch.window == 0 {
+			ch.usedBank ^= ch.mode
+		}
 	}
 }
 

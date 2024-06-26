@@ -4,11 +4,10 @@ go 1.21.5
 
 require (
 	github.com/godot-go/godot-go v0.3.17
-	github.com/hajimehoshi/ebiten/v2 v2.6.3
+	github.com/hajimehoshi/ebiten/v2 v2.6.5
 	github.com/hajimehoshi/oto v1.0.1
+	github.com/pkg/profile v1.7.0
 )
-
-replace github.com/godot-go/godot-go => /Users/akatsuki/Dev/Go/godot-go
 
 require (
 	github.com/CannibalVox/cgoalloc v1.2.1 // indirect
@@ -17,7 +16,6 @@ require (
 	github.com/felixge/fgprof v0.9.3 // indirect
 	github.com/google/pprof v0.0.0-20211214055906-6f57359322fd // indirect
 	github.com/jezek/xgb v1.1.0 // indirect
-	github.com/pkg/profile v1.7.0 // indirect
 	go.uber.org/atomic v1.7.0 // indirect
 	go.uber.org/multierr v1.6.0 // indirect
 	go.uber.org/zap v1.16.0 // indirect
