@@ -1,17 +1,22 @@
 package apu
 
+import (
+	"encoding/binary"
+	"io"
+)
+
 type sweep struct {
 	enabled bool
 	square  *square
 
 	// スイープ開始時の周波数(スイープ中に0xFF13と0xFF14に書き込まれて.square.periodが変更されても影響を受けないようにするためのもの)
-	periodShadow int
+	periodShadow int32
 
-	interval int // NR10's bit6-4(スイープ間隔)
+	interval int8 // NR10's bit6-4(スイープ間隔)
 	negate   bool
-	shift    int
+	shift    int8
 
-	step int // スイープ間隔(.interval)をカウントするためのカウンタ
+	step int8 // スイープ間隔(.interval)をカウントするためのカウンタ
 }
 
 func newSweep(ch *square) *sweep {
@@ -83,4 +88,22 @@ func (s *sweep) checkOverflow() {
 			s.square.enabled = false
 		}
 	}
+}
+
+func (s *sweep) serialize(w io.Writer) {
+	binary.Write(w, binary.LittleEndian, s.enabled)
+	binary.Write(w, binary.LittleEndian, s.periodShadow)
+	binary.Write(w, binary.LittleEndian, s.interval)
+	binary.Write(w, binary.LittleEndian, s.negate)
+	binary.Write(w, binary.LittleEndian, s.shift)
+	binary.Write(w, binary.LittleEndian, s.step)
+}
+
+func (s *sweep) deserialize(r io.Reader) {
+	binary.Read(r, binary.LittleEndian, &s.enabled)
+	binary.Read(r, binary.LittleEndian, &s.periodShadow)
+	binary.Read(r, binary.LittleEndian, &s.interval)
+	binary.Read(r, binary.LittleEndian, &s.negate)
+	binary.Read(r, binary.LittleEndian, &s.shift)
+	binary.Read(r, binary.LittleEndian, &s.step)
 }

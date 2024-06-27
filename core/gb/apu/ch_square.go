@@ -1,5 +1,10 @@
 package apu
 
+import (
+	"encoding/binary"
+	"io"
+)
+
 var squareDutyTable = [4][8]int{
 	{0, 0, 0, 0, 0, 0, 0, 1}, // 12.5%
 	{1, 0, 0, 0, 0, 0, 0, 1}, // 25%
@@ -11,17 +16,17 @@ type square struct {
 	enabled bool
 	ignored bool // Ignore sample output
 
-	length int  // 音の残り再生時間
-	stop   bool // .length が 0 になったときに 音を止めるかどうか(NR14's bit6)
+	length int32 // 音の残り再生時間
+	stop   bool  // .length が 0 になったときに 音を止めるかどうか(NR14's bit6)
 
 	envelope *envelope
 	sweep    *sweep
 
-	duty        int // NR11's bit7-6, (squareDutyTable の index)
-	dutyCounter int // 0 ~ 7
+	duty        uint8 // NR11's bit7-6, (squareDutyTable の index)
+	dutyCounter uint8 // 0 ~ 7
 
-	period      int // GBでは周波数を指定するのではなく、周期の長さを指定する, 実際の周波数は ((4194304/32)/(2048-period)) Hz (64~131072 Hz -> 65536~32 APUサイクル)
-	freqCounter int
+	period      int32 // GBでは周波数を指定するのではなく、周期の長さを指定する, 実際の周波数は ((4194304/32)/(2048-period)) Hz (64~131072 Hz -> 65536~32 APUサイクル)
+	freqCounter int32
 }
 
 func newSquareChannel(hasSweep bool) *square {
@@ -73,7 +78,7 @@ func (ch *square) getOutput() int {
 		if ch.enabled {
 			dutyTable := (squareDutyTable[ch.duty])[:]
 			if dutyTable[ch.dutyCounter] != 0 {
-				return ch.envelope.volume
+				return int(ch.envelope.volume)
 			}
 		}
 	}
@@ -81,7 +86,7 @@ func (ch *square) getOutput() int {
 }
 
 // デューティ比の1ステップの長さをAPUサイクル数で返す
-func (ch *square) dutyStepCycle() int {
+func (ch *square) dutyStepCycle() int32 {
 	// hz := (1048576 / (2048 - ch.period)) // freqency
 	// return 4194304 / hz
 	return 4 * (2048 - ch.period)
@@ -101,4 +106,34 @@ func (ch *square) tryRestart() {
 	if ch.length == 0 {
 		ch.length = 64
 	}
+}
+
+func (ch *square) serialize(s io.Writer) {
+	binary.Write(s, binary.LittleEndian, ch.enabled)
+	binary.Write(s, binary.LittleEndian, ch.ignored)
+	binary.Write(s, binary.LittleEndian, ch.length)
+	binary.Write(s, binary.LittleEndian, ch.stop)
+	ch.envelope.serialize(s)
+	if ch.sweep != nil {
+		ch.sweep.serialize(s)
+	}
+	binary.Write(s, binary.LittleEndian, ch.duty)
+	binary.Write(s, binary.LittleEndian, ch.dutyCounter)
+	binary.Write(s, binary.LittleEndian, ch.period)
+	binary.Write(s, binary.LittleEndian, ch.freqCounter)
+}
+
+func (ch *square) deserialize(s io.Reader) {
+	binary.Read(s, binary.LittleEndian, &ch.enabled)
+	binary.Read(s, binary.LittleEndian, &ch.ignored)
+	binary.Read(s, binary.LittleEndian, &ch.length)
+	binary.Read(s, binary.LittleEndian, &ch.stop)
+	ch.envelope.deserialize(s)
+	if ch.sweep != nil {
+		ch.sweep.deserialize(s)
+	}
+	binary.Read(s, binary.LittleEndian, &ch.duty)
+	binary.Read(s, binary.LittleEndian, &ch.dutyCounter)
+	binary.Read(s, binary.LittleEndian, &ch.period)
+	binary.Read(s, binary.LittleEndian, &ch.freqCounter)
 }

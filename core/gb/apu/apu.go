@@ -1,5 +1,10 @@
 package apu
 
+import (
+	"encoding/binary"
+	"io"
+)
+
 const (
 	MODEL_GB = iota
 	MODEL_GBA
@@ -15,11 +20,14 @@ type APU interface {
 	Write(addr uint16, val uint8)
 
 	Sample() (lsample, rsample uint8)
+
+	Serialize(s io.Writer)
+	Deserialize(s io.Reader)
 }
 
 type apu struct {
 	enabled bool
-	model   int
+	model   uint8
 
 	ch1, ch2 *square
 	ch3      *wave
@@ -28,15 +36,13 @@ type apu struct {
 	sequencerCounter int64 // (フレームシーケンサの)512Hzを生み出すためのカウンタ (ref: https://gbdev.io/pandocs/Audio_details.html#div-apu)
 	sequencerStep    int64 // 512Hzから 64, 128, 256Hzなどの生み出すためのカウンタ
 
-	sampleTimer int64 // 1サンプルを生み出すために44100Hzを生み出すためのカウンタ
-
 	ioreg  [0x30]uint8
-	volume [2]int // NR50(Left, Right)
+	volume [2]uint8 // NR50(Left, Right)
 }
 
 func New(model int) APU {
 	return &apu{
-		model: model,
+		model: uint8(model),
 	}
 }
 
@@ -48,8 +54,7 @@ func (a *apu) Reset(hasBIOS bool) {
 	a.ch4 = newNoiseChannel()
 	a.sequencerCounter = 0
 	a.sequencerStep = 0
-	a.sampleTimer = 0
-	a.volume = [2]int{7, 7}
+	a.volume = [2]uint8{7, 7}
 	a.ioreg = [0x30]uint8{}
 	if !hasBIOS {
 		a.skipBIOS()
@@ -118,7 +123,33 @@ func (a *apu) Step() {
 
 func (a *apu) Sample() (lsample, rsample uint8) {
 	sample := (a.ch1.getOutput() + a.ch2.getOutput() + a.ch3.getOutput() + a.ch4.getOutput()) // 各チャンネルの出力(音量=波)を足し合わせたものがサンプル
-	left := uint8((sample * a.volume[0]) / 7)
-	right := uint8((sample * a.volume[1]) / 7)
+	left := uint8((sample * int(a.volume[0])) / 7)
+	right := uint8((sample * int(a.volume[1])) / 7)
 	return left, right
+}
+
+func (a *apu) Serialize(s io.Writer) {
+	binary.Write(s, binary.LittleEndian, a.enabled)
+	binary.Write(s, binary.LittleEndian, a.model)
+	a.ch1.serialize(s)
+	a.ch2.serialize(s)
+	a.ch3.serialize(s)
+	a.ch4.serialize(s)
+	binary.Write(s, binary.LittleEndian, a.sequencerCounter)
+	binary.Write(s, binary.LittleEndian, a.sequencerStep)
+	binary.Write(s, binary.LittleEndian, a.ioreg)
+	binary.Write(s, binary.LittleEndian, a.volume)
+}
+
+func (a *apu) Deserialize(s io.Reader) {
+	binary.Read(s, binary.LittleEndian, &a.enabled)
+	binary.Read(s, binary.LittleEndian, &a.model)
+	a.ch1.deserialize(s)
+	a.ch2.deserialize(s)
+	a.ch3.deserialize(s)
+	a.ch4.deserialize(s)
+	binary.Read(s, binary.LittleEndian, &a.sequencerCounter)
+	binary.Read(s, binary.LittleEndian, &a.sequencerStep)
+	binary.Read(s, binary.LittleEndian, &a.ioreg)
+	binary.Read(s, binary.LittleEndian, &a.volume)
 }

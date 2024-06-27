@@ -1,10 +1,15 @@
 package apu
 
+import (
+	"encoding/binary"
+	"io"
+)
+
 type noise struct {
 	enabled bool
 	ignored bool // Ignore sample output
 
-	length int // 音の残り再生時間
+	length int32 // 音の残り再生時間
 	stop   bool
 
 	envelope *envelope
@@ -12,11 +17,11 @@ type noise struct {
 	lfsr uint16 // Noiseの疑似乱数(lfsr: Linear Feedback Shift Register = 疑似乱数生成アルゴリズム)
 
 	// この2つでノイズの周波数(疑似乱数の生成頻度)を決める
-	octave  int // ノイズ周波数2(オクターブ指定)
-	divisor int // ノイズ周波数1(カウント指定)
-	period  int
+	octave  int32 // ノイズ周波数2(オクターブ指定)
+	divisor int32 // ノイズ周波数1(カウント指定)
+	period  int32
 
-	width int
+	width int32
 
 	output int
 }
@@ -58,7 +63,7 @@ func (ch *noise) clockTimer() {
 	}
 
 	if (ch.lfsr & 1) == 0 {
-		result = ch.envelope.volume
+		result = int(ch.envelope.volume)
 	}
 
 	if !ch.enabled {
@@ -68,8 +73,8 @@ func (ch *noise) clockTimer() {
 	ch.output = result
 }
 
-func (ch *noise) calcFreqency() int {
-	freq := 1
+func (ch *noise) calcFreqency() int32 {
+	freq := int32(1)
 	if ch.divisor != 0 {
 		freq = 2 * ch.divisor
 	}
@@ -97,4 +102,30 @@ func (ch *noise) tryRestart() {
 
 func (ch *noise) dacEnable() bool {
 	return ((ch.envelope.initialVolume != 0) || ch.envelope.direction)
+}
+
+func (ch *noise) serialize(s io.Writer) {
+	binary.Write(s, binary.LittleEndian, ch.enabled)
+	binary.Write(s, binary.LittleEndian, ch.ignored)
+	binary.Write(s, binary.LittleEndian, ch.length)
+	binary.Write(s, binary.LittleEndian, ch.stop)
+	ch.envelope.serialize(s)
+	binary.Write(s, binary.LittleEndian, ch.lfsr)
+	binary.Write(s, binary.LittleEndian, ch.octave)
+	binary.Write(s, binary.LittleEndian, ch.divisor)
+	binary.Write(s, binary.LittleEndian, ch.period)
+	binary.Write(s, binary.LittleEndian, ch.width)
+}
+
+func (ch *noise) deserialize(s io.Reader) {
+	binary.Read(s, binary.LittleEndian, &ch.enabled)
+	binary.Read(s, binary.LittleEndian, &ch.ignored)
+	binary.Read(s, binary.LittleEndian, &ch.length)
+	binary.Read(s, binary.LittleEndian, &ch.stop)
+	ch.envelope.deserialize(s)
+	binary.Read(s, binary.LittleEndian, &ch.lfsr)
+	binary.Read(s, binary.LittleEndian, &ch.octave)
+	binary.Read(s, binary.LittleEndian, &ch.divisor)
+	binary.Read(s, binary.LittleEndian, &ch.period)
+	binary.Read(s, binary.LittleEndian, &ch.width)
 }
