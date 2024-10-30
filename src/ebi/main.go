@@ -46,7 +46,6 @@ func Run() exitCode {
 	defer func() {
 		if e.music != nil {
 			e.music.Close()
-			e.context.Close()
 		}
 	}()
 

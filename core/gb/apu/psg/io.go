@@ -1,20 +1,16 @@
-package apu
-
-import (
-	"github.com/akatsuki105/dawngb/util"
-)
+package psg
 
 // NOTE: "ゼルダの伝説 ふしぎの木の実" はAPUのNR52を正しく実装しないとタイトル画面から進めない
 
-func (a *apu) Read(addr uint16) uint8 {
+func (a *PSG) Read(addr uint16) uint8 {
 	switch addr {
 	case 0xFF26:
 		val := uint8(0)
-		val = util.SetBit(val, 7, a.enabled)
-		val = util.SetBit(val, 0, a.ch1.enabled)
-		val = util.SetBit(val, 1, a.ch2.enabled)
-		val = util.SetBit(val, 2, a.ch3.enabled)
-		val = util.SetBit(val, 3, a.ch4.enabled)
+		val = setBit(val, 7, a.enabled)
+		val = setBit(val, 0, a.ch1.enabled)
+		val = setBit(val, 1, a.ch2.enabled)
+		val = setBit(val, 2, a.ch3.enabled)
+		val = setBit(val, 3, a.ch4.enabled)
 		return val
 	case 0xFF30, 0xFF31, 0xFF32, 0xFF33, 0xFF34, 0xFF35, 0xFF36, 0xFF37, 0xFF38, 0xFF39, 0xFF3A, 0xFF3B, 0xFF3C, 0xFF3D, 0xFF3E, 0xFF3F:
 		if a.model == MODEL_GBA {
@@ -28,9 +24,10 @@ func (a *apu) Read(addr uint16) uint8 {
 	return a.ioreg[addr-0xFF10]
 }
 
-func (a *apu) Write(addr uint16, val uint8) {
+func (a *PSG) Write(addr uint16, val uint8) {
 	if addr == 0xFF26 {
-		a.enabled = util.Bit(val, 7)
+		a.enabled = getBit(val, 7)
+		return
 	}
 
 	if !a.enabled {
@@ -40,7 +37,7 @@ func (a *apu) Write(addr uint16, val uint8) {
 	a.ioreg[addr-0xFF10] = val
 	switch addr {
 	case 0xFF10:
-		negate := util.Bit(val, 3)
+		negate := getBit(val, 3)
 		if a.ch1.sweep.enabled && a.ch1.sweep.negate && !negate {
 			a.ch1.enabled = false // 下降スイープ中に上昇スイープを設定すると消音される
 		}
@@ -53,8 +50,8 @@ func (a *apu) Write(addr uint16, val uint8) {
 		a.ch1.length = 64 - int32(val&0b11_1111)
 
 	case 0xFF12:
-		a.ch1.envelope.initialVolume = int32(val>>4) & 0b1111
-		a.ch1.envelope.direction = util.Bit(val, 3)
+		a.ch1.envelope.initialVolume = (val >> 4) & 0b1111
+		a.ch1.envelope.direction = getBit(val, 3)
 		a.ch1.envelope.speed = int32(val & 0b111)
 		if !a.ch1.dacEnable() {
 			a.ch1.enabled = false
@@ -65,8 +62,8 @@ func (a *apu) Write(addr uint16, val uint8) {
 
 	case 0xFF14:
 		a.ch1.period = (a.ch1.period & 0x00FF) | (int32(val&0b111) << 8)
-		a.ch1.stop = util.Bit(val, 6)
-		if util.Bit(val, 7) { // キーオン(音が鳴り始める)
+		a.ch1.stop = getBit(val, 6)
+		if getBit(val, 7) { // キーオン(音が鳴り始める)
 			a.ch1.tryRestart()
 		}
 
@@ -75,8 +72,8 @@ func (a *apu) Write(addr uint16, val uint8) {
 		a.ch2.length = 64 - int32(val&0b11_1111)
 
 	case 0xFF17:
-		a.ch2.envelope.initialVolume = int32(val>>4) & 0b1111
-		a.ch2.envelope.direction = util.Bit(val, 3)
+		a.ch2.envelope.initialVolume = (val >> 4) & 0b1111
+		a.ch2.envelope.direction = getBit(val, 3)
 		a.ch2.envelope.speed = int32(val & 0b111)
 		if !a.ch2.dacEnable() {
 			a.ch2.enabled = false
@@ -87,13 +84,13 @@ func (a *apu) Write(addr uint16, val uint8) {
 
 	case 0xFF19:
 		a.ch2.period = (a.ch2.period & 0x00FF) | (int32(val&0b111) << 8)
-		a.ch2.stop = util.Bit(val, 6)
-		if util.Bit(val, 7) { // キーオン(音が鳴り始める)
+		a.ch2.stop = getBit(val, 6)
+		if getBit(val, 7) { // キーオン(音が鳴り始める)
 			a.ch2.tryRestart()
 		}
 
 	case 0xFF1A:
-		a.ch3.dacEnable = util.Bit(val, 7)
+		a.ch3.dacEnable = getBit(val, 7)
 		if !a.ch3.dacEnable {
 			a.ch3.enabled = false
 		}
@@ -110,11 +107,11 @@ func (a *apu) Write(addr uint16, val uint8) {
 		a.ch3.period |= int32(val)
 		a.ch3.freqCounter = a.ch3.windowStepCycle()
 	case 0xFF1E:
-		a.ch3.stop = util.Bit(val, 6)
+		a.ch3.stop = getBit(val, 6)
 		a.ch3.period &= 0b000_1111_1111
 		a.ch3.period |= int32(val&0b111) << 8
 		a.ch3.freqCounter = a.ch3.windowStepCycle()
-		if util.Bit(val, 7) { // キーオン(音が鳴り始める)
+		if getBit(val, 7) { // キーオン(音が鳴り始める)
 			a.ch3.enabled = a.ch3.dacEnable
 			if a.ch3.length == 0 {
 				a.ch3.length = 256
@@ -132,35 +129,36 @@ func (a *apu) Write(addr uint16, val uint8) {
 	case 0xFF20:
 		a.ch4.length = 64 - int32(val&0b11_1111)
 	case 0xFF21:
-		a.ch4.envelope.initialVolume = int32(val>>4) & 0b1111
-		a.ch4.envelope.direction = util.Bit(val, 3)
+		a.ch4.envelope.initialVolume = (val >> 4) & 0b1111
+		a.ch4.envelope.direction = getBit(val, 3)
 		a.ch4.envelope.speed = int32(val & 0b111)
 		if !a.ch4.dacEnable() {
 			a.ch4.enabled = false
 		}
 	case 0xFF22:
-		a.ch4.octave = int32(val >> 4) // ノイズ周波数2(オクターブ指定)
-		a.ch4.divisor = int32(val & 0b111)
+		a.ch4.octave = (val >> 4) // ノイズ周波数2(オクターブ指定)
+		a.ch4.divisor = (val & 0b111)
+		a.ch4.narrow = getBit(val, 3)
 		a.ch4.period = a.ch4.calcFreqency()
-		a.ch4.width = 15
-		if util.Bit(val, 3) {
-			a.ch4.width = 7
-		}
 	case 0xFF23:
-		a.ch4.stop = util.Bit(val, 6)
-		if util.Bit(val, 7) { // キーオン(音が鳴り始める)
+		a.ch4.stop = getBit(val, 6)
+		if getBit(val, 7) { // キーオン(音が鳴り始める)
 			a.ch4.tryRestart()
 		}
 
-	case 0xFF24:
-		a.volume[0] = (val >> 4) & 0b111
-		a.volume[1] = (val & 0b111)
+	case 0xFF24: // NR50
+		a.rightVolume = (val >> 0) & 0b111
+		a.leftVolume = (val >> 4) & 0b111
 
 	case 0xFF25:
-		a.ch1.ignored = !util.Bit(val, 0)
-		a.ch2.ignored = !util.Bit(val, 1)
-		a.ch3.ignored = !util.Bit(val, 2)
-		a.ch4.ignored = !util.Bit(val, 3)
+		a.rightEnables[0] = getBit(val, 0)
+		a.rightEnables[1] = getBit(val, 1)
+		a.rightEnables[2] = getBit(val, 2)
+		a.rightEnables[3] = getBit(val, 3)
+		a.leftEnables[0] = getBit(val, 4)
+		a.leftEnables[1] = getBit(val, 5)
+		a.leftEnables[2] = getBit(val, 6)
+		a.leftEnables[3] = getBit(val, 7)
 
 	case 0xFF30, 0xFF31, 0xFF32, 0xFF33, 0xFF34, 0xFF35, 0xFF36, 0xFF37, 0xFF38, 0xFF39, 0xFF3A, 0xFF3B, 0xFF3C, 0xFF3D, 0xFF3E, 0xFF3F:
 		if a.model == MODEL_GBA {
@@ -173,4 +171,15 @@ func (a *apu) Write(addr uint16, val uint8) {
 			a.ch3.samples[addr-0xFF30] = val
 		}
 	}
+}
+
+func getBit(val uint8, bit int) bool {
+	return val&(1<<bit) != 0
+}
+
+func setBit(val uint8, bit int, b bool) uint8 {
+	if b {
+		return val | (1 << bit)
+	}
+	return val & ^(1 << bit)
 }

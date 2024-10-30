@@ -10,8 +10,8 @@ import (
 	"strings"
 
 	"github.com/akatsuki105/dawngb/core"
+	"github.com/ebitengine/oto/v3"
 	"github.com/hajimehoshi/ebiten/v2"
-	"github.com/hajimehoshi/oto"
 )
 
 var emu *Emu
@@ -67,9 +67,8 @@ type Emu struct {
 
 	// Audio
 	soundEnabled bool
-	samples      []byte
-	sampleBuffer *bytes.Buffer
-	context      *oto.Context
+	volume       float64
+	sampleBuffer *sampleBuffer
 	music        *oto.Player
 
 	turbo     int
@@ -81,20 +80,27 @@ func createEmu() *Emu {
 		return emu
 	}
 	e := &Emu{
-		samples:      make([]byte, 4096),
-		sampleBuffer: bytes.NewBuffer(make([]byte, 0)),
+		sampleBuffer: newSampleBuffer(make([]uint8, 0, 4096)),
 		turbo:        1,
+		volume:       0.5,
 		taskQueue:    make([]func(), 0, 10),
 	}
-	e.c = core.New("GB", e.sampleBuffer)
+	e.c = core.NewGB(e.sampleBuffer)
 
 	// init Audio
-	context, err := oto.NewContext(32768, 2, 2, len(e.samples))
+	op := oto.NewContextOptions{
+		SampleRate:   32768,
+		ChannelCount: 2,
+		Format:       oto.FormatUnsignedInt8,
+	}
+	context, readyChan, err := oto.NewContext(&op)
 	if err != nil {
 		panic("oto.NewContext failed: " + err.Error())
 	}
-	e.context = context
-	e.music = context.NewPlayer()
+	<-readyChan
+	e.music = context.NewPlayer(e.sampleBuffer)
+	e.music.SetVolume(e.volume)
+	e.music.SetBufferSize(4096)
 
 	emu = e
 	return e
@@ -161,7 +167,9 @@ func (e *Emu) Update() error {
 			e.c.RunFrame()
 		}
 
-		e.playSound()
+		if e.soundEnabled {
+			e.music.Play()
+		}
 	}
 
 	err := e.handleDropFile()
@@ -241,16 +249,6 @@ func (e *Emu) pollGamepadInput() {
 	}
 }
 
-func (e *Emu) playSound() {
-	for i := 0; i < len(e.samples); i++ {
-		e.samples[i] = 0
-	}
-	n, err := e.sampleBuffer.Read(e.samples)
-	if e.soundEnabled && err == nil && n > 0 {
-		e.music.Write(e.samples[:n])
-	}
-}
-
 func (e *Emu) setTurbo(speed int) {
 	e.queueTask(func() {
 		e.turbo = speed
@@ -301,4 +299,21 @@ func (e *Emu) setPaused(paused bool) {
 			e.paused = paused
 		}
 	})
+}
+
+// Read で n == 0 のときに EOF を返すと音が途切れるので、 nil を返すようにしただけ
+type sampleBuffer struct {
+	*bytes.Buffer
+}
+
+func newSampleBuffer(buf []uint8) *sampleBuffer {
+	return &sampleBuffer{bytes.NewBuffer(buf)}
+}
+
+func (s *sampleBuffer) Read(p []uint8) (int, error) {
+	n, _ := s.Buffer.Read(p)
+	if n == 0 {
+		return 0, nil // EOF を返すと音が途切れるので、 nil を返す
+	}
+	return n, nil
 }

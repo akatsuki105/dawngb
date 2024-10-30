@@ -5,8 +5,9 @@ import (
 
 	"github.com/akatsuki105/dawngb/core/gb/video/renderer"
 	"github.com/akatsuki105/dawngb/util"
-	. "github.com/akatsuki105/dawngb/util/datasize"
 )
+
+const KB = 1024
 
 const CYCLE = 2
 

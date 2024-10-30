@@ -1,4 +1,4 @@
-package apu
+package psg
 
 import (
 	"encoding/binary"
@@ -7,7 +7,6 @@ import (
 
 type wave struct {
 	enabled bool
-	ignored bool // Ignore sample output
 
 	dacEnable bool  // NR30's bit7
 	stop      bool  // .length が 0 になったときに 音を止めるかどうか(NR34's bit6)
@@ -27,9 +26,7 @@ type wave struct {
 }
 
 func newWaveChannel() *wave {
-	return &wave{
-		ignored: true,
-	}
+	return &wave{}
 }
 
 func (ch *wave) clock256Hz() {
@@ -53,18 +50,16 @@ func (ch *wave) clockTimer() {
 	}
 }
 
-func (ch *wave) getOutput() int {
-	if !ch.ignored {
-		if ch.enabled && ch.dacEnable {
-			isHi := ch.window&1 == 0 // 上位4bit -> 下位4bit -> 上位4bit -> 下位4bit -> ...
-			sample := uint8(0)
-			if isHi {
-				sample = ch.samples[ch.window>>1] >> 4
-			} else {
-				sample = ch.samples[ch.window>>1] & 0xF
-			}
-			return int(sample >> ch.volume)
+func (ch *wave) getOutput() uint8 {
+	if ch.enabled && ch.dacEnable {
+		isHi := ch.window&1 == 0 // 上位4bit -> 下位4bit -> 上位4bit -> 下位4bit -> ...
+		sample := uint8(0)
+		if isHi {
+			sample = ch.samples[ch.window>>1] >> 4
+		} else {
+			sample = ch.samples[ch.window>>1] & 0xF
 		}
+		return sample >> ch.volume
 	}
 	return 0
 }
@@ -75,7 +70,6 @@ func (ch *wave) windowStepCycle() int32 {
 
 func (ch *wave) serialize(s io.Writer) {
 	binary.Write(s, binary.LittleEndian, ch.enabled)
-	binary.Write(s, binary.LittleEndian, ch.ignored)
 	binary.Write(s, binary.LittleEndian, ch.dacEnable)
 	binary.Write(s, binary.LittleEndian, ch.stop)
 	binary.Write(s, binary.LittleEndian, ch.length)
@@ -91,7 +85,6 @@ func (ch *wave) serialize(s io.Writer) {
 
 func (ch *wave) deserialize(s io.Reader) {
 	binary.Read(s, binary.LittleEndian, &ch.enabled)
-	binary.Read(s, binary.LittleEndian, &ch.ignored)
 	binary.Read(s, binary.LittleEndian, &ch.dacEnable)
 	binary.Read(s, binary.LittleEndian, &ch.stop)
 	binary.Read(s, binary.LittleEndian, &ch.length)

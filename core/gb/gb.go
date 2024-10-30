@@ -5,22 +5,16 @@ import (
 	"image/color"
 	"io"
 
+	"github.com/akatsuki105/dawngb/core/gb/apu"
 	"github.com/akatsuki105/dawngb/core/gb/cartridge"
 	"github.com/akatsuki105/dawngb/core/gb/cpu"
 	"github.com/akatsuki105/dawngb/core/gb/video"
 	"github.com/akatsuki105/dawngb/util"
 )
 
+const KB, MB = 1024, 1024 * 1024
+
 var buttons = [8]string{"A", "B", "SELECT", "START", "RIGHT", "LEFT", "UP", "DOWN"}
-
-type peripheral interface {
-	Reset(hasBIOS bool)
-	Read(addr uint16) uint8
-	Write(addr uint16, val uint8)
-
-	Serialize(state io.Writer)
-	Deserialize(state io.Reader)
-}
 
 type oamDmaController struct {
 	active bool
@@ -34,7 +28,7 @@ type GB struct {
 	m         *Memory
 	video     *video.Video
 	cartridge *cartridge.Cartridge
-	input     peripheral
+	input     *input
 	timer     *timer
 	serial    *serial
 	dmac      *dmaController
@@ -45,9 +39,7 @@ type GB struct {
 	inputs    [8]bool // A, B, Select, Start, Right, Left, Up, Down
 	runHDMA   func()
 	oamDMA    oamDmaController
-
-	// for audio
-	audio *audio
+	apu       *apu.APU
 }
 
 func New(audioBuffer io.Writer) *GB {
@@ -56,14 +48,12 @@ func New(audioBuffer io.Writer) *GB {
 	g.cpu = cpu.New(g.m, g.halt, g.stop, g.tick)
 	g.video = video.New(g.requestInterrupt, g.triggerHDMA)
 	g.timer = newTimer(g)
-	g.audio = newAudio(audioBuffer)
+	g.apu = apu.New(audioBuffer)
 	g.input = newInput(g)
 	g.dmac = newDMAController(g)
 	g.serial = newSerial(g)
 	return g
 }
-
-func (g *GB) ID() string { return "GB" }
 
 func (g *GB) Reset(hasBIOS bool) {
 	g.ie, g.interrupt = 0, [5]bool{}
@@ -77,7 +67,7 @@ func (g *GB) Reset(hasBIOS bool) {
 	g.m.Reset(hasBIOS)
 	g.cpu.Reset(hasBIOS)
 	g.video.Reset(model, hasBIOS)
-	g.audio.reset(hasBIOS)
+	g.apu.Reset(hasBIOS)
 	g.timer.Reset(hasBIOS)
 	g.input.Reset(hasBIOS)
 	g.dmac.Reset(hasBIOS)
@@ -130,6 +120,7 @@ func (g *GB) RunFrame() {
 			g.video.CatchUp()
 		}
 		g.video.CatchUp()
+		g.apu.FlushSamples()
 	}
 }
 
@@ -164,7 +155,7 @@ func (g *GB) tick(cycles int64) {
 }
 
 func (g *GB) catchUp(cycles int64) {
-	g.audio.tick(cycles)
+	g.apu.Tick(cycles)
 	g.video.Tick(cycles)
 	g.timer.tick(cycles)
 	g.serial.tick(cycles)

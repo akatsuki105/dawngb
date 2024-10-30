@@ -7,6 +7,8 @@ import (
 	"github.com/akatsuki105/dawngb/util"
 )
 
+const KB = 1024
+
 const (
 	Z_BD = iota
 	Z_BG

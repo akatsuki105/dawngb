@@ -2,7 +2,6 @@ package software
 
 import (
 	"github.com/akatsuki105/dawngb/util"
-	. "github.com/akatsuki105/dawngb/util/datasize"
 )
 
 type spriteLayer struct {

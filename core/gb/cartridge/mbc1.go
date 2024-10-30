@@ -1,9 +1,5 @@
 package cartridge
 
-import (
-	. "github.com/akatsuki105/dawngb/util/datasize"
-)
-
 type mbc1 struct {
 	c          *Cartridge
 	ramEnabled bool

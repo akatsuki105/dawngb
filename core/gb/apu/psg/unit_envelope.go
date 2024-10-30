@@ -1,4 +1,4 @@
-package apu
+package psg
 
 import (
 	"encoding/binary"
@@ -7,9 +7,9 @@ import (
 
 // 音の三要素 のうち、 音の大きさ (振幅)
 type envelope struct {
-	initialVolume int32 // 初期音量(リスタート時にセット)
-	volume        int32
-	direction     bool // 音量変更の方向(trueで大きくなっていく)
+	initialVolume uint8 // 初期音量(リスタート時にセット)
+	volume        uint8 // 0..15
+	direction     bool  // 音量変更の方向(trueで大きくなっていく)
 
 	// 音量変更の速さ(0に近いほど速い、ただし0だと変化なし)
 	// speed が n のとき、 音量変更は (n / 64) 秒 ごとに行われる
@@ -46,9 +46,12 @@ func (e *envelope) update() {
 
 func (e *envelope) updateVolume() {
 	if e.direction {
-		e.volume = min(e.volume+1, 15)
-	} else {
-		e.volume = max(e.volume-1, 0)
+		e.volume++
+		if e.volume > 15 {
+			e.volume = 15
+		}
+	} else if e.volume > 0 {
+		e.volume--
 	}
 }
 

@@ -1,4 +1,4 @@
-package apu
+package psg
 
 import (
 	"encoding/binary"
@@ -14,7 +14,6 @@ var squareDutyTable = [4][8]int{
 
 type square struct {
 	enabled bool
-	ignored bool // Ignore sample output
 
 	length int32 // 音の残り再生時間
 	stop   bool  // .length が 0 になったときに 音を止めるかどうか(NR14's bit6)
@@ -31,8 +30,6 @@ type square struct {
 
 func newSquareChannel(hasSweep bool) *square {
 	ch := &square{
-		enabled:  false,
-		ignored:  true,
 		envelope: newEnvelope(),
 	}
 
@@ -73,13 +70,11 @@ func (ch *square) clockTimer() {
 	}
 }
 
-func (ch *square) getOutput() int {
-	if !ch.ignored {
-		if ch.enabled {
-			dutyTable := (squareDutyTable[ch.duty])[:]
-			if dutyTable[ch.dutyCounter] != 0 {
-				return int(ch.envelope.volume)
-			}
+func (ch *square) getOutput() uint8 {
+	if ch.enabled {
+		dutyTable := (squareDutyTable[ch.duty])[:]
+		if dutyTable[ch.dutyCounter] != 0 {
+			return ch.envelope.volume
 		}
 	}
 	return 0
@@ -110,7 +105,6 @@ func (ch *square) tryRestart() {
 
 func (ch *square) serialize(s io.Writer) {
 	binary.Write(s, binary.LittleEndian, ch.enabled)
-	binary.Write(s, binary.LittleEndian, ch.ignored)
 	binary.Write(s, binary.LittleEndian, ch.length)
 	binary.Write(s, binary.LittleEndian, ch.stop)
 	ch.envelope.serialize(s)
@@ -125,7 +119,6 @@ func (ch *square) serialize(s io.Writer) {
 
 func (ch *square) deserialize(s io.Reader) {
 	binary.Read(s, binary.LittleEndian, &ch.enabled)
-	binary.Read(s, binary.LittleEndian, &ch.ignored)
 	binary.Read(s, binary.LittleEndian, &ch.length)
 	binary.Read(s, binary.LittleEndian, &ch.stop)
 	ch.envelope.deserialize(s)

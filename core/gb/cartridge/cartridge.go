@@ -4,8 +4,9 @@ import (
 	"fmt"
 
 	"github.com/akatsuki105/dawngb/util"
-	. "github.com/akatsuki105/dawngb/util/datasize"
 )
+
+const KB, MB = 1024, 1024 * 1024
 
 var ramSizes = map[uint8]uint{
 	2: 8 * KB,

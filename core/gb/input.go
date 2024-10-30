@@ -6,19 +6,19 @@ import (
 	"github.com/akatsuki105/dawngb/util"
 )
 
-type Input struct {
+type input struct {
 	g        *GB
 	p14, p15 bool
 	joyp     uint8
 }
 
-func newInput(g *GB) *Input {
-	return &Input{
+func newInput(g *GB) *input {
+	return &input{
 		g: g,
 	}
 }
 
-func (i *Input) Reset(hasBIOS bool) {
+func (i *input) Reset(hasBIOS bool) {
 	i.p14, i.p15 = false, false
 	i.joyp = 0x0F
 	if !hasBIOS {
@@ -27,7 +27,7 @@ func (i *Input) Reset(hasBIOS bool) {
 	}
 }
 
-func (i *Input) poll() {
+func (i *input) poll() {
 	dpad := uint8(0x0)
 	dpad = util.SetBit(dpad, 0, !i.g.inputs[4+0])
 	dpad = util.SetBit(dpad, 1, !i.g.inputs[4+1])
@@ -53,7 +53,7 @@ func (i *Input) poll() {
 	}
 }
 
-func (i *Input) Read(addr uint16) uint8 {
+func (i *input) Read(addr uint16) uint8 {
 	i.poll()
 	val := i.joyp
 	val = util.SetBit(val, 4, i.p14)
@@ -68,16 +68,16 @@ func (i *Input) Read(addr uint16) uint8 {
 	return val
 }
 
-func (i *Input) Write(addr uint16, val uint8) {
+func (i *input) Write(addr uint16, val uint8) {
 	i.p14 = util.Bit(val, 4)
 	i.p15 = util.Bit(val, 5)
 }
 
-func (i *Input) Serialize(s io.Writer) {
+func (i *input) Serialize(s io.Writer) {
 	s.Write([]byte{util.Btou8(i.p14), util.Btou8(i.p15), i.joyp})
 }
 
-func (i *Input) Deserialize(s io.Reader) {
+func (i *input) Deserialize(s io.Reader) {
 	buf := make([]byte, 3)
 	s.Read(buf)
 	i.p14, i.p15 = buf[0] != 0, buf[1] != 0

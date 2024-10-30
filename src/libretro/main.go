@@ -94,7 +94,7 @@ func retro_init() {
 		sampleBuffer: bytes.NewBuffer(make([]byte, 0)),
 		samples:      make([]byte, 4096),
 	}
-	e.c = core.New("GB", e.sampleBuffer)
+	e.c = core.NewGB(e.sampleBuffer)
 }
 
 //export retro_deinit

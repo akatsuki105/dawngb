@@ -1,4 +1,4 @@
-package apu
+package psg
 
 import (
 	"encoding/binary"

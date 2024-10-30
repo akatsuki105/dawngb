@@ -1,4 +1,4 @@
-package apu
+package psg
 
 import (
 	"encoding/binary"
@@ -7,31 +7,28 @@ import (
 
 type noise struct {
 	enabled bool
-	ignored bool // Ignore sample output
 
 	length int32 // 音の残り再生時間
-	stop   bool
+	stop   bool  // NR44.6
 
 	envelope *envelope
 
 	lfsr uint16 // Noiseの疑似乱数(lfsr: Linear Feedback Shift Register = 疑似乱数生成アルゴリズム)
 
 	// この2つでノイズの周波数(疑似乱数の生成頻度)を決める
-	octave  int32 // ノイズ周波数2(オクターブ指定)
-	divisor int32 // ノイズ周波数1(カウント指定)
+	divisor uint8 // ノイズ周波数1(カウント指定)
+	octave  uint8 // ノイズ周波数2(オクターブ指定)
 	period  int32
 
-	width int32
+	narrow bool // NR43.3; 0: 15bit, 1: 7bit
 
-	output int
+	output uint8 // 0..15
 }
 
 func newNoiseChannel() *noise {
 	return &noise{
-		ignored:  true,
 		envelope: newEnvelope(),
-		lfsr:     1,
-		width:    15,
+		lfsr:     0,
 	}
 }
 
@@ -52,18 +49,22 @@ func (ch *noise) clock256Hz() {
 
 func (ch *noise) clockTimer() {
 	// ch.enabledに関わらず、乱数は生成される
-	result := 0
 	ch.period--
 	if ch.period <= 0 {
 		ch.period = ch.calcFreqency()
 		if ch.octave < 14 {
-			mask := ((ch.lfsr ^ (ch.lfsr >> 1)) & 1)
-			ch.lfsr = ((ch.lfsr >> 1) ^ (mask << (ch.width - 1))) & 0x7FFF
+			bit := ((ch.lfsr ^ (ch.lfsr >> 1)) & 1)
+			if ch.narrow {
+				ch.lfsr = (ch.lfsr >> 1) ^ (bit << 6)
+			} else {
+				ch.lfsr = (ch.lfsr >> 1) ^ (bit << 14)
+			}
 		}
 	}
 
+	result := uint8(0)
 	if (ch.lfsr & 1) == 0 {
-		result = int(ch.envelope.volume)
+		result = ch.envelope.volume
 	}
 
 	if !ch.enabled {
@@ -73,20 +74,15 @@ func (ch *noise) clockTimer() {
 	ch.output = result
 }
 
+var noisePeriodTable = []uint8{4, 8, 16, 24, 32, 40, 48, 56}
+
 func (ch *noise) calcFreqency() int32 {
-	freq := int32(1)
-	if ch.divisor != 0 {
-		freq = 2 * ch.divisor
-	}
-	freq <<= ch.octave
-	return freq * 8
+	return int32(noisePeriodTable[ch.divisor]) << ch.octave
 }
 
-func (ch *noise) getOutput() int {
-	if !ch.ignored {
-		if ch.enabled {
-			return ch.output
-		}
+func (ch *noise) getOutput() uint8 {
+	if ch.enabled {
+		return ch.output
 	}
 	return 0
 }
@@ -97,7 +93,7 @@ func (ch *noise) tryRestart() {
 	if ch.length == 0 {
 		ch.length = 64
 	}
-	ch.lfsr = 0x7FFF >> (15 - ch.width)
+	ch.lfsr = 0x7FFF
 }
 
 func (ch *noise) dacEnable() bool {
@@ -106,7 +102,6 @@ func (ch *noise) dacEnable() bool {
 
 func (ch *noise) serialize(s io.Writer) {
 	binary.Write(s, binary.LittleEndian, ch.enabled)
-	binary.Write(s, binary.LittleEndian, ch.ignored)
 	binary.Write(s, binary.LittleEndian, ch.length)
 	binary.Write(s, binary.LittleEndian, ch.stop)
 	ch.envelope.serialize(s)
@@ -114,12 +109,11 @@ func (ch *noise) serialize(s io.Writer) {
 	binary.Write(s, binary.LittleEndian, ch.octave)
 	binary.Write(s, binary.LittleEndian, ch.divisor)
 	binary.Write(s, binary.LittleEndian, ch.period)
-	binary.Write(s, binary.LittleEndian, ch.width)
+	binary.Write(s, binary.LittleEndian, ch.narrow)
 }
 
 func (ch *noise) deserialize(s io.Reader) {
 	binary.Read(s, binary.LittleEndian, &ch.enabled)
-	binary.Read(s, binary.LittleEndian, &ch.ignored)
 	binary.Read(s, binary.LittleEndian, &ch.length)
 	binary.Read(s, binary.LittleEndian, &ch.stop)
 	ch.envelope.deserialize(s)
@@ -127,5 +121,5 @@ func (ch *noise) deserialize(s io.Reader) {
 	binary.Read(s, binary.LittleEndian, &ch.octave)
 	binary.Read(s, binary.LittleEndian, &ch.divisor)
 	binary.Read(s, binary.LittleEndian, &ch.period)
-	binary.Read(s, binary.LittleEndian, &ch.width)
+	binary.Read(s, binary.LittleEndian, &ch.narrow)
 }
