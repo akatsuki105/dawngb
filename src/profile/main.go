@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/akatsuki105/dawngb/core"
+	"github.com/akatsuki105/dawngb/core/gb"
 	"github.com/pkg/profile"
 )
 
@@ -31,23 +31,24 @@ func run() exitCode {
 	if flag.NArg() > 0 {
 		defer profile.Start(profile.ProfilePath("./build/profile")).Stop()
 
-		gb := core.NewGB(nil)
+		c := gb.New(nil)
 
 		rom, err := os.ReadFile(flag.Arg(0))
 		if err != nil {
 			fmt.Fprintln(os.Stderr, err)
 			return ExitCodeError
 		}
-		err = gb.LoadROM(rom)
+		err = c.Load(gb.LOAD_ROM, rom)
 		if err != nil {
 			fmt.Fprintln(os.Stderr, err)
 			return ExitCodeError
 		}
 
+		c.Reset(false)
 		fmt.Printf("Run emulator for %d seconds\n", *s)
 
 		for i := 0; i < (*s)*60; i++ {
-			gb.RunFrame()
+			c.RunFrame()
 			if i%60 == 0 {
 				fmt.Printf("%d sec\n", i/60+1)
 			}

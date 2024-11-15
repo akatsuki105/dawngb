@@ -8,34 +8,24 @@ endif
 
 GOOS?=$(shell go env GOOS)
 GOARCH?=$(shell go env GOARCH)
-GODOT?=$(shell which godot)
+GOOPTIONS ?= -ldflags="-s -w" -trimpath
 
-.PHONY: build wasm goenv profile godot libretro clean
+.PHONY: build wasm profile libretro clean
 
 build:
-	go build -o build/$(NAME)$(EXE) ./src/ebi
+	go build $(GOOPTIONS) -o build/$(NAME)$(EXE) ./src/ebi
 
 wasm:
-	env GOOS=js GOARCH=wasm go build -o docs/core.wasm ./src/ebi
-
-goenv:
-	go env
+	env GOOS=js GOARCH=wasm go build $(GOOPTIONS) -o docs/core.wasm ./src/ebi
 
 profile:
 	go build -o build/profile/profile ./src/profile
 
-godot: goenv
-	CGO_ENABLED=1 \
-	GOOS=$(GOOS) \
-	GOARCH=$(GOARCH) \
-	CGO_CFLAGS='-Og -g3 -g -fPIC' \
-	CGO_LDFLAGS='-Og -g3 -g' \
-	go build -gcflags=all="-N -l" -tags tools -buildmode=c-shared -x -trimpath -o "build/libgodotgo-gb-macos-$(GOARCH).dylib" ./src/godot/main.go
-	cp "build/libgodotgo-gb-macos-$(GOARCH).dylib" "/Users/akatsuki/Dev/Godot/GameBoy/lib/libgodotgo-gb-macos-$(GOARCH).dylib"
-	cp "build/libgodotgo-gb-macos-$(GOARCH).h" "/Users/akatsuki/Dev/Godot/GameBoy/lib/libgodotgo-gb-macos-$(GOARCH).h"
+libretro:
+	GOARCH=$(GOARCH) CGO_ENABLED=1 go build $(GOOPTIONS) -buildmode=c-shared -o ./build/libretro/$(NAME)_libretro.dylib ./src/libretro/main.go
 
-libretro: goenv
-	GOARCH=$(GOARCH) CGO_ENABLED=1 go build -buildmode=c-shared -o build/libretro/$(NAME)_$(GOARCH)_libretro.dylib ./src/libretro/main.go
+libretro-deck:
+	CC=x86_64-unknown-linux-gnu-gcc GOARCH=amd64 GOOS=linux CGO_ENABLED=1 go build $(GOOPTIONS) -buildmode=c-shared -o ./build/libretro/$(NAME)_libretro.so ./src/libretro/main.go
 
 clean:
 	rm -rf build

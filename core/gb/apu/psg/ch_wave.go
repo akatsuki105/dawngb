@@ -20,13 +20,24 @@ type wave struct {
 	window  int8      // 0 ~ 31
 
 	// For GBA
-	bank     uint8 // 0 or 1 (NR30's bit6)
+	bank     uint8 // NR30.6
 	usedBank uint8 // 現在演奏中のバンク、modeが1の場合は、 .bank の値と必ずしも一致しないので
 	mode     uint8 //　 0: 16バイト(32サンプル)を演奏に使い、裏のバンクでは読み書きを行う、 1: 32バイト(64サンプル)を全部演奏に使う
 }
 
 func newWaveChannel() *wave {
 	return &wave{}
+}
+
+func (ch *wave) reset() {
+	ch.enabled = false
+	ch.dacEnable = false
+	ch.stop, ch.length = false, 0
+	ch.volume = 0
+	ch.period, ch.freqCounter = 0, 0
+	clear(ch.samples[:])
+	ch.window = 0
+	ch.bank, ch.usedBank, ch.mode = 0, 0, 0
 }
 
 func (ch *wave) clock256Hz() {

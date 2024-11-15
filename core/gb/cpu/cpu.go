@@ -1,83 +1,209 @@
 package cpu
 
 import (
-	"fmt"
+	"errors"
+
+	"github.com/akatsuki105/dawngb/core/gb/cpu/sm83"
+	"github.com/akatsuki105/dawngb/util"
 )
 
-type Memory interface {
-	Read(addr uint16) uint8
-	Write(addr uint16, val uint8)
+const (
+	IRQ_VBLANK = iota
+	IRQ_LCDSTAT
+	IRQ_TIMER
+	IRQ_SERIAL
+	IRQ_JOYPAD
+)
+
+// DMG-CPU, CGB-CPU
+type CPU struct {
+	Cycles int64 // 8MHzのマスターサイクル単位
+	*sm83.SM83
+	bus              sm83.Bus
+	Clock            int64 // 8(1x) or 4(2x)
+	dma              *DMA
+	joypad           *joypad
+	bios             BIOS
+	HRAM             [0x7F]uint8
+	halted           bool
+	IE               uint8
+	interrupt        [5]bool // IF
+	key1             uint8   // FF4D
+	ff72, ff73, ff74 uint8
 }
 
-type Cpu struct {
-	r    Registers
-	m    Memory
-	inst struct {
-		opcode uint8
-		addr   uint16
-		cb     bool
+// a.k.a. Boot ROM
+type BIOS struct {
+	ff50 bool
+	data []uint8
+}
+
+func New(bus sm83.Bus) *CPU {
+	c := &CPU{
+		bus: bus,
 	}
-	IME        bool
-	halt, stop func()
-	_tick      func(mastercycles int64)
-	Cycle      int64 // 8 or 4
+	c.SM83 = sm83.New(c, c.halt, c.stop, c.wait)
+	c.joypad = newJoypad(c.IRQ)
+	c.dma = newDMA(c)
+	return c
 }
 
-func New(m Memory, halt, stop func(), tick func(int64)) *Cpu {
-	return &Cpu{
-		m:     m,
-		halt:  halt,
-		stop:  stop,
-		_tick: tick,
+func (c *CPU) Reset(hasBIOS bool) {
+	c.Cycles = 0
+	c.SM83.Reset(hasBIOS)
+	c.Clock = 8
+	c.dma.Reset(hasBIOS)
+	c.joypad.reset(hasBIOS)
+	clear(c.HRAM[:])
+	c.halted = false
+	c.IE, c.interrupt = 0, [5]bool{}
+	c.key1 = 0
+	c.ff72, c.ff73, c.ff74 = 0, 0, 0
+}
+
+func (c *CPU) wait(n int64) {
+	c.Cycles += n * c.Clock
+}
+
+func (c *CPU) LoadBIOS(bios []uint8) error {
+	c.bios.ff50 = false
+
+	switch len(bios) {
+	case 256: // DMG, MGB, SGB
+		c.bios.data = make([]uint8, 256)
+		copy(c.bios.data[:], bios)
+	case 2048: // CGB, AGB
+		c.bios.data = make([]uint8, 2048)
+		copy(c.bios.data[:], bios)
+	case 2048 + 256: // CGB, AGB (0x100..200 is padded)
+		c.bios.data = make([]uint8, 2048)
+		copy(c.bios.data[:256], bios[:256]) // 0x000..100
+		copy(c.bios.data[256:], bios[512:]) // 0x200..900
+	default:
+		return errors.New("invalid BIOS size")
+	}
+
+	c.bios.ff50 = true
+	return nil
+}
+
+func (c *CPU) stop() {
+	if c.key1&(1<<0) != 0 {
+		if c.Clock == 4 {
+			c.Clock = 8
+		} else {
+			c.Clock = 4
+		}
+		c.key1 &^= 1 << 0
 	}
 }
 
-func (c *Cpu) Reset(hasBIOS bool) {
-	c.r = Registers{}
-	c.IME = false
-	c.Cycle = 8
-	if !hasBIOS {
-		c.skipBIOS()
+func (c *CPU) StartHDMA() {
+	c.dma.startHDMA()
+}
+
+func (c *CPU) Step() int64 {
+	prev := c.Cycles
+	if c.dma.doHDMA {
+		c.dma.doHDMA = false
+		c.dma.runHDMA()
+		c.Cycles += 64
+		return c.Cycles - prev
 	}
-}
 
-func (c *Cpu) skipBIOS() {
-	c.r.a = 0x11
-	c.r.f.unpack(0x80)
-	c.r.bc.unpack(0x0000)
-	c.r.de.unpack(0xFF56)
-	c.r.hl.unpack(0x000D)
-
-	c.r.sp = 0xFFFE
-	c.r.pc = 0x100
-}
-
-func (c *Cpu) Step() {
-	pc := c.r.pc
-	c.inst.addr = pc
-	opcode := c.fetch()
-	c.inst.opcode = opcode
-	c.inst.cb = false
-
-	fn := opTable[opcode]
-	if fn != nil {
-		// fmt.Printf("0x%02X in 0x%04X\n", opcode, pc)
-		fn(c)
+	irqID := c.checkInterrupt()
+	if irqID >= 0 {
+		c.halted = false
+		if c.IME {
+			c.interrupt[irqID] = false
+			c.Interrupt(irqID)
+		} else {
+			c.SM83.Step()
+		}
+	} else if c.halted {
+		c.Cycles++
 	} else {
-		panic(fmt.Sprintf("illegal opcode: 0x%02X in 0x%04X", opcode, pc))
+		c.SM83.Step()
 	}
 
-	c.tick(opCycles[opcode] * c.Cycle)
+	return c.Cycles - prev
 }
 
-func (c *Cpu) fetch() uint8 {
-	pc := c.r.pc
-	c.r.pc++
-	return c.m.Read(pc)
+func (c *CPU) ReadIO(addr uint16) uint8 {
+	switch addr {
+	case 0xFF00:
+		return c.joypad.read()
+	case 0xFF0F:
+		val := uint8(0)
+		for i := 0; i < 5; i++ {
+			val |= (uint8(util.Btoi(c.interrupt[i])) << i)
+		}
+		return val
+	case 0xFF4D:
+		key1 := c.key1 | 0x7E
+		if c.Clock == 4 { // 2x
+			key1 |= 1 << 7
+		}
+		return key1
+	case 0xFF51, 0xFF52, 0xFF53, 0xFF54, 0xFF55:
+		return c.dma.Read(addr)
+	case 0xFF72:
+		return c.ff72
+	case 0xFF73:
+		return c.ff73
+	case 0xFF74:
+		return c.ff74
+	}
+	return 0
 }
 
-func (c *Cpu) tick(mastercycles int64) {
-	if c._tick != nil {
-		c._tick(mastercycles)
+func (c *CPU) WriteIO(addr uint16, val uint8) {
+	switch addr {
+	case 0xFF00:
+		c.joypad.write(val)
+	case 0xFF0F:
+		for i := 0; i < 5; i++ {
+			c.interrupt[i] = util.Bit(val, i)
+		}
+	case 0xFF4D:
+		c.key1 = (c.key1 & 0x80) | (val & 0x01)
+	case 0xFF50: // BANK
+		c.bios.ff50 = false
+	case 0xFF51, 0xFF52, 0xFF53, 0xFF54:
+		c.dma.Write(addr, val)
+	case 0xFF55:
+		cycles := c.dma.Write(addr, val)
+		c.Cycles += cycles
+	case 0xFF72:
+		c.ff72 = val
+	case 0xFF73:
+		c.ff73 = val
+	case 0xFF74:
+		c.ff74 = val
+	}
+}
+
+func (c *CPU) IRQ(id int) { c.interrupt[id] = true }
+
+func (c *CPU) SendInputs(inputs uint8) {
+	c.joypad.inputs = inputs
+}
+
+func (c *CPU) checkInterrupt() int {
+	for i := 0; i < 5; i++ {
+		if util.Bit(c.IE, i) && c.interrupt[i] {
+			return i
+		}
+	}
+	return -1
+}
+
+func (c *CPU) halt() {
+	if c.IME {
+		c.halted = true
+	} else {
+		if c.checkInterrupt() < 0 {
+			c.halted = true
+		}
 	}
 }

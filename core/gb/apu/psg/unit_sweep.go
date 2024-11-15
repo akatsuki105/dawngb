@@ -10,39 +10,42 @@ type sweep struct {
 	square  *square
 
 	// スイープ開始時の周波数(スイープ中に0xFF13と0xFF14に書き込まれて.square.periodが変更されても影響を受けないようにするためのもの)
-	periodShadow int32
+	periodLatch uint16
 
-	interval int8 // NR10's bit6-4(スイープ間隔)
-	negate   bool
-	shift    int8
+	shift    uint8 // NR10.0-2; スイープ量
+	negate   bool  // NR10.3; スイープの方向(0: 加算, 1: 減算)
+	interval uint8 // NR10.4-6; スイープ間隔
 
-	step int8 // スイープ間隔(.interval)をカウントするためのカウンタ
+	step uint8 // スイープ間隔(.interval)をカウントするためのカウンタ
 }
 
 func newSweep(ch *square) *sweep {
 	return &sweep{
-		square:   ch,
-		interval: 0,
-		step:     8,
+		square: ch,
 	}
 }
 
 func (s *sweep) reset() {
-	s.periodShadow = s.square.period
+	s.enabled = false
+	s.periodLatch, s.interval, s.negate, s.shift = 0, 0, false, 0
+	s.step = 0
+}
+
+func (s *sweep) reload() {
+	s.periodLatch = s.square.period
 	s.step = s.interval
 	if s.interval == 0 {
 		s.step = 8
 	}
 	s.enabled = (s.interval != 0 || s.shift != 0)
 	if s.shift != 0 {
-		s.updateFrequency()
 		s.checkOverflow()
 	}
 }
 
 func (s *sweep) update() {
 	s.step--
-	if s.step <= 0 {
+	if s.step == 0 {
 		s.step = s.interval
 		if s.interval == 0 {
 			s.step = 8
@@ -56,8 +59,8 @@ func (s *sweep) update() {
 
 func (s *sweep) updateFrequency() {
 	if s.enabled {
-		delta := s.periodShadow >> s.shift
-		freq := s.periodShadow
+		delta := s.periodLatch >> s.shift
+		freq := s.periodLatch
 		if !s.negate {
 			freq += delta
 		} else {
@@ -66,8 +69,8 @@ func (s *sweep) updateFrequency() {
 
 		if freq > 2047 {
 			s.square.enabled = false
-		} else if s.shift != 0 && freq >= 0 {
-			s.periodShadow = freq
+		} else if s.shift != 0 {
+			s.periodLatch = freq
 			s.square.period = freq
 			s.square.freqCounter = s.square.dutyStepCycle()
 		}
@@ -76,8 +79,8 @@ func (s *sweep) updateFrequency() {
 
 func (s *sweep) checkOverflow() {
 	if s.enabled {
-		delta := s.periodShadow >> s.shift
-		freq := s.periodShadow
+		delta := s.periodLatch >> s.shift
+		freq := s.periodLatch
 		if !s.negate {
 			freq += delta
 		} else {
@@ -92,7 +95,7 @@ func (s *sweep) checkOverflow() {
 
 func (s *sweep) serialize(w io.Writer) {
 	binary.Write(w, binary.LittleEndian, s.enabled)
-	binary.Write(w, binary.LittleEndian, s.periodShadow)
+	binary.Write(w, binary.LittleEndian, s.periodLatch)
 	binary.Write(w, binary.LittleEndian, s.interval)
 	binary.Write(w, binary.LittleEndian, s.negate)
 	binary.Write(w, binary.LittleEndian, s.shift)
@@ -101,7 +104,7 @@ func (s *sweep) serialize(w io.Writer) {
 
 func (s *sweep) deserialize(r io.Reader) {
 	binary.Read(r, binary.LittleEndian, &s.enabled)
-	binary.Read(r, binary.LittleEndian, &s.periodShadow)
+	binary.Read(r, binary.LittleEndian, &s.periodLatch)
 	binary.Read(r, binary.LittleEndian, &s.interval)
 	binary.Read(r, binary.LittleEndian, &s.negate)
 	binary.Read(r, binary.LittleEndian, &s.shift)

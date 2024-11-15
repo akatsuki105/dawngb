@@ -32,6 +32,18 @@ func newNoiseChannel() *noise {
 	}
 }
 
+func (ch *noise) reset() {
+	ch.enabled = false
+	ch.length = 0
+	ch.stop = false
+	ch.envelope.reset()
+	ch.lfsr = 0
+	ch.divisor, ch.octave = 0, 0
+	ch.period = 0
+	ch.narrow = false
+	ch.output = 0
+}
+
 func (ch *noise) clock64Hz() {
 	if ch.enabled {
 		ch.envelope.update()
@@ -89,7 +101,7 @@ func (ch *noise) getOutput() uint8 {
 
 func (ch *noise) tryRestart() {
 	ch.enabled = ch.dacEnable()
-	ch.envelope.reset()
+	ch.envelope.reload()
 	if ch.length == 0 {
 		ch.length = 64
 	}

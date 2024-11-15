@@ -31,10 +31,3 @@ func Btou8(b bool) uint8 {
 	}
 	return 0
 }
-
-func Flip(size int, b bool, i int) int {
-	if b {
-		return (size - 1) - i
-	}
-	return i
-}

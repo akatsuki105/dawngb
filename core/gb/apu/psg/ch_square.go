@@ -5,7 +5,7 @@ import (
 	"io"
 )
 
-var squareDutyTable = [4][8]int{
+var squareDutyTable = [4][8]uint8{
 	{0, 0, 0, 0, 0, 0, 0, 1}, // 12.5%
 	{1, 0, 0, 0, 0, 0, 0, 1}, // 25%
 	{1, 0, 0, 0, 0, 1, 1, 1}, // 50%
@@ -13,19 +13,19 @@ var squareDutyTable = [4][8]int{
 }
 
 type square struct {
-	enabled bool
+	enabled bool // NR52.0(ch1), NR52.1(ch2)
 
-	length int32 // 音の残り再生時間
-	stop   bool  // .length が 0 になったときに 音を止めるかどうか(NR14's bit6)
+	length int32 // NR11.0-5; 音の残り再生時間
+	stop   bool  // NR14.6; .length が 0 になったときに音を止めるかどうか
 
 	envelope *envelope
 	sweep    *sweep
 
-	duty        uint8 // NR11's bit7-6, (squareDutyTable の index)
+	duty        uint8 // NR11.6-7, (squareDutyTable の index)
 	dutyCounter uint8 // 0 ~ 7
 
-	period      int32 // GBでは周波数を指定するのではなく、周期の長さを指定する, 実際の周波数は ((4194304/32)/(2048-period)) Hz (64~131072 Hz -> 65536~32 APUサイクル)
-	freqCounter int32
+	period      uint16 // NR13.0-7, NR14.0-2; GBでは周波数を指定するのではなく、周期の長さを指定する
+	freqCounter uint16
 }
 
 func newSquareChannel(hasSweep bool) *square {
@@ -33,11 +33,21 @@ func newSquareChannel(hasSweep bool) *square {
 		envelope: newEnvelope(),
 	}
 
-	// スイープ機能があるのは ch1 のみなので区別する必要がある
-	if hasSweep {
+	if hasSweep { // スイープ機能があるのは ch1 のみなので区別する必要がある
 		ch.sweep = newSweep(ch)
 	}
 	return ch
+}
+
+func (ch *square) reset() {
+	ch.enabled = false
+	ch.length, ch.stop = 0, false
+	ch.envelope.reset()
+	if ch.sweep != nil {
+		ch.sweep.reset()
+	}
+	ch.duty, ch.dutyCounter = 0, 0
+	ch.period, ch.freqCounter = 0, 0
 }
 
 func (ch *square) clock64Hz() {
@@ -55,7 +65,7 @@ func (ch *square) clock128Hz() {
 func (ch *square) clock256Hz() {
 	if ch.stop && ch.length > 0 {
 		ch.length--
-		if ch.length <= 0 {
+		if ch.length == 0 {
 			ch.enabled = false
 		}
 	}
@@ -64,9 +74,10 @@ func (ch *square) clock256Hz() {
 func (ch *square) clockTimer() {
 	if ch.freqCounter > 0 {
 		ch.freqCounter--
-	} else {
-		ch.freqCounter = ch.dutyStepCycle()
-		ch.dutyCounter = (ch.dutyCounter + 1) % 8
+		if ch.freqCounter == 0 {
+			ch.freqCounter = ch.dutyStepCycle()
+			ch.dutyCounter = (ch.dutyCounter + 1) & 7
+		}
 	}
 }
 
@@ -81,7 +92,7 @@ func (ch *square) getOutput() uint8 {
 }
 
 // デューティ比の1ステップの長さをAPUサイクル数で返す
-func (ch *square) dutyStepCycle() int32 {
+func (ch *square) dutyStepCycle() uint16 {
 	// hz := (1048576 / (2048 - ch.period)) // freqency
 	// return 4194304 / hz
 	return 4 * (2048 - ch.period)
@@ -94,9 +105,9 @@ func (ch *square) dacEnable() bool {
 func (ch *square) tryRestart() {
 	ch.enabled = ch.dacEnable()
 	ch.freqCounter = ch.dutyStepCycle()
-	ch.envelope.reset()
+	ch.envelope.reload()
 	if ch.sweep != nil {
-		ch.sweep.reset()
+		ch.sweep.reload()
 	}
 	if ch.length == 0 {
 		ch.length = 64

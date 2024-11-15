@@ -34,7 +34,11 @@ func Run() exitCode {
 	e := createEmu()
 
 	if flag.NArg() > 0 {
-		e.LoadROMFromPath(flag.Arg(0))
+		err := e.LoadROMFromPath(flag.Arg(0))
+		if err != nil {
+			fmt.Fprintln(os.Stderr, err)
+			return exitCodeError
+		}
 	}
 
 	w, h := e.Layout(0, 0)

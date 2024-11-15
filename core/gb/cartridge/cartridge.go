@@ -8,7 +8,7 @@ import (
 
 const KB, MB = 1024, 1024 * 1024
 
-var ramSizes = map[uint8]uint{
+var RAM_SIZES = map[uint8]uint{
 	2: 8 * KB,
 	3: 32 * KB,
 	4: 128 * KB,
@@ -27,7 +27,7 @@ type Cartridge struct {
 	mbc
 }
 
-func New(rom []uint8) *Cartridge {
+func New(rom []uint8) (*Cartridge, error) {
 	isCGB := util.Bit(rom[0x143], 7)
 
 	title := string(rom[0x134:0x13F])
@@ -43,29 +43,33 @@ func New(rom []uint8) *Cartridge {
 	c.rom = make([]uint8, (32*KB)<<rom[0x148])
 	copy(c.rom, rom)
 
-	ramSize, ok := ramSizes[rom[0x149]]
+	ramSize, ok := RAM_SIZES[rom[0x149]]
 	if ok {
 		c.ram = make([]uint8, ramSize)
 	}
 
-	c.mbc = createMBC(c)
+	mbc, err := createMBC(c)
+	if err != nil {
+		return nil, err
+	}
+	c.mbc = mbc
 	fmt.Println("MapperID:", c.rom[0x147])
-	return c
+	return c, nil
 }
 
-func createMBC(c *Cartridge) mbc {
+func createMBC(c *Cartridge) (mbc, error) {
 	mbcType := c.rom[0x147]
 	switch mbcType {
 	case 0:
-		return newMBC0(c)
+		return newMBC0(c), nil
 	case 1, 2, 3:
-		return newMBC1(c)
+		return newMBC1(c), nil
 	case 16, 19:
-		return newMBC3(c)
+		return newMBC3(c), nil
 	case 25, 26, 27:
-		return newMBC5(c)
+		return newMBC5(c), nil
 	default:
-		panic(fmt.Sprintf("unsupported mbc type: 0x%02X", mbcType))
+		return nil, fmt.Errorf("unsupported mbc type: 0x%02X", mbcType)
 	}
 }
 
@@ -82,7 +86,7 @@ func (c *Cartridge) Write(addr uint16, val uint8) {
 }
 
 func (c *Cartridge) IsCGB() bool {
-	return util.Bit(c.rom[0x143], 7)
+	return (c.rom[0x143] & (1 << 7)) != 0
 }
 
 func (c *Cartridge) LoadSRAM(data []uint8) error {

@@ -4,6 +4,7 @@ import (
 	"encoding/binary"
 	"io"
 
+	"github.com/akatsuki105/dawngb/core/gb/cpu"
 	"github.com/akatsuki105/dawngb/util"
 )
 
@@ -26,8 +27,8 @@ func (t *timer) Reset(hasBIOS bool) {
 	}
 }
 
-func (t *timer) tick(cycles int64) {
-	t.cycles += cycles
+func (t *timer) run(cycles8MHz int64) {
+	t.cycles += cycles8MHz
 	for t.cycles >= 16 {
 		t.update()
 		t.cycles -= 16
@@ -35,7 +36,7 @@ func (t *timer) tick(cycles int64) {
 }
 
 func (t *timer) Read(addr uint16) uint8 {
-	x := t.g.cpu.Cycle / 4
+	x := t.g.cpu.Clock / 4
 	switch addr {
 	case 0xFF04:
 		div := t.counter / (16 * x)
@@ -65,7 +66,7 @@ func (t *timer) Write(addr uint16, val uint8) {
 
 // 524288Hz
 func (t *timer) update() {
-	x := t.g.cpu.Cycle / 4
+	x := t.g.cpu.Clock / 4
 
 	t.counter++
 	if util.Bit(t.tac, 2) {
@@ -73,7 +74,7 @@ func (t *timer) update() {
 			t.tima++
 			if t.tima == 0 {
 				t.tima = t.tma
-				t.g.requestInterrupt(2)
+				t.g.cpu.IRQ(cpu.IRQ_TIMER)
 			}
 		}
 	}

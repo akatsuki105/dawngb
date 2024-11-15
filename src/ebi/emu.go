@@ -9,7 +9,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/akatsuki105/dawngb/core"
+	"github.com/akatsuki105/dawngb/core/gb"
 	"github.com/ebitengine/oto/v3"
 	"github.com/hajimehoshi/ebiten/v2"
 )
@@ -61,7 +61,7 @@ var inputMapWeb = map[string]bool{
 }
 
 type Emu struct {
-	c      core.Core
+	c      *gb.GB
 	active bool
 	paused bool
 
@@ -80,18 +80,18 @@ func createEmu() *Emu {
 		return emu
 	}
 	e := &Emu{
-		sampleBuffer: newSampleBuffer(make([]uint8, 0, 4096)),
+		sampleBuffer: newSampleBuffer(make([]uint8, 0, 8192)),
 		turbo:        1,
 		volume:       0.5,
 		taskQueue:    make([]func(), 0, 10),
 	}
-	e.c = core.NewGB(e.sampleBuffer)
+	e.c = gb.New(e.sampleBuffer)
 
 	// init Audio
 	op := oto.NewContextOptions{
 		SampleRate:   32768,
 		ChannelCount: 2,
-		Format:       oto.FormatUnsignedInt8,
+		Format:       oto.FormatSignedInt16LE, // RetroArch はこれを使っているので合わせると楽
 	}
 	context, readyChan, err := oto.NewContext(&op)
 	if err != nil {
@@ -100,7 +100,7 @@ func createEmu() *Emu {
 	<-readyChan
 	e.music = context.NewPlayer(e.sampleBuffer)
 	e.music.SetVolume(e.volume)
-	e.music.SetBufferSize(4096)
+	e.music.SetBufferSize(8192)
 
 	emu = e
 	return e
@@ -133,10 +133,11 @@ func (e *Emu) LoadROMFromPath(path string) error {
 		savPath := strings.ReplaceAll(path, ext, ".sav")
 		if _, err := os.Stat(savPath); err == nil {
 			if savData, err := os.ReadFile(savPath); err == nil {
-				err := e.c.LoadSRAM(savData)
+				err := e.c.Load(gb.LOAD_SAVE, savData)
 				if err != nil {
 					return err
 				}
+				e.c.Reset(false)
 			}
 		}
 	}
@@ -144,13 +145,17 @@ func (e *Emu) LoadROMFromPath(path string) error {
 	return nil
 }
 
-func (e *Emu) LoadROM(data []byte) error {
-	err := e.c.LoadROM(data)
-	e.active = err == nil
-	if e.active {
-		ebiten.SetWindowTitle(e.title())
+func (e *Emu) LoadROM(data []uint8) error {
+	err := e.c.Load(gb.LOAD_ROM, data)
+	if err != nil {
+		e.active = false
+		return err
 	}
-	return err
+
+	e.active = true
+	e.c.Reset(false)
+	ebiten.SetWindowTitle(e.title())
+	return nil
 }
 
 func (e *Emu) Update() error {
@@ -184,10 +189,10 @@ func (e *Emu) Draw(screen *ebiten.Image) {
 	if e.active && !e.paused {
 		data := e.c.Screen()
 		w, h := e.c.Resolution()
-		img := image.NewRGBA(image.Rect(0, 0, w, h))
+		img := image.NewNRGBA(image.Rect(0, 0, w, h))
 		for y := 0; y < h; y++ {
 			for x := 0; x < w; x++ {
-				img.Set(x, y, data[y*w+x])
+				img.SetNRGBA(x, y, data[y*w+x])
 			}
 		}
 		screen.DrawImage(ebiten.NewImageFromImage(img), nil)
@@ -282,11 +287,31 @@ func (e *Emu) handleDropFile() error {
 			if err != nil {
 				return err
 			}
+
 			switch ext {
-			case ".gb", ".gbc":
-				return e.LoadROM(data)
-			case ".sav":
-				return e.c.LoadSRAM(data)
+			case ".gb", ".gbc": // ROM
+				err := e.LoadROM(data)
+				if err != nil {
+					return err
+				}
+				e.c.Reset(false)
+
+			case ".sav": // Save Data
+				err := e.c.Load(gb.LOAD_SAVE, data)
+				if err != nil {
+					return err
+				}
+				e.c.Reset(false)
+
+			case ".bin": // BIOS
+				size := len(data)
+				if size == 256 || size == 2048 || size == 2048+256 {
+					err := e.c.Load(gb.LOAD_BIOS, data)
+					if err != nil {
+						return err
+					}
+					e.c.Reset(true)
+				}
 			}
 		}
 	}

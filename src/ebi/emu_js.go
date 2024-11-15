@@ -2,6 +2,8 @@ package main
 
 import (
 	"syscall/js"
+
+	"github.com/akatsuki105/dawngb/core/gb"
 )
 
 func init() {
@@ -48,7 +50,7 @@ func press(this js.Value, args []js.Value) any {
 func loadROM(this js.Value, args []js.Value) any {
 	if emu != nil {
 		raw := args[0]
-		rom := make([]byte, raw.Get("length").Int())
+		rom := make([]uint8, raw.Get("length").Int())
 		js.CopyBytesToGo(rom, raw)
 		emu.LoadROM(rom)
 	}
@@ -57,21 +59,26 @@ func loadROM(this js.Value, args []js.Value) any {
 
 func loadSave(this js.Value, args []js.Value) any {
 	if emu != nil {
-		sram := emu.c.SRAM()
-		size := len(sram)
-		newSram := make([]byte, size)
-		js.CopyBytesToGo(newSram, args[0])
-		emu.c.LoadSRAM(newSram)
+		sram, err := emu.c.Dump(gb.DUMP_SAVE)
+		if err == nil {
+			size := len(sram)
+			newSram := make([]uint8, size)
+			js.CopyBytesToGo(newSram, args[0])
+			emu.c.Load(gb.LOAD_SAVE, newSram)
+			emu.c.Reset(false)
+		}
 	}
 	return nil
 }
 
 func dumpSave(this js.Value, args []js.Value) any {
 	if emu != nil {
-		sram := emu.c.SRAM()
-		dst := js.Global().Get("Uint8Array").New(len(sram))
-		js.CopyBytesToJS(dst, sram)
-		return dst
+		sram, err := emu.c.Dump(gb.DUMP_SAVE)
+		if err == nil {
+			dst := js.Global().Get("Uint8Array").New(len(sram))
+			js.CopyBytesToJS(dst, sram)
+			return dst
+		}
 	}
 	return nil
 }

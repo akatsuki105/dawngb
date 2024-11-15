@@ -3,17 +3,18 @@ package gb
 import (
 	"math"
 
+	"github.com/akatsuki105/dawngb/core/gb/cpu"
 	"github.com/akatsuki105/dawngb/util"
 )
 
 type serial struct {
-	g      *GB
+	irq    func(int)
 	until  int64
 	sb, sc uint8
 }
 
-func newSerial(g *GB) *serial {
-	return &serial{g: g}
+func newSerial(irq func(int)) *serial {
+	return &serial{irq: irq}
 }
 
 func (s *serial) Reset(hasBIOS bool) {
@@ -21,8 +22,8 @@ func (s *serial) Reset(hasBIOS bool) {
 	s.sb, s.sc = 0, 0
 }
 
-func (s *serial) tick(cycles int64) {
-	for i := int64(0); i < cycles; i++ {
+func (s *serial) run(cycles8MHz int64) {
+	for i := int64(0); i < cycles8MHz; i++ {
 		s.until--
 		if s.until <= 0 {
 			s.until = math.MaxInt64
@@ -61,5 +62,5 @@ func (s *serial) Write(addr uint16, val uint8) {
 func (s *serial) dummyTransfer() {
 	s.sc &= 0x7F
 	s.sb = 0xFF
-	s.g.requestInterrupt(3)
+	s.irq(cpu.IRQ_SERIAL)
 }

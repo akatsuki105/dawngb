@@ -1,0 +1,39 @@
+# Software Information
+display_name = "Nintendo - Game Boy / Color (DawnGB)"
+categories = "Emulator"
+authors = "Akatsuki105"
+corename = "DawnGB"
+supported_extensions = "gb|gbc"
+license = "MIT"
+permissions = ""
+display_version = "v1.0.0"
+
+# Hardware Information
+manufacturer = "Nintendo"
+systemname = "Game Boy/Game Boy Color"
+systemid = "game_boy"
+
+# Libretro Features
+savestate = "false"
+savestate_features = "deterministic"
+cheats = "false"
+input_descriptors = "false"
+memory_descriptors = "false"
+libretro_saves = "true"
+core_options = "true"
+supports_no_game = "false"
+database = "Nintendo - Game Boy|Nintendo - Game Boy Color"
+hw_render = "false"
+is_experimental = "true"
+
+# Firmware / BIOS
+firmware_count = 2
+firmware0_desc = "dmg_boot.bin (Game Boy boot ROM)"
+firmware0_path = "dmg_boot.bin"
+firmware0_opt = "true"
+firmware1_desc = "cgb_boot.bin (Game Boy Color boot ROM)"
+firmware1_path = "cgb_boot.bin"
+firmware1_opt = "true"
+notes = "(!) dmg_boot.bin (md5): 32fbbd84168d3482956eb3c5051637f5|(!) cgb_boot.bin (md5): dbfce9db9deaa2567f6a84fde55f9680"
+
+description = "DawnGB is an GB/GBC emulator."

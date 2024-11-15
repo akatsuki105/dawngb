@@ -8,182 +8,183 @@ import (
 	"github.com/akatsuki105/dawngb/core/gb/apu"
 	"github.com/akatsuki105/dawngb/core/gb/cartridge"
 	"github.com/akatsuki105/dawngb/core/gb/cpu"
-	"github.com/akatsuki105/dawngb/core/gb/video"
-	"github.com/akatsuki105/dawngb/util"
+	"github.com/akatsuki105/dawngb/core/gb/ppu"
 )
 
 const KB, MB = 1024, 1024 * 1024
 
+const (
+	MODEL_DMG = iota
+	MODEL_CGB
+)
+
+type LoadCmd = uint8
+
+const (
+	LOAD_ROM LoadCmd = iota
+	LOAD_SAVE
+	LOAD_BIOS
+)
+
+type DumpCmd = uint8
+
+const (
+	DUMP_SAVE DumpCmd = iota
+)
+
 var buttons = [8]string{"A", "B", "SELECT", "START", "RIGHT", "LEFT", "UP", "DOWN"}
 
-type oamDmaController struct {
-	active bool
-	src    uint16
-	until  int64
-}
-
 type GB struct {
-	cycles    int64 // 8.3MHzのマスターサイクル単位
-	cpu       *cpu.Cpu
-	m         *Memory
-	video     *video.Video
+	cpu       *cpu.CPU
+	ppu       *ppu.PPU
+	apu       *apu.APU
 	cartridge *cartridge.Cartridge
-	input     *input
 	timer     *timer
 	serial    *serial
-	dmac      *dmaController
-	ie        uint8
-	interrupt [5]bool // IF
-	halted    bool
-	key1      bool    // FF4D's bit 0
-	inputs    [8]bool // A, B, Select, Start, Right, Left, Up, Down
-	runHDMA   func()
-	oamDMA    oamDmaController
-	apu       *apu.APU
+	inputs    uint8 // 押されている時にビットを立てる; bit0: A, bit1: B, bit2: SELECT, bit3: START, bit4: RIGHT, bit5: LEFT, bit6: UP, bit7: DOWN
+	wram      [(4 * KB) * 8]uint8
+	wramBank  uint // SVBK(0xFF70, CGB only)
 }
 
 func New(audioBuffer io.Writer) *GB {
 	g := &GB{}
-	g.m = newMemory(g)
-	g.cpu = cpu.New(g.m, g.halt, g.stop, g.tick)
-	g.video = video.New(g.requestInterrupt, g.triggerHDMA)
-	g.timer = newTimer(g)
+	g.cpu = cpu.New(g)
+	g.ppu = ppu.New(g, g.cpu.IRQ, g.cpu.StartHDMA)
 	g.apu = apu.New(audioBuffer)
-	g.input = newInput(g)
-	g.dmac = newDMAController(g)
-	g.serial = newSerial(g)
+	g.timer = newTimer(g)
+	g.serial = newSerial(g.cpu.IRQ)
+	g.wramBank = 1
 	return g
 }
 
 func (g *GB) Reset(hasBIOS bool) {
-	g.ie, g.interrupt = 0, [5]bool{}
-	g.halted, g.key1, g.oamDMA.active = false, false, false
-
-	model := 0
+	model := MODEL_DMG
 	if g.cartridge != nil && g.cartridge.IsCGB() {
-		model = 1
+		model = MODEL_CGB
 	}
 
-	g.m.Reset(hasBIOS)
+	clear(g.wram[:])
+	g.wramBank = 1
 	g.cpu.Reset(hasBIOS)
-	g.video.Reset(model, hasBIOS)
+	g.ppu.Reset(model, hasBIOS)
 	g.apu.Reset(hasBIOS)
 	g.timer.Reset(hasBIOS)
-	g.input.Reset(hasBIOS)
-	g.dmac.Reset(hasBIOS)
 	g.serial.Reset(hasBIOS)
+	g.inputs = 0
 
 	if !hasBIOS {
-		g.m.Write(0xFF02, 0x7F)
-		g.m.Write(0xFF0F, 0xE1)
-		if model == 1 {
-			g.m.Write(0xFF4D, 0x7E)
-			g.m.Write(0xFF4F, 0xFE)
+		g.Write(0xFF02, 0x7F) // SC
+		g.Write(0xFF0F, 0xE1) // IF
+		if model == MODEL_CGB {
+			g.Write(0xFF4D, 0x7E) // KEY1
+			g.Write(0xFF4F, 0xFE) // VBK
 		}
 	}
 }
 
-func (g *GB) LoadROM(romData []byte) error {
-	g.cartridge = cartridge.New(romData)
-	g.Reset(false)
+var errInvalidCmd = fmt.Errorf("invalid command")
+
+func (g *GB) Load(cmd LoadCmd, args ...any) error {
+	switch cmd {
+	case LOAD_ROM:
+		if len(args) != 1 {
+			return fmt.Errorf("LOAD_ROM command requires []uint8")
+		}
+		rom, ok := args[0].([]uint8)
+		if !ok {
+			return fmt.Errorf("LOAD_ROM command requires []uint8")
+		}
+		cartridge, err := cartridge.New(rom)
+		if err != nil {
+			return err
+		}
+		g.cartridge = cartridge
+
+	case LOAD_SAVE:
+		if len(args) != 1 {
+			return fmt.Errorf("LOAD_SAVE command requires []uint8")
+		}
+		if g.cartridge == nil {
+			return fmt.Errorf("no cartridge loaded")
+		}
+		sram, ok := args[0].([]uint8)
+		if !ok {
+			return fmt.Errorf("LOAD_SAVE command requires []uint8")
+		}
+		err := g.cartridge.LoadSRAM(sram)
+		if err != nil {
+			return err
+		}
+
+	case LOAD_BIOS:
+		if len(args) != 1 {
+			return fmt.Errorf("LOAD_BIOS command requires []uint8")
+		}
+		bios, ok := args[0].([]uint8)
+		if !ok {
+			return fmt.Errorf("LOAD_BIOS command requires []uint8")
+		}
+		err := g.cpu.LoadBIOS(bios)
+		if err != nil {
+			return err
+		}
+
+	default:
+		return errInvalidCmd
+	}
 
 	return nil
 }
 
-func (g *GB) LoadSRAM(data []byte) error {
-	if g.cartridge == nil {
-		return fmt.Errorf("no cartridge loaded")
+func (g *GB) Dump(cmd DumpCmd, args ...any) ([]uint8, error) {
+	switch cmd {
+	case DUMP_SAVE:
+		if g.cartridge == nil {
+			return []uint8{}, fmt.Errorf("no cartridge loaded")
+		}
+		return g.cartridge.SRAM(), nil
+	default:
+		return nil, errInvalidCmd
 	}
-	err := g.cartridge.LoadSRAM(data)
-	if err != nil {
-		return err
-	}
-	g.Reset(false)
-	return nil
-}
-
-func (g *GB) SRAM() []byte {
-	if g.cartridge == nil {
-		return nil
-	}
-	return g.cartridge.SRAM()
 }
 
 func (g *GB) RunFrame() {
 	if g.cartridge != nil {
-		const FRAME = 70224 * video.CYCLE
-		start := g.cycles
+		g.cpu.SendInputs(g.inputs ^ 0xFF) // ボタンの状態をCPUに送る(ただし、押されてないボタンのビットを立てる)
+		g.inputs = 0
 
-		frame := g.video.FrameCounter
-		for frame == g.video.FrameCounter && ((g.cycles - start) < FRAME) {
-			g.run()
-			g.video.CatchUp()
+		const FRAME = 70224 * ppu.CYCLE
+		start := g.cpu.Cycles
+
+		frame := g.ppu.FrameCounter
+		for frame == g.ppu.FrameCounter && ((g.cpu.Cycles - start) < FRAME) {
+			g.step()
 		}
-		g.video.CatchUp()
 		g.apu.FlushSamples()
 	}
 }
 
-func (g *GB) run() {
-	prev := g.cycles
-
-	if g.dmac.doHDMA {
-		g.dmac.doHDMA = false
-		g.dmac.runHDMA()
-	} else {
-		irqID := g.checkInterrupt()
-		if irqID >= 0 {
-			g.halted = false
-			if g.cpu.IME {
-				g.interrupt[irqID] = false
-				g.cpu.Interrupt(irqID)
-			} else {
-				g.cpu.Step()
-			}
-		} else if g.halted {
-			g.tick(1)
-		} else {
-			g.cpu.Step()
-		}
-	}
-
-	g.catchUp(g.cycles - prev)
-}
-
-func (g *GB) tick(cycles int64) {
-	g.cycles += cycles
-}
-
-func (g *GB) catchUp(cycles int64) {
-	g.apu.Tick(cycles)
-	g.video.Tick(cycles)
-	g.timer.tick(cycles)
-	g.serial.tick(cycles)
-
-	if g.oamDMA.active {
-		g.oamDMA.until -= cycles
-		if g.oamDMA.until <= 0 {
-			for i := uint16(0); i < 160; i++ {
-				g.video.Write(0xFE00+i, g.m.Read(g.oamDMA.src+i))
-			}
-			g.oamDMA.active = false
-		}
-	}
+func (g *GB) step() {
+	delta := g.cpu.Step() // CPUで1命令実行して、その後に他のコンポーネントを同期させる
+	g.ppu.Run(delta)
+	g.apu.Run(delta)
+	g.timer.run(delta)
+	g.serial.run(delta)
 }
 
 func (g *GB) Resolution() (w int, h int) { return 160, 144 }
 
-func (g *GB) Screen() []color.RGBA {
-	if g.cartridge != nil {
-		return g.video.Screen()
-	}
-	return []color.RGBA{}
+func (g *GB) Screen() []color.NRGBA {
+	return g.ppu.Screen()
 }
 
 func (g *GB) SetKeyInput(key string, press bool) {
-	for i, b := range buttons {
-		if b == key {
-			g.inputs[i] = press
+	if press {
+		for i, b := range buttons {
+			if b == key {
+				g.inputs |= (1 << uint(i))
+				break
+			}
 		}
 	}
 }
@@ -195,62 +196,12 @@ func (g *GB) Title() string {
 	return g.cartridge.Title()
 }
 
-func (g *GB) requestInterrupt(id int) { g.interrupt[id] = true }
-
-func (g *GB) checkInterrupt() int {
-	for i := 0; i < 5; i++ {
-		if util.Bit(g.ie, i) && g.interrupt[i] {
-			return i
-		}
-	}
-	return -1
-}
-
-func (g *GB) triggerOAMDMA(src uint16) {
-	if !g.oamDMA.active {
-		g.oamDMA.active = true
-		g.oamDMA.src = src
-		g.oamDMA.until = 160 * g.cpu.Cycle
-	}
-}
-
-func (g *GB) triggerHDMA() {
-	if g.runHDMA != nil {
-		g.dmac.doHDMA = true
-	}
-}
-
-func (g *GB) halt() {
-	if g.cpu.IME {
-		g.halted = true
-	} else {
-		if g.checkInterrupt() < 0 {
-			g.halted = true
-		}
-	}
-}
-
-func (g *GB) stop() {
-	if g.key1 {
-		if g.cpu.Cycle == 4 {
-			g.cpu.Cycle = 8
-		} else {
-			g.cpu.Cycle = 4
-		}
-		g.key1 = false
-	}
-}
-
 func (g *GB) Serialize(state io.Writer) {
 	// TODO: implement
-	g.input.Serialize(state)
 	g.timer.Serialize(state)
-	g.dmac.Serialize(state)
 }
 
 func (g *GB) Deserialize(state io.Reader) {
 	// TODO: implement
-	g.input.Deserialize(state)
 	g.timer.Deserialize(state)
-	g.dmac.Deserialize(state)
 }
