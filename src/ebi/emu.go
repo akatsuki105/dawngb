@@ -126,6 +126,7 @@ func (e *Emu) LoadROMFromPath(path string) error {
 	if err != nil {
 		return err
 	}
+	e.c.Reset(false)
 
 	// Load Save Data
 	ext := filepath.Ext(path)
@@ -153,7 +154,6 @@ func (e *Emu) LoadROM(data []uint8) error {
 	}
 
 	e.active = true
-	e.c.Reset(false)
 	ebiten.SetWindowTitle(e.title())
 	return nil
 }

@@ -53,6 +53,7 @@ func loadROM(this js.Value, args []js.Value) any {
 		rom := make([]uint8, raw.Get("length").Int())
 		js.CopyBytesToGo(rom, raw)
 		emu.LoadROM(rom)
+		emu.c.Reset(false)
 	}
 	return nil
 }
