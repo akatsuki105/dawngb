@@ -46,8 +46,8 @@ func (a *APU) Run(cycles8MHz int64) {
 				lvolume, rvolume := a.PSG.Volume()
 				lsample, rsample := (int(left)*512)-16384, (int(right)*512)-16384
 				lsample, rsample = (lsample*int(lvolume+1))/8, (rsample*int(rvolume+1))/8
-				a.samples[a.sampleCount*2] = int16(lsample)
-				a.samples[a.sampleCount*2+1] = int16(rsample)
+				a.samples[a.sampleCount*2] = int16(lsample) / 2
+				a.samples[a.sampleCount*2+1] = int16(rsample) / 2
 				a.sampleCount++
 			}
 		}

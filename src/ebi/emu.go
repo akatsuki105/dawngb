@@ -131,15 +131,26 @@ func (e *Emu) LoadROMFromPath(path string) error {
 	// Load Save Data
 	ext := filepath.Ext(path)
 	if ext == ".gbc" || ext == ".gb" {
-		savPath := strings.ReplaceAll(path, ext, ".sav")
-		if _, err := os.Stat(savPath); err == nil {
-			if savData, err := os.ReadFile(savPath); err == nil {
-				err := e.c.Load(gb.LOAD_SAVE, savData)
-				if err != nil {
-					return err
+		var savData []uint8
+
+		savExt := []string{".sav", ".srm"}
+		for _, sav := range savExt {
+			savPath := strings.ReplaceAll(path, ext, sav)
+			if _, err := os.Stat(savPath); err == nil {
+				data, err := os.ReadFile(savPath)
+				if err == nil {
+					savData = data
+					break
 				}
-				e.c.Reset(false)
 			}
+		}
+
+		if len(savData) > 0 {
+			err := e.c.Load(gb.LOAD_SAVE, savData)
+			if err != nil {
+				return err
+			}
+			e.c.Reset(false)
 		}
 	}
 
@@ -300,7 +311,7 @@ func (e *Emu) handleDropFile() error {
 				}
 				e.c.Reset(false)
 
-			case ".sav": // Save Data
+			case ".sav", ".srm": // Save Data
 				err := e.c.Load(gb.LOAD_SAVE, data)
 				if err != nil {
 					return err

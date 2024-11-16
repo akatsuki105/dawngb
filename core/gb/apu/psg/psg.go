@@ -13,8 +13,9 @@ const (
 
 // GB/GBA の PSG (Programmable Sound Generator) ユニット, 4.19MHz で動作する (GB/GBA両方)
 type PSG struct {
+	model uint8
+
 	enabled bool // NR52.7
-	model   uint8
 
 	ch1, ch2 *square
 	ch3      *wave
@@ -33,7 +34,7 @@ func New(model uint8) *PSG {
 		model: model,
 		ch1:   newSquareChannel(true),
 		ch2:   newSquareChannel(false),
-		ch3:   newWaveChannel(),
+		ch3:   newWaveChannel(model),
 		ch4:   newNoiseChannel(),
 	}
 }

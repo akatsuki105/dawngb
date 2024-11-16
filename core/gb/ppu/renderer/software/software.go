@@ -78,23 +78,23 @@ func (s *Software) DrawScanline(y int, scanline []color.NRGBA) {
 }
 
 func (s *Software) SetLCDC(val uint8) {
-	s.bg.active = util.Bit(val, 0)
+	s.bg.active = (val & (1 << 0)) != 0
 	if s.model == 1 {
 		s.bg.active = true
-		if util.Bit(val, 0) {
+		if (val & (1 << 0)) != 0 {
 			s.sprite.z = 0
 		} else {
 			s.sprite.z = Z_MASTER_SPR
 		}
 	}
-	s.bg.tilemap = [2]uint16{0x1800, 0x1C00}[util.Btoi(util.Bit(val, 3))]
-	s.bg.tiledata = [2]int{0x800, 0x0}[util.Btoi(util.Bit(val, 4))]
+	s.bg.tilemap = [2]uint16{0x1800, 0x1C00}[(val>>3)&1]
+	s.bg.tiledata = [2]int{0x800, 0x0}[(val>>4)&1]
 
 	s.win.active = s.bg.active && util.Bit(val, 5)
-	s.win.tilemap = [2]uint16{0x1800, 0x1C00}[util.Btoi(util.Bit(val, 6))]
+	s.win.tilemap = [2]uint16{0x1800, 0x1C00}[(val>>6)&1]
 
 	s.sprite.active = util.Bit(val, 1)
-	s.sprite.height = [2]int{8, 16}[util.Btoi(util.Bit(val, 2))]
+	s.sprite.height = [2]int{8, 16}[(val>>2)&1]
 }
 
 func (s *Software) SetBGP(val uint8) {

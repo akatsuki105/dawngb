@@ -24,7 +24,7 @@ func newTimer(irq func(n int), clock *int64) *timer {
 	}
 }
 
-func (t *timer) Reset(hasBIOS bool) {
+func (t *timer) reset(hasBIOS bool) {
 	t.cycles = 0
 	t.counter, t.tima, t.tma, t.tac = 0, 0, 0, 0
 	if !hasBIOS {
@@ -37,6 +37,22 @@ func (t *timer) run(cycles8MHz int64) {
 	for t.cycles >= 16 {
 		t.update()
 		t.cycles -= 16
+	}
+}
+
+// 524288Hz
+func (t *timer) update() {
+	x := (*t.clock) / 4
+
+	t.counter++
+	if util.Bit(t.tac, 2) {
+		if (t.counter % (timaClock[t.tac&0b11] * x)) == 0 {
+			t.tima++
+			if t.tima == 0 {
+				t.tima = t.tma
+				t.irq(IRQ_TIMER)
+			}
+		}
 	}
 }
 
@@ -66,22 +82,6 @@ func (t *timer) Write(addr uint16, val uint8) {
 		t.tma = val
 	case 0xFF07:
 		t.tac = val & 0b111
-	}
-}
-
-// 524288Hz
-func (t *timer) update() {
-	x := (*t.clock) / 4
-
-	t.counter++
-	if util.Bit(t.tac, 2) {
-		if (t.counter % (timaClock[t.tac&0b11] * x)) == 0 {
-			t.tima++
-			if t.tima == 0 {
-				t.tima = t.tma
-				t.irq(IRQ_TIMER)
-			}
-		}
 	}
 }
 

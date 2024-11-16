@@ -50,6 +50,18 @@ func (ch *square) reset() {
 	ch.period, ch.freqCounter = 0, 0
 }
 
+func (ch *square) reload() {
+	ch.enabled = ch.dacEnable()
+	ch.freqCounter = ch.dutyStepCycle()
+	ch.envelope.reload()
+	if ch.sweep != nil {
+		ch.sweep.reload()
+	}
+	if ch.length == 0 {
+		ch.length = 64
+	}
+}
+
 func (ch *square) clock64Hz() {
 	if ch.enabled {
 		ch.envelope.update()
@@ -100,18 +112,6 @@ func (ch *square) dutyStepCycle() uint16 {
 
 func (ch *square) dacEnable() bool {
 	return ((ch.envelope.initialVolume != 0) || ch.envelope.direction)
-}
-
-func (ch *square) tryRestart() {
-	ch.enabled = ch.dacEnable()
-	ch.freqCounter = ch.dutyStepCycle()
-	ch.envelope.reload()
-	if ch.sweep != nil {
-		ch.sweep.reload()
-	}
-	if ch.length == 0 {
-		ch.length = 64
-	}
 }
 
 func (ch *square) serialize(s io.Writer) {
