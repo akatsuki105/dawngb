@@ -82,7 +82,7 @@ func createEmu() *Emu {
 	e := &Emu{
 		sampleBuffer: newSampleBuffer(make([]uint8, 0, 8192)),
 		turbo:        1,
-		volume:       0.5,
+		volume:       1,
 		taskQueue:    make([]func(), 0, 10),
 	}
 	e.c = gb.New(e.sampleBuffer)
