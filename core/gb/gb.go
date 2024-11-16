@@ -39,8 +39,6 @@ type GB struct {
 	ppu       *ppu.PPU
 	apu       *apu.APU
 	cartridge *cartridge.Cartridge
-	timer     *timer
-	serial    *serial
 	inputs    uint8 // 押されている時にビットを立てる; bit0: A, bit1: B, bit2: SELECT, bit3: START, bit4: RIGHT, bit5: LEFT, bit6: UP, bit7: DOWN
 	wram      [(4 * KB) * 8]uint8
 	wramBank  uint // SVBK(0xFF70, CGB only)
@@ -51,8 +49,6 @@ func New(audioBuffer io.Writer) *GB {
 	g.cpu = cpu.New(g)
 	g.ppu = ppu.New(g, g.cpu.IRQ, g.cpu.StartHDMA)
 	g.apu = apu.New(audioBuffer)
-	g.timer = newTimer(g)
-	g.serial = newSerial(g.cpu.IRQ)
 	g.wramBank = 1
 	return g
 }
@@ -68,8 +64,6 @@ func (g *GB) Reset(hasBIOS bool) {
 	g.cpu.Reset(hasBIOS)
 	g.ppu.Reset(model, hasBIOS)
 	g.apu.Reset(hasBIOS)
-	g.timer.Reset(hasBIOS)
-	g.serial.Reset(hasBIOS)
 	g.inputs = 0
 
 	if !hasBIOS {
@@ -168,8 +162,6 @@ func (g *GB) step() {
 	delta := g.cpu.Step() // CPUで1命令実行して、その後に他のコンポーネントを同期させる
 	g.ppu.Run(delta)
 	g.apu.Run(delta)
-	g.timer.run(delta)
-	g.serial.run(delta)
 }
 
 func (g *GB) Resolution() (w int, h int) { return 160, 144 }
@@ -198,10 +190,8 @@ func (g *GB) Title() string {
 
 func (g *GB) Serialize(state io.Writer) {
 	// TODO: implement
-	g.timer.Serialize(state)
 }
 
 func (g *GB) Deserialize(state io.Reader) {
 	// TODO: implement
-	g.timer.Deserialize(state)
 }

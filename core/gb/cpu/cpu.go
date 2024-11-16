@@ -21,8 +21,10 @@ type CPU struct {
 	*sm83.SM83
 	bus              sm83.Bus
 	Clock            int64 // 8(1x) or 4(2x)
+	timer            *timer
 	dma              *DMA
 	joypad           *joypad
+	serial           *serial
 	bios             BIOS
 	HRAM             [0x7F]uint8
 	halted           bool
@@ -43,8 +45,10 @@ func New(bus sm83.Bus) *CPU {
 		bus: bus,
 	}
 	c.SM83 = sm83.New(c, c.halt, c.stop, c.wait)
+	c.timer = newTimer(c.IRQ, &c.Clock)
 	c.joypad = newJoypad(c.IRQ)
 	c.dma = newDMA(c)
+	c.serial = newSerial(c.IRQ)
 	return c
 }
 
@@ -52,8 +56,10 @@ func (c *CPU) Reset(hasBIOS bool) {
 	c.Cycles = 0
 	c.SM83.Reset(hasBIOS)
 	c.Clock = 8
+	c.timer.Reset(hasBIOS)
 	c.dma.Reset(hasBIOS)
 	c.joypad.reset(hasBIOS)
+	c.serial.Reset(hasBIOS)
 	clear(c.HRAM[:])
 	c.halted = false
 	c.IE, c.interrupt = 0, [5]bool{}
@@ -103,6 +109,13 @@ func (c *CPU) StartHDMA() {
 }
 
 func (c *CPU) Step() int64 {
+	cycles := c.step()
+	c.timer.run(cycles)
+	c.serial.run(cycles)
+	return cycles
+}
+
+func (c *CPU) step() int64 {
 	prev := c.Cycles
 	if c.dma.doHDMA {
 		c.dma.doHDMA = false
@@ -133,6 +146,10 @@ func (c *CPU) ReadIO(addr uint16) uint8 {
 	switch addr {
 	case 0xFF00:
 		return c.joypad.read()
+	case 0xFF01, 0xFF02:
+		return c.serial.Read(addr)
+	case 0xFF04, 0xFF05, 0xFF06, 0xFF07:
+		return c.timer.Read(addr)
 	case 0xFF0F:
 		val := uint8(0)
 		for i := 0; i < 5; i++ {
@@ -161,6 +178,10 @@ func (c *CPU) WriteIO(addr uint16, val uint8) {
 	switch addr {
 	case 0xFF00:
 		c.joypad.write(val)
+	case 0xFF01, 0xFF02:
+		c.serial.Write(addr, val)
+	case 0xFF04, 0xFF05, 0xFF06, 0xFF07:
+		c.timer.Write(addr, val)
 	case 0xFF0F:
 		for i := 0; i < 5; i++ {
 			c.interrupt[i] = util.Bit(val, i)

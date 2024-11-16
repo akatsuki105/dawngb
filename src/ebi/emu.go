@@ -262,7 +262,11 @@ func (e *Emu) setTurbo(speed int) {
 
 func (e *Emu) enableSound(enabled bool) {
 	e.queueTask(func() {
+		prev := e.soundEnabled
 		e.soundEnabled = enabled
+		if prev != enabled {
+			e.sampleBuffer.Reset()
+		}
 	})
 }
 

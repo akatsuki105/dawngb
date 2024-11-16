@@ -1,23 +1,28 @@
-package gb
+package cpu
 
 import (
 	"encoding/binary"
 	"io"
 
-	"github.com/akatsuki105/dawngb/core/gb/cpu"
 	"github.com/akatsuki105/dawngb/util"
 )
 
 var timaClock = [4]int64{64, 1, 4, 16}
 
 type timer struct {
-	g              *GB
+	irq            func(n int)
+	clock          *int64
 	cycles         int64 // CPUから見て遅れているマスターサイクル数
 	tima, tma, tac uint8
 	counter        int64 // 524288Hz(一番細かいのが524288Hzなのであとはそれの倍数で数えれば良い)
 }
 
-func newTimer(g *GB) *timer { return &timer{g: g} }
+func newTimer(irq func(n int), clock *int64) *timer {
+	return &timer{
+		irq:   irq,
+		clock: clock,
+	}
+}
 
 func (t *timer) Reset(hasBIOS bool) {
 	t.cycles = 0
@@ -36,7 +41,7 @@ func (t *timer) run(cycles8MHz int64) {
 }
 
 func (t *timer) Read(addr uint16) uint8 {
-	x := t.g.cpu.Clock / 4
+	x := (*t.clock) / 4
 	switch addr {
 	case 0xFF04:
 		div := t.counter / (16 * x)
@@ -66,7 +71,7 @@ func (t *timer) Write(addr uint16, val uint8) {
 
 // 524288Hz
 func (t *timer) update() {
-	x := t.g.cpu.Clock / 4
+	x := (*t.clock) / 4
 
 	t.counter++
 	if util.Bit(t.tac, 2) {
@@ -74,7 +79,7 @@ func (t *timer) update() {
 			t.tima++
 			if t.tima == 0 {
 				t.tima = t.tma
-				t.g.cpu.IRQ(cpu.IRQ_TIMER)
+				t.irq(IRQ_TIMER)
 			}
 		}
 	}

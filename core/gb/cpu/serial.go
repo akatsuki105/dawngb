@@ -1,9 +1,8 @@
-package gb
+package cpu
 
 import (
 	"math"
 
-	"github.com/akatsuki105/dawngb/core/gb/cpu"
 	"github.com/akatsuki105/dawngb/util"
 )
 
@@ -62,5 +61,5 @@ func (s *serial) Write(addr uint16, val uint8) {
 func (s *serial) dummyTransfer() {
 	s.sc &= 0x7F
 	s.sb = 0xFF
-	s.irq(cpu.IRQ_SERIAL)
+	s.irq(IRQ_SERIAL)
 }

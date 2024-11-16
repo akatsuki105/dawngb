@@ -52,6 +52,7 @@ func loadROM(this js.Value, args []js.Value) any {
 		raw := args[0]
 		rom := make([]uint8, raw.Get("length").Int())
 		js.CopyBytesToGo(rom, raw)
+		emu.soundEnabled = true
 		emu.LoadROM(rom)
 		emu.c.Reset(false)
 	}
