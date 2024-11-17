@@ -14,7 +14,7 @@ type envelope struct {
 	// 音量変更の速さ(0に近いほど速い、ただし0だと変化なし)
 	// speed が n のとき、 音量変更は (n / 64) 秒 ごとに行われる
 	speed uint8
-	step  int32 // 音量変更を行うタイミングをカウントするためのカウンタ
+	step  uint8 // 音量変更を行うタイミングをカウントするためのカウンタ
 }
 
 func newEnvelope() *envelope {
@@ -31,7 +31,7 @@ func (e *envelope) reset() {
 
 func (e *envelope) reload() {
 	e.volume = e.initialVolume
-	e.step = int32(e.speed)
+	e.step = e.speed
 	if e.speed == 0 {
 		e.step = 8
 	}
@@ -42,7 +42,7 @@ func (e *envelope) update() {
 		e.step--
 		if e.step == 0 {
 			e.updateVolume()
-			e.step = int32(e.speed)
+			e.step = e.speed
 		}
 	}
 }

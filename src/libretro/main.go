@@ -54,6 +54,7 @@ var samples = [4096]uint8{}
 var systemDir = "./"
 var saveDir = "./"
 var romData = []uint8{}
+var hasBIOS = false
 
 // Environment callback. Gives implementations a way of performing uncommon tasks. Extensible.
 //
@@ -139,7 +140,7 @@ func retro_set_controller_port_device(port, device C.uint) {
 
 //export retro_reset
 func retro_reset() {
-	console.Reset(false)
+	console.Reset(hasBIOS)
 }
 
 //export retro_run
@@ -219,11 +220,11 @@ func retro_load_game(info *C.struct_retro_game_info) C.bool {
 	romData = data
 
 	console = gb.New(sampleBuffer)
-	intro := loadBIOS()
+	hasBIOS = loadBIOS()
 	if err := console.Load(gb.LOAD_ROM, romData); err != nil {
 		return false
 	}
-	console.Reset(intro)
+	console.Reset(hasBIOS)
 	clear(screen)
 	loadSaveData(romPath)
 
@@ -255,7 +256,7 @@ func loadSaveData(romPath string) {
 		data, err := os.ReadFile(filepath.Join(saveDir, savename))
 		if err == nil {
 			console.Load(gb.LOAD_SAVE, data)
-			console.Reset(false)
+			console.Reset(hasBIOS)
 		}
 	}
 }
@@ -268,6 +269,7 @@ func retro_load_game_special(gameType C.uint, info unsafe.Pointer, numInfo C.siz
 //export retro_unload_game
 func retro_unload_game() {
 	console = nil
+	hasBIOS = false
 	clear(screen)
 }
 

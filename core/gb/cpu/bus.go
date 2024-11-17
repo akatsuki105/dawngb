@@ -6,7 +6,7 @@ func (c *CPU) Read(addr uint16) uint8 {
 			return c.bios.data[addr]
 		}
 		if len(c.bios.data) == 2048 && (addr >= 0x200 && addr < 0x900) {
-			return c.bios.data[addr-256]
+			return c.bios.data[addr-0x100]
 		}
 	}
 	if addr >= 0xFF80 && addr <= 0xFFFE { // HRAM

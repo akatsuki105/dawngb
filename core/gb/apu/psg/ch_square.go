@@ -15,7 +15,7 @@ var squareDutyTable = [4][8]uint8{
 type square struct {
 	enabled bool // NR52.0(ch1), NR52.1(ch2)
 
-	length int32 // NR11.0-5; 音の残り再生時間
+	length uint8 // NR11.0-5; 音の残り再生時間
 	stop   bool  // NR14.6; .length が 0 になったときに音を止めるかどうか
 
 	envelope *envelope
@@ -26,6 +26,8 @@ type square struct {
 
 	period      uint16 // NR13.0-7, NR14.0-2; GBでは周波数を指定するのではなく、周期の長さを指定する
 	freqCounter uint16
+
+	output bool // 0 or 1; 矩形波の出力が1かどうか
 }
 
 func newSquareChannel(hasSweep bool) *square {
@@ -48,6 +50,7 @@ func (ch *square) reset() {
 	}
 	ch.duty, ch.dutyCounter = 0, 0
 	ch.period, ch.freqCounter = 0, 0
+	ch.output = false
 }
 
 func (ch *square) reload() {
@@ -88,17 +91,20 @@ func (ch *square) clockTimer() {
 		ch.freqCounter--
 		if ch.freqCounter == 0 {
 			ch.freqCounter = ch.dutyStepCycle()
-			ch.dutyCounter = (ch.dutyCounter + 1) & 7
+			ch.update()
 		}
 	}
 }
 
+func (ch *square) update() {
+	ch.dutyCounter = (ch.dutyCounter + 1) & 7
+	dutyTable := (squareDutyTable[ch.duty])[:]
+	ch.output = dutyTable[ch.dutyCounter] != 0
+}
+
 func (ch *square) getOutput() uint8 {
-	if ch.enabled {
-		dutyTable := (squareDutyTable[ch.duty])[:]
-		if dutyTable[ch.dutyCounter] != 0 {
-			return ch.envelope.volume
-		}
+	if ch.enabled && ch.output {
+		return ch.envelope.volume
 	}
 	return 0
 }

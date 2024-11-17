@@ -6,9 +6,9 @@ import (
 )
 
 type noise struct {
-	enabled bool
+	enabled bool // NR52.3
 
-	length int32 // 音の残り再生時間
+	length uint8 // 音の残り再生時間
 	stop   bool  // NR44.6
 
 	envelope *envelope
@@ -16,9 +16,9 @@ type noise struct {
 	lfsr uint16 // Noiseの疑似乱数(lfsr: Linear Feedback Shift Register = 疑似乱数生成アルゴリズム)
 
 	// この2つでノイズの周波数(疑似乱数の生成頻度)を決める
-	divisor uint8 // ノイズ周波数1(カウント指定)
-	octave  uint8 // ノイズ周波数2(オクターブ指定)
-	period  int32
+	divisor uint8 // NR43.0-2; ノイズ周波数1(カウント指定)
+	octave  uint8 // NR43.4-7; ノイズ周波数2(オクターブ指定)
+	period  uint32
 
 	narrow bool // NR43.3; 0: 15bit, 1: 7bit
 
@@ -34,8 +34,7 @@ func newNoiseChannel() *noise {
 
 func (ch *noise) reset() {
 	ch.enabled = false
-	ch.length = 0
-	ch.stop = false
+	ch.length, ch.stop = 0, false
 	ch.envelope.reset()
 	ch.lfsr = 0
 	ch.divisor, ch.octave = 0, 0
@@ -47,10 +46,10 @@ func (ch *noise) reset() {
 func (ch *noise) reload() {
 	ch.enabled = ch.dacEnable()
 	ch.envelope.reload()
+	ch.lfsr = 0x7FFF
 	if ch.length == 0 {
 		ch.length = 64
 	}
-	ch.lfsr = 0x7FFF
 }
 
 func (ch *noise) clock64Hz() {
@@ -62,7 +61,7 @@ func (ch *noise) clock64Hz() {
 func (ch *noise) clock256Hz() {
 	if ch.stop && ch.length > 0 {
 		ch.length--
-		if ch.length <= 0 {
+		if ch.length == 0 {
 			ch.enabled = false
 		}
 	}
@@ -71,16 +70,9 @@ func (ch *noise) clock256Hz() {
 func (ch *noise) clockTimer() {
 	// ch.enabledに関わらず、乱数は生成される
 	ch.period--
-	if ch.period <= 0 {
+	if ch.period == 0 {
 		ch.period = ch.calcFreqency()
-		if ch.octave < 14 {
-			bit := ((ch.lfsr ^ (ch.lfsr >> 1)) & 1)
-			if ch.narrow {
-				ch.lfsr = (ch.lfsr >> 1) ^ (bit << 6)
-			} else {
-				ch.lfsr = (ch.lfsr >> 1) ^ (bit << 14)
-			}
-		}
+		ch.update()
 	}
 
 	result := uint8(0)
@@ -95,10 +87,21 @@ func (ch *noise) clockTimer() {
 	ch.output = result
 }
 
+func (ch *noise) update() {
+	if ch.octave < 14 {
+		bit := ((ch.lfsr ^ (ch.lfsr >> 1)) & 1)
+		if ch.narrow {
+			ch.lfsr = (ch.lfsr >> 1) ^ (bit << 6)
+		} else {
+			ch.lfsr = (ch.lfsr >> 1) ^ (bit << 14)
+		}
+	}
+}
+
 var noisePeriodTable = []uint8{4, 8, 16, 24, 32, 40, 48, 56}
 
-func (ch *noise) calcFreqency() int32 {
-	return int32(noisePeriodTable[ch.divisor]) << ch.octave
+func (ch *noise) calcFreqency() uint32 {
+	return uint32(noisePeriodTable[ch.divisor]) << ch.octave
 }
 
 func (ch *noise) getOutput() uint8 {

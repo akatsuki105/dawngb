@@ -76,9 +76,6 @@ func (ch *wave) clockTimer() {
 		if ch.freqCounter == 0 {
 			ch.freqCounter = ch.windowStepCycle()
 			ch.update()
-			if ch.window == 0 {
-				ch.curBank ^= ch.mode
-			}
 		}
 	}
 }
@@ -99,6 +96,10 @@ func (ch *wave) update() {
 		ch.output = ch.samples[ch.window>>1] >> 4
 	} else {
 		ch.output = ch.samples[ch.window>>1] & 0xF
+	}
+
+	if ch.window == 0 {
+		ch.curBank ^= ch.mode
 	}
 }
 

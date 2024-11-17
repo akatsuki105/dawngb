@@ -78,7 +78,7 @@ func (a *PSG) Write(addr uint16, val uint8) {
 		a.ch1.sweep.interval = (val >> 4) & 0b111
 		return
 	case NR11:
-		a.ch1.length = 64 - int32(val&0b11_1111)
+		a.ch1.length = 64 - (val & 0b11_1111)
 		a.ch1.duty = (val >> 6)
 		return
 	case NR12:
@@ -101,7 +101,7 @@ func (a *PSG) Write(addr uint16, val uint8) {
 		return
 
 	case NR21:
-		a.ch2.length = 64 - int32(val&0b11_1111)
+		a.ch2.length = 64 - (val & 0b11_1111)
 		a.ch2.duty = (val >> 6)
 		return
 	case NR22:
@@ -162,7 +162,7 @@ func (a *PSG) Write(addr uint16, val uint8) {
 		return
 
 	case NR41:
-		a.ch4.length = 64 - int32(val&0b11_1111)
+		a.ch4.length = 64 - (val & 0b11_1111)
 		return
 	case NR42:
 		a.ch4.envelope.initialVolume = (val >> 4) & 0b1111
@@ -173,9 +173,9 @@ func (a *PSG) Write(addr uint16, val uint8) {
 		}
 		return
 	case NR43:
-		a.ch4.octave = (val >> 4) // ノイズ周波数2(オクターブ指定)
 		a.ch4.divisor = (val & 0b111)
 		a.ch4.narrow = getBit(val, 3)
+		a.ch4.octave = (val >> 4) // ノイズ周波数2(オクターブ指定)
 		a.ch4.period = a.ch4.calcFreqency()
 		return
 	case NR44:

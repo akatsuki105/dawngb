@@ -64,6 +64,7 @@ func (c *CPU) Reset(hasBIOS bool) {
 	c.halted = false
 	c.IE, c.interrupt = 0, [5]bool{}
 	c.key1 = 0
+	c.bios.ff50 = hasBIOS
 	c.ff72, c.ff73, c.ff74 = 0, 0, 0
 }
 

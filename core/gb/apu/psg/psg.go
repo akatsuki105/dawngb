@@ -21,7 +21,7 @@ type PSG struct {
 	ch3      *wave
 	ch4      *noise
 
-	sequencerCounter int64 // (フレームシーケンサの)512Hzを生み出すためのカウンタ (ref: https://gbdev.io/pandocs/Audio_details.html#div-apu)
+	sequencerCounter int16 // (フレームシーケンサの)512Hzを生み出すためのカウンタ (ref: https://gbdev.io/pandocs/Audio_details.html#div-apu)
 	sequencerStep    uint8 // 512Hzから 64, 128, 256Hzなどの生み出すためのカウンタ
 
 	ioreg                     [0x30]uint8 // APUが勝手に状態を変えないレジスタ　はread時にここの値を返す
