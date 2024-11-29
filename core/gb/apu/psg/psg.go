@@ -39,7 +39,7 @@ func New(model uint8) *PSG {
 	}
 }
 
-func (a *PSG) Reset(hasBIOS bool) {
+func (a *PSG) Reset() {
 	a.enabled = false
 	a.ch1.reset()
 	a.ch2.reset()
@@ -49,12 +49,9 @@ func (a *PSG) Reset(hasBIOS bool) {
 	clear(a.ioreg[:])
 	a.leftVolume, a.rightVolume = 7, 7
 	a.leftEnables, a.rightEnables = [4]bool{}, [4]bool{}
-	if !hasBIOS {
-		a.skipBIOS()
-	}
 }
 
-func (a *PSG) skipBIOS() {
+func (a *PSG) SkipBIOS() {
 	a.Write(NR10, 0x80)
 	a.Write(NR11, 0xBF)
 	a.Write(NR12, 0xF3)

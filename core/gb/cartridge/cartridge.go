@@ -22,9 +22,9 @@ type mbc interface {
 
 type Cartridge struct {
 	title string
-	rom   []uint8
+	ROM   []uint8
 	ram   []uint8 // SRAM
-	mbc
+	mbc           // mapper
 }
 
 func New(rom []uint8) (*Cartridge, error) {
@@ -40,10 +40,10 @@ func New(rom []uint8) (*Cartridge, error) {
 		ram:   make([]uint8, 0),
 	}
 
-	c.rom = make([]uint8, (32*KB)<<rom[0x148])
-	copy(c.rom, rom)
+	c.ROM = make([]uint8, (32*KB)<<rom[0x148])
+	copy(c.ROM, rom)
 
-	ramSize, ok := RAM_SIZES[rom[0x149]]
+	ramSize, ok := RAM_SIZES[rom[0x149]] // これはSRAMチップのサイズであって、MBC2のようなMBCチップにRAMが内蔵されている場合は0になるっぽい
 	if ok {
 		c.ram = make([]uint8, ramSize)
 	}
@@ -53,17 +53,20 @@ func New(rom []uint8) (*Cartridge, error) {
 		return nil, err
 	}
 	c.mbc = mbc
-	fmt.Println("MapperID:", c.rom[0x147])
+	// fmt.Println("MapperID:", c.ROM[0x147])
 	return c, nil
 }
 
 func createMBC(c *Cartridge) (mbc, error) {
-	mbcType := c.rom[0x147]
+	mbcType := c.ROM[0x147]
 	switch mbcType {
 	case 0:
 		return newMBC0(c), nil
 	case 1, 2, 3:
 		return newMBC1(c), nil
+	case 5, 6:
+		c.ram = make([]uint8, 512)
+		return newMBC2(c), nil
 	case 16, 19:
 		return newMBC3(c), nil
 	case 25, 26, 27:
@@ -85,8 +88,8 @@ func (c *Cartridge) Write(addr uint16, val uint8) {
 	c.mbc.write(addr, val)
 }
 
-func (c *Cartridge) IsCGB() bool {
-	return (c.rom[0x143] & (1 << 7)) != 0
+func (c *Cartridge) CGBFlag() uint8 {
+	return c.ROM[0x143]
 }
 
 func (c *Cartridge) LoadSRAM(data []uint8) error {

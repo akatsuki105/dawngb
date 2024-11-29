@@ -14,7 +14,7 @@ func newSerial(irq func(int)) *serial {
 	return &serial{irq: irq}
 }
 
-func (s *serial) reset(hasBIOS bool) {
+func (s *serial) reset() {
 	s.until = math.MaxInt64
 	s.sb, s.sc = 0, 0
 }

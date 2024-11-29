@@ -18,14 +18,22 @@ func (c *CPU) ReadIO(addr uint16) uint8 {
 			val |= (util.Btou8(c.interrupt[i]) << i)
 		}
 		return val
+	case 0xFF4C:
+		return c.key0
 	case 0xFF4D:
-		key1 := c.key1 | 0x7E
-		if c.Clock == 4 { // 2x
-			key1 |= 1 << 7
+		if c.isCGB {
+			key1 := c.key1 | 0x7E
+			if c.Clock == 4 { // 2x
+				key1 |= 1 << 7
+			}
+			return key1
 		}
-		return key1
-	case 0xFF51, 0xFF52, 0xFF53, 0xFF54, 0xFF55:
-		return c.dma.Read(addr)
+	case 0xFF50:
+		return 1
+	case 0xFF55:
+		if c.isCGB {
+			return c.DMA.Read(addr)
+		}
 	case 0xFF72:
 		return c.ff72
 	case 0xFF73:
@@ -50,15 +58,25 @@ func (c *CPU) WriteIO(addr uint16, val uint8) {
 		for i := 0; i < 5; i++ {
 			c.interrupt[i] = (val & (1 << i)) != 0
 		}
+	case 0xFF4C:
+		if c.key0 == 0 {
+			c.key0 = val
+		}
 	case 0xFF4D:
-		c.key1 = (c.key1 & 0x80) | (val & 0x01)
+		if c.isCGB {
+			c.key1 = (c.key1 & 0x80) | (val & 0x01)
+		}
 	case 0xFF50: // BANK
 		c.bios.ff50 = false
 	case 0xFF51, 0xFF52, 0xFF53, 0xFF54:
-		c.dma.Write(addr, val)
+		if c.isCGB {
+			c.DMA.Write(addr, val)
+		}
 	case 0xFF55:
-		cycles := c.dma.Write(addr, val)
-		c.Cycles += cycles
+		if c.isCGB {
+			cycles := c.DMA.Write(addr, val)
+			c.Cycles += cycles
+		}
 	case 0xFF72:
 		c.ff72 = val
 	case 0xFF73:

@@ -28,17 +28,18 @@ func newDMA(bus sm83.Bus) *DMA {
 	}
 }
 
-func (d *DMA) Reset(hasBIOS bool) {
+func (d *DMA) reset() {
 	d.mode = GDMA
 	d.src, d.dst, d.length = 0, 0, 0
 	d.completed = true
-	if !hasBIOS {
-		d.Write(0xFF51, 0xFF)
-		d.Write(0xFF52, 0xFF)
-		d.Write(0xFF53, 0xFF)
-		d.Write(0xFF54, 0xFF)
-		d.Write(0xFF55, 0xFF)
-	}
+}
+
+func (d *DMA) skipBIOS() {
+	d.Write(0xFF51, 0xFF)
+	d.Write(0xFF52, 0xFF)
+	d.Write(0xFF53, 0xFF)
+	d.Write(0xFF54, 0xFF)
+	d.Write(0xFF55, 0xFF)
 }
 
 func (d *DMA) Read(addr uint16) uint8 {

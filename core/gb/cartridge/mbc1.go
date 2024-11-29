@@ -1,14 +1,13 @@
 package cartridge
 
 type mbc1 struct {
-	c          *Cartridge
-	ramEnabled bool
-	romBank    uint8
-	ramBank    uint8
-	mode       uint8
+	c                *Cartridge
+	ramEnabled       bool
+	romBank, ramBank uint8
+	mode             uint8
 }
 
-func newMBC1(c *Cartridge) mbc {
+func newMBC1(c *Cartridge) *mbc1 {
 	return &mbc1{
 		c:       c,
 		romBank: 1,
@@ -18,15 +17,15 @@ func newMBC1(c *Cartridge) mbc {
 func (m *mbc1) read(addr uint16) uint8 {
 	switch addr >> 12 {
 	case 0x0, 0x1, 0x2, 0x3:
-		return m.c.rom[addr&0x3FFF]
+		return m.c.ROM[addr&0x3FFF]
 	case 0x4, 0x5, 0x6, 0x7:
 		romBank := uint(m.romBank)
 		if m.mode == 0 {
-			if len(m.c.rom) >= int(1*MB) {
+			if len(m.c.ROM) >= int(1*MB) {
 				romBank |= (uint(m.ramBank) << 5)
 			}
 		}
-		return m.c.rom[(romBank<<14)|uint(addr&0x3FFF)]
+		return m.c.ROM[(romBank<<14)|uint(addr&0x3FFF)]
 	case 0xA, 0xB:
 		if m.ramEnabled {
 			ramBank := uint(0)

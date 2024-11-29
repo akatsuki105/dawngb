@@ -54,7 +54,12 @@ var samples = [4096]uint8{}
 var systemDir = "./"
 var saveDir = "./"
 var romData = []uint8{}
-var hasBIOS = false
+
+var bios = struct {
+	exists bool
+	data   []uint8
+	isCGB  bool
+}{}
 
 // Environment callback. Gives implementations a way of performing uncommon tasks. Extensible.
 //
@@ -97,11 +102,27 @@ func retro_init() {
 			saveDir = C.GoString(cStr)
 		}
 	}
+
+	// check BIOS
+	bios.exists = false
+	if systemDir != "./" {
+		if data, err := os.ReadFile(filepath.Join(systemDir, CGB_BIOS)); err == nil {
+			bios.exists = true
+			bios.data = data
+			bios.isCGB = true
+		} else if data, err := os.ReadFile(filepath.Join(systemDir, DMG_BIOS)); err == nil {
+			bios.exists = true
+			bios.data = data
+			bios.isCGB = false
+		}
+	}
 }
 
 //export retro_deinit
 func retro_deinit() {
 	retro_unload_game()
+	bios.exists = false
+	bios.data = nil
 }
 
 //export retro_api_version
@@ -123,7 +144,7 @@ func retro_get_system_av_info(info *C.struct_retro_system_av_info) {
 		return
 	}
 	width, height := console.Resolution()
-	info.timing.fps = C.double(60.0)
+	info.timing.fps = C.double(59.7275)
 	info.timing.sample_rate = C.double(32768.0)
 
 	info.geometry.base_width = C.uint(width)
@@ -140,7 +161,7 @@ func retro_set_controller_port_device(port, device C.uint) {
 
 //export retro_reset
 func retro_reset() {
-	console.Reset(hasBIOS)
+	console.Reset(false)
 }
 
 //export retro_run
@@ -219,36 +240,37 @@ func retro_load_game(info *C.struct_retro_game_info) C.bool {
 	}
 	romData = data
 
-	console = gb.New(sampleBuffer)
-	hasBIOS = loadBIOS()
+	intro := false
+	if bios.exists {
+		if bios.isCGB {
+			console = gb.New(gb.MODEL_CGB, sampleBuffer)
+			console.Load(gb.LOAD_BIOS, bios.data)
+			intro = true
+		} else {
+			ext := filepath.Ext(romPath)
+			if ext == ".gbc" {
+				console = gb.New(gb.MODEL_CGB, sampleBuffer) // DMGのBIOSしかない場合は、CGBでダイレクトに起動
+			} else {
+				console = gb.New(gb.MODEL_DMG, sampleBuffer)
+				console.Load(gb.LOAD_BIOS, bios.data)
+				intro = true
+			}
+		}
+	} else {
+		console = gb.New(gb.MODEL_CGB, sampleBuffer)
+	}
+
 	if err := console.Load(gb.LOAD_ROM, romData); err != nil {
 		return false
 	}
-	console.Reset(hasBIOS)
+	console.Reset(intro)
 	clear(screen)
-	loadSaveData(romPath)
+	loadSaveData(romPath, intro)
 
 	return true
 }
 
-func loadBIOS() bool {
-	if console != nil && systemDir != "" {
-		bios, err := os.ReadFile(filepath.Join(systemDir, CGB_BIOS))
-		if err == nil {
-			console.Load(gb.LOAD_BIOS, bios)
-			return true
-		}
-
-		bios, err = os.ReadFile(filepath.Join(systemDir, DMG_BIOS))
-		if err == nil {
-			console.Load(gb.LOAD_BIOS, bios)
-			return true
-		}
-	}
-	return false
-}
-
-func loadSaveData(romPath string) {
+func loadSaveData(romPath string, intro bool) {
 	if saveDir != "" {
 		filename := filepath.Base(romPath)                    // "AA/BB/GAME.gbc" -> "GAME.gbc"
 		ext := filepath.Ext(filename)                         // "GAME.gbc" -> ".gbc"
@@ -256,7 +278,7 @@ func loadSaveData(romPath string) {
 		data, err := os.ReadFile(filepath.Join(saveDir, savename))
 		if err == nil {
 			console.Load(gb.LOAD_SAVE, data)
-			console.Reset(hasBIOS)
+			console.Reset(intro)
 		}
 	}
 }
@@ -269,14 +291,11 @@ func retro_load_game_special(gameType C.uint, info unsafe.Pointer, numInfo C.siz
 //export retro_unload_game
 func retro_unload_game() {
 	console = nil
-	hasBIOS = false
 	clear(screen)
 }
 
 //export retro_get_region
-func retro_get_region() C.uint {
-	return C.RETRO_REGION_NTSC
-}
+func retro_get_region() C.uint { return C.RETRO_REGION_NTSC }
 
 //export retro_get_memory_data
 func retro_get_memory_data(id C.uint) unsafe.Pointer {

@@ -3,23 +3,32 @@ package sm83
 import "github.com/akatsuki105/dawngb/util"
 
 type pair struct {
-	lo, hi uint8
+	Lo, Hi uint8
 }
 
 func (p *pair) pack() uint16 {
-	return uint16(p.hi)<<8 | uint16(p.lo)
+	return uint16(p.Hi)<<8 | uint16(p.Lo)
 }
 
-func (p *pair) unpack(val uint16) {
-	p.lo = uint8(val)
-	p.hi = uint8(val >> 8)
+func (p *pair) Unpack(val uint16) {
+	p.Lo = uint8(val)
+	p.Hi = uint8(val >> 8)
 }
 
 type Registers struct {
-	a          uint8
-	f          psr
-	bc, de, hl pair
-	sp, pc     uint16
+	A          uint8
+	F          psr
+	BC, DE, HL pair
+	SP, PC     uint16
+}
+
+func (r *Registers) reset() {
+	r.A = 0x00
+	r.F.Unpack(0x00)
+	r.BC.Unpack(0x0000)
+	r.DE.Unpack(0x0000)
+	r.HL.Unpack(0x0000)
+	r.SP, r.PC = 0x0000, 0x0000
 }
 
 // ZNHC----
@@ -36,7 +45,7 @@ func (p *psr) pack() uint8 {
 	return packed
 }
 
-func (p *psr) unpack(val uint8) {
+func (p *psr) Unpack(val uint8) {
 	p.z = util.Bit(val, 7)
 	p.n = util.Bit(val, 6)
 	p.h = util.Bit(val, 5)

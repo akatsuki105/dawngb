@@ -50,660 +50,660 @@ func op00(c *SM83) { /* nop */ }
 func op01(c *SM83) {
 	lo := uint16(c.fetch())
 	hi := uint16(c.fetch())
-	c.r.bc.unpack((hi << 8) | lo)
+	c.R.BC.Unpack((hi << 8) | lo)
 }
 
-func op02(c *SM83) { c.bus.Write(c.r.bc.pack(), c.r.a) }
+func op02(c *SM83) { c.bus.Write(c.R.BC.pack(), c.R.A) }
 
-func op03(c *SM83) { c.r.bc.unpack(c.r.bc.pack() + 1) }
+func op03(c *SM83) { c.R.BC.Unpack(c.R.BC.pack() + 1) }
 
 func op04(c *SM83) {
-	c.r.bc.hi++
-	c.r.f.z, c.r.f.n, c.r.f.h = (c.r.bc.hi == 0), false, (c.r.bc.hi&0x0F == 0x00)
+	c.R.BC.Hi++
+	c.R.F.z, c.R.F.n, c.R.F.h = (c.R.BC.Hi == 0), false, (c.R.BC.Hi&0x0F == 0x00)
 }
 
 func op05(c *SM83) {
-	c.r.bc.hi--
-	c.r.f.z, c.r.f.n, c.r.f.h = (c.r.bc.hi == 0), true, (c.r.bc.hi&0x0F == 0x0F)
+	c.R.BC.Hi--
+	c.R.F.z, c.R.F.n, c.R.F.h = (c.R.BC.Hi == 0), true, (c.R.BC.Hi&0x0F == 0x0F)
 }
 
-func op06(c *SM83) { c.r.bc.hi = c.fetch() }
+func op06(c *SM83) { c.R.BC.Hi = c.fetch() }
 
 // rlca
 func op07(c *SM83) {
-	msb := util.Bit(c.r.a, 7)
-	c.r.f.c = msb
-	c.r.a = (c.r.a << 1) | (util.Btou8(msb))
-	c.r.f.z, c.r.f.n, c.r.f.h = false, false, false
+	msb := util.Bit(c.R.A, 7)
+	c.R.F.c = msb
+	c.R.A = (c.R.A << 1) | (util.Btou8(msb))
+	c.R.F.z, c.R.F.n, c.R.F.h = false, false, false
 }
 
 func op08(c *SM83) {
 	lo := uint16(c.fetch())
 	hi := uint16(c.fetch())
 	addr := (hi << 8) | lo
-	c.bus.Write(addr, uint8(c.r.sp))
-	c.bus.Write(addr+1, uint8(c.r.sp>>8))
+	c.bus.Write(addr, uint8(c.R.SP))
+	c.bus.Write(addr+1, uint8(c.R.SP>>8))
 }
 
 func op09(c *SM83) {
-	hl := c.r.hl.pack()
-	bc := c.r.bc.pack()
-	c.r.hl.unpack(hl + bc)
-	c.r.f.n, c.r.f.h, c.r.f.c = false, ((hl&0x0FFF)+(bc&0x0FFF) > 0x0FFF), (uint(hl)+uint(bc) > 0xFFFF)
+	hl := c.R.HL.pack()
+	bc := c.R.BC.pack()
+	c.R.HL.Unpack(hl + bc)
+	c.R.F.n, c.R.F.h, c.R.F.c = false, ((hl&0x0FFF)+(bc&0x0FFF) > 0x0FFF), (uint(hl)+uint(bc) > 0xFFFF)
 }
 
-func op0A(c *SM83) { c.r.a = c.bus.Read(c.r.bc.pack()) }
+func op0A(c *SM83) { c.R.A = c.bus.Read(c.R.BC.pack()) }
 
-func op0B(c *SM83) { c.r.bc.unpack(c.r.bc.pack() - 1) }
+func op0B(c *SM83) { c.R.BC.Unpack(c.R.BC.pack() - 1) }
 
 func op0C(c *SM83) {
-	c.r.bc.lo++
-	c.r.f.z, c.r.f.n, c.r.f.h = (c.r.bc.lo == 0), false, (c.r.bc.lo&0x0F == 0x00)
+	c.R.BC.Lo++
+	c.R.F.z, c.R.F.n, c.R.F.h = (c.R.BC.Lo == 0), false, (c.R.BC.Lo&0x0F == 0x00)
 }
 
 func op0D(c *SM83) {
-	c.r.bc.lo--
-	c.r.f.z, c.r.f.n, c.r.f.h = (c.r.bc.lo == 0), true, (c.r.bc.lo&0x0F == 0x0F)
+	c.R.BC.Lo--
+	c.R.F.z, c.R.F.n, c.R.F.h = (c.R.BC.Lo == 0), true, (c.R.BC.Lo&0x0F == 0x0F)
 }
 
-func op0E(c *SM83) { c.r.bc.lo = c.fetch() }
+func op0E(c *SM83) { c.R.BC.Lo = c.fetch() }
 
 // rrca
 func op0F(c *SM83) {
-	lsb := util.Bit(c.r.a, 0)
-	c.r.f.c = lsb
-	c.r.a = (c.r.a >> 1) | (util.Btou8(lsb) << 7)
-	c.r.f.z, c.r.f.n, c.r.f.h = false, false, false
+	lsb := util.Bit(c.R.A, 0)
+	c.R.F.c = lsb
+	c.R.A = (c.R.A >> 1) | (util.Btou8(lsb) << 7)
+	c.R.F.z, c.R.F.n, c.R.F.h = false, false, false
 }
 
 func op10(c *SM83) {
-	c.r.pc++ // NOTE: 遊戯王DM4はこれをしっかりしないと動かない
+	c.R.PC++ // NOTE: 遊戯王DM4はこれをしっかりしないと動かない
 	c.stop()
 }
 
 func op11(c *SM83) {
 	lo := uint16(c.fetch())
 	hi := uint16(c.fetch())
-	c.r.de.unpack((hi << 8) | lo)
+	c.R.DE.Unpack((hi << 8) | lo)
 }
 
-func op12(c *SM83) { c.bus.Write(c.r.de.pack(), c.r.a) }
+func op12(c *SM83) { c.bus.Write(c.R.DE.pack(), c.R.A) }
 
-func op13(c *SM83) { c.r.de.unpack(c.r.de.pack() + 1) }
+func op13(c *SM83) { c.R.DE.Unpack(c.R.DE.pack() + 1) }
 
 func op14(c *SM83) {
-	c.r.de.hi++
-	c.r.f.z, c.r.f.n, c.r.f.h = (c.r.de.hi == 0), false, (c.r.de.hi&0x0F == 0x00)
+	c.R.DE.Hi++
+	c.R.F.z, c.R.F.n, c.R.F.h = (c.R.DE.Hi == 0), false, (c.R.DE.Hi&0x0F == 0x00)
 }
 
 func op15(c *SM83) {
-	c.r.de.hi--
-	c.r.f.z, c.r.f.n, c.r.f.h = (c.r.de.hi == 0), true, (c.r.de.hi&0x0F == 0x0F)
+	c.R.DE.Hi--
+	c.R.F.z, c.R.F.n, c.R.F.h = (c.R.DE.Hi == 0), true, (c.R.DE.Hi&0x0F == 0x0F)
 }
 
-func op16(c *SM83) { c.r.de.hi = c.fetch() }
+func op16(c *SM83) { c.R.DE.Hi = c.fetch() }
 
 // rla
 func op17(c *SM83) {
-	carry := util.Btou8(c.r.f.c)
-	c.r.f.c = util.Bit(c.r.a, 7)
-	c.r.a = (c.r.a << 1) | carry
-	c.r.f.z, c.r.f.n, c.r.f.h = false, false, false
+	carry := util.Btou8(c.R.F.c)
+	c.R.F.c = util.Bit(c.R.A, 7)
+	c.R.A = (c.R.A << 1) | carry
+	c.R.F.z, c.R.F.n, c.R.F.h = false, false, false
 }
 
 func op18(c *SM83) {
 	rel := int8(c.fetch())
-	c.branch(c.r.pc + uint16(rel))
+	c.branch(c.R.PC + uint16(rel))
 }
 
 func op19(c *SM83) {
-	hl := c.r.hl.pack()
-	de := c.r.de.pack()
-	c.r.hl.unpack(hl + de)
-	c.r.f.n = false
-	c.r.f.h = (hl&0x0FFF)+(de&0x0FFF) > 0x0FFF
-	c.r.f.c = uint(hl)+uint(de) > 0xFFFF
+	hl := c.R.HL.pack()
+	de := c.R.DE.pack()
+	c.R.HL.Unpack(hl + de)
+	c.R.F.n = false
+	c.R.F.h = (hl&0x0FFF)+(de&0x0FFF) > 0x0FFF
+	c.R.F.c = uint(hl)+uint(de) > 0xFFFF
 }
 
-func op1A(c *SM83) { c.r.a = c.bus.Read(c.r.de.pack()) }
+func op1A(c *SM83) { c.R.A = c.bus.Read(c.R.DE.pack()) }
 
-func op1B(c *SM83) { c.r.de.unpack(c.r.de.pack() - 1) }
+func op1B(c *SM83) { c.R.DE.Unpack(c.R.DE.pack() - 1) }
 
 func op1C(c *SM83) {
-	c.r.de.lo++
-	c.r.f.z, c.r.f.n, c.r.f.h = (c.r.de.lo == 0), false, (c.r.de.lo&0x0F == 0x00)
+	c.R.DE.Lo++
+	c.R.F.z, c.R.F.n, c.R.F.h = (c.R.DE.Lo == 0), false, (c.R.DE.Lo&0x0F == 0x00)
 }
 
 func op1D(c *SM83) {
-	c.r.de.lo--
-	c.r.f.z, c.r.f.n, c.r.f.h = (c.r.de.lo == 0), true, (c.r.de.lo&0x0F == 0x0F)
+	c.R.DE.Lo--
+	c.R.F.z, c.R.F.n, c.R.F.h = (c.R.DE.Lo == 0), true, (c.R.DE.Lo&0x0F == 0x0F)
 }
 
-func op1E(c *SM83) { c.r.de.lo = c.fetch() }
+func op1E(c *SM83) { c.R.DE.Lo = c.fetch() }
 
 // rra
 func op1F(c *SM83) {
-	carry := util.Btou8(c.r.f.c)
-	c.r.f.c = util.Bit(c.r.a, 0)
-	c.r.a = (c.r.a >> 1) | (carry << 7)
-	c.r.f.z, c.r.f.n, c.r.f.h = false, false, false
+	carry := util.Btou8(c.R.F.c)
+	c.R.F.c = util.Bit(c.R.A, 0)
+	c.R.A = (c.R.A >> 1) | (carry << 7)
+	c.R.F.z, c.R.F.n, c.R.F.h = false, false, false
 }
 
 func op20(c *SM83) {
 	rel := int8(c.fetch())
-	if !c.r.f.z {
-		c.branch(c.r.pc + uint16(rel))
+	if !c.R.F.z {
+		c.branch(c.R.PC + uint16(rel))
 	}
 }
 
 func op21(c *SM83) {
 	lo := uint16(c.fetch())
 	hi := uint16(c.fetch())
-	c.r.hl.unpack((hi << 8) | lo)
+	c.R.HL.Unpack((hi << 8) | lo)
 }
 
 func op22(c *SM83) {
-	c.bus.Write(c.r.hl.pack(), c.r.a)
-	c.r.hl.unpack(c.r.hl.pack() + 1)
+	c.bus.Write(c.R.HL.pack(), c.R.A)
+	c.R.HL.Unpack(c.R.HL.pack() + 1)
 }
 
-func op23(c *SM83) { c.r.hl.unpack(c.r.hl.pack() + 1) }
+func op23(c *SM83) { c.R.HL.Unpack(c.R.HL.pack() + 1) }
 
 func op24(c *SM83) {
-	c.r.hl.hi++
-	c.r.f.z, c.r.f.n, c.r.f.h = (c.r.hl.hi == 0), false, (c.r.hl.hi&0x0F == 0x00)
+	c.R.HL.Hi++
+	c.R.F.z, c.R.F.n, c.R.F.h = (c.R.HL.Hi == 0), false, (c.R.HL.Hi&0x0F == 0x00)
 }
 
 func op25(c *SM83) {
-	c.r.hl.hi--
-	c.r.f.z, c.r.f.n, c.r.f.h = (c.r.hl.hi == 0), true, (c.r.hl.hi&0x0F == 0x0F)
+	c.R.HL.Hi--
+	c.R.F.z, c.R.F.n, c.R.F.h = (c.R.HL.Hi == 0), true, (c.R.HL.Hi&0x0F == 0x0F)
 }
 
-func op26(c *SM83) { c.r.hl.hi = c.fetch() }
+func op26(c *SM83) { c.R.HL.Hi = c.fetch() }
 
 // daa
 func op27(c *SM83) {
-	carry := c.r.f.c
-	if !c.r.f.n {
-		if carry || c.r.a > 0x99 {
-			c.r.a += 0x60
-			c.r.f.c = true
+	carry := c.R.F.c
+	if !c.R.F.n {
+		if carry || c.R.A > 0x99 {
+			c.R.A += 0x60
+			c.R.F.c = true
 		}
-		if c.r.f.h || (c.r.a&0xF) > 0x09 {
-			c.r.a += 0x06
+		if c.R.F.h || (c.R.A&0xF) > 0x09 {
+			c.R.A += 0x06
 		}
 	} else {
 		if carry {
-			c.r.a -= 0x60
+			c.R.A -= 0x60
 		}
-		if c.r.f.h {
-			c.r.a -= 0x06
+		if c.R.F.h {
+			c.R.A -= 0x06
 		}
 	}
-	c.r.f.z, c.r.f.h = (c.r.a == 0), false
+	c.R.F.z, c.R.F.h = (c.R.A == 0), false
 }
 
 func op28(c *SM83) {
 	rel := int8(c.fetch())
-	if c.r.f.z {
-		c.branch(c.r.pc + uint16(rel))
+	if c.R.F.z {
+		c.branch(c.R.PC + uint16(rel))
 	}
 }
 
 // add hl, hl
 func op29(c *SM83) {
-	hl := c.r.hl.pack()
+	hl := c.R.HL.pack()
 	result := uint32(hl) + uint32(hl)
-	c.r.hl.unpack(uint16(result))
-	c.r.f.n, c.r.f.h, c.r.f.c = false, ((hl&0x0FFF)+(hl&0x0FFF) > 0x0FFF), (result > 0xFFFF)
+	c.R.HL.Unpack(uint16(result))
+	c.R.F.n, c.R.F.h, c.R.F.c = false, ((hl&0x0FFF)+(hl&0x0FFF) > 0x0FFF), (result > 0xFFFF)
 }
 
 func op2A(c *SM83) {
-	c.r.a = c.bus.Read(c.r.hl.pack())
-	c.r.hl.unpack(c.r.hl.pack() + 1)
+	c.R.A = c.bus.Read(c.R.HL.pack())
+	c.R.HL.Unpack(c.R.HL.pack() + 1)
 }
 
-func op2B(c *SM83) { c.r.hl.unpack(c.r.hl.pack() - 1) }
+func op2B(c *SM83) { c.R.HL.Unpack(c.R.HL.pack() - 1) }
 
 func op2C(c *SM83) {
-	c.r.hl.lo++
-	c.r.f.z, c.r.f.n, c.r.f.h = (c.r.hl.lo == 0), false, (c.r.hl.lo&0x0F == 0x00)
+	c.R.HL.Lo++
+	c.R.F.z, c.R.F.n, c.R.F.h = (c.R.HL.Lo == 0), false, (c.R.HL.Lo&0x0F == 0x00)
 }
 
 // dec l
 func op2D(c *SM83) {
-	c.r.hl.lo--
-	c.r.f.z, c.r.f.n, c.r.f.h = (c.r.hl.lo == 0), true, (c.r.hl.lo&0x0F == 0x0F)
+	c.R.HL.Lo--
+	c.R.F.z, c.R.F.n, c.R.F.h = (c.R.HL.Lo == 0), true, (c.R.HL.Lo&0x0F == 0x0F)
 }
 
-func op2E(c *SM83) { c.r.hl.lo = c.fetch() }
+func op2E(c *SM83) { c.R.HL.Lo = c.fetch() }
 
 func op2F(c *SM83) {
-	c.r.a = ^c.r.a
-	c.r.f.n, c.r.f.h = true, true
+	c.R.A = ^c.R.A
+	c.R.F.n, c.R.F.h = true, true
 }
 
 func op30(c *SM83) {
 	rel := int8(c.fetch())
-	if !c.r.f.c {
-		c.branch(c.r.pc + uint16(rel))
+	if !c.R.F.c {
+		c.branch(c.R.PC + uint16(rel))
 	}
 }
 
 func op31(c *SM83) {
 	lo := uint16(c.fetch())
 	hi := uint16(c.fetch())
-	c.r.sp = (hi << 8) | lo
+	c.R.SP = (hi << 8) | lo
 }
 
 func op32(c *SM83) {
-	c.bus.Write(c.r.hl.pack(), c.r.a)
-	c.r.hl.unpack(c.r.hl.pack() - 1)
+	c.bus.Write(c.R.HL.pack(), c.R.A)
+	c.R.HL.Unpack(c.R.HL.pack() - 1)
 }
 
-func op33(c *SM83) { c.r.sp++ }
+func op33(c *SM83) { c.R.SP++ }
 
 func op34(c *SM83) {
-	hl := c.r.hl.pack()
+	hl := c.R.HL.pack()
 	val := c.bus.Read(hl)
 	val++
 	c.bus.Write(hl, val)
-	c.r.f.z, c.r.f.n, c.r.f.h = (val == 0), false, (val&0x0F == 0x00)
+	c.R.F.z, c.R.F.n, c.R.F.h = (val == 0), false, (val&0x0F == 0x00)
 }
 
 func op35(c *SM83) {
-	hl := c.r.hl.pack()
+	hl := c.R.HL.pack()
 	val := c.bus.Read(hl)
 	val--
 	c.bus.Write(hl, val)
-	c.r.f.z, c.r.f.n, c.r.f.h = (val == 0), true, (val&0x0F == 0x0F)
+	c.R.F.z, c.R.F.n, c.R.F.h = (val == 0), true, (val&0x0F == 0x0F)
 }
 
 func op36(c *SM83) {
-	hl := c.r.hl.pack()
+	hl := c.R.HL.pack()
 	val := c.fetch()
 	c.bus.Write(hl, val)
 }
 
-func op37(c *SM83) { c.r.f.n, c.r.f.h, c.r.f.c = false, false, true }
+func op37(c *SM83) { c.R.F.n, c.R.F.h, c.R.F.c = false, false, true }
 
 func op38(c *SM83) {
 	rel := int8(c.fetch())
-	if c.r.f.c {
-		c.branch(c.r.pc + uint16(rel))
+	if c.R.F.c {
+		c.branch(c.R.PC + uint16(rel))
 	}
 }
 
 func op39(c *SM83) {
-	sp := c.r.sp
-	hl := c.r.hl.pack()
+	sp := c.R.SP
+	hl := c.R.HL.pack()
 	result := uint32(sp) + uint32(hl)
-	c.r.hl.unpack(uint16(result))
-	c.r.f.n, c.r.f.h, c.r.f.c = false, ((sp&0x0FFF)+(hl&0x0FFF) > 0x0FFF), (result > 0xFFFF)
+	c.R.HL.Unpack(uint16(result))
+	c.R.F.n, c.R.F.h, c.R.F.c = false, ((sp&0x0FFF)+(hl&0x0FFF) > 0x0FFF), (result > 0xFFFF)
 }
 
 func op3A(c *SM83) {
-	c.r.a = c.bus.Read(c.r.hl.pack())
-	c.r.hl.unpack(c.r.hl.pack() - 1)
+	c.R.A = c.bus.Read(c.R.HL.pack())
+	c.R.HL.Unpack(c.R.HL.pack() - 1)
 }
 
-func op3B(c *SM83) { c.r.sp-- }
+func op3B(c *SM83) { c.R.SP-- }
 
 func op3C(c *SM83) {
-	c.r.a++
-	c.r.f.z, c.r.f.n, c.r.f.h = (c.r.a == 0), false, (c.r.a&0x0F == 0x00)
+	c.R.A++
+	c.R.F.z, c.R.F.n, c.R.F.h = (c.R.A == 0), false, (c.R.A&0x0F == 0x00)
 }
 
 func op3D(c *SM83) {
-	c.r.a--
-	c.r.f.z, c.r.f.n, c.r.f.h = (c.r.a == 0), true, (c.r.a&0x0F == 0x0F)
+	c.R.A--
+	c.R.F.z, c.R.F.n, c.R.F.h = (c.R.A == 0), true, (c.R.A&0x0F == 0x0F)
 }
 
-func op3E(c *SM83) { c.r.a = c.fetch() }
+func op3E(c *SM83) { c.R.A = c.fetch() }
 
-func op3F(c *SM83) { c.r.f.n, c.r.f.h, c.r.f.c = false, false, !c.r.f.c }
+func op3F(c *SM83) { c.R.F.n, c.R.F.h, c.R.F.c = false, false, !c.R.F.c }
 
 func op40(c *SM83) { /* ld b, b */ }
 
-func op41(c *SM83) { c.r.bc.hi = c.r.bc.lo }
+func op41(c *SM83) { c.R.BC.Hi = c.R.BC.Lo }
 
-func op42(c *SM83) { c.r.bc.hi = c.r.de.hi }
+func op42(c *SM83) { c.R.BC.Hi = c.R.DE.Hi }
 
-func op43(c *SM83) { c.r.bc.hi = c.r.de.lo }
+func op43(c *SM83) { c.R.BC.Hi = c.R.DE.Lo }
 
-func op44(c *SM83) { c.r.bc.hi = c.r.hl.hi }
+func op44(c *SM83) { c.R.BC.Hi = c.R.HL.Hi }
 
-func op45(c *SM83) { c.r.bc.hi = c.r.hl.lo }
+func op45(c *SM83) { c.R.BC.Hi = c.R.HL.Lo }
 
-func op46(c *SM83) { c.r.bc.hi = c.bus.Read(c.r.hl.pack()) }
+func op46(c *SM83) { c.R.BC.Hi = c.bus.Read(c.R.HL.pack()) }
 
-func op47(c *SM83) { c.r.bc.hi = c.r.a }
+func op47(c *SM83) { c.R.BC.Hi = c.R.A }
 
-func op48(c *SM83) { c.r.bc.lo = c.r.bc.hi }
+func op48(c *SM83) { c.R.BC.Lo = c.R.BC.Hi }
 
 func op49(c *SM83) { /* ld c, c */ }
 
-func op4A(c *SM83) { c.r.bc.lo = c.r.de.hi }
+func op4A(c *SM83) { c.R.BC.Lo = c.R.DE.Hi }
 
-func op4B(c *SM83) { c.r.bc.lo = c.r.de.lo }
+func op4B(c *SM83) { c.R.BC.Lo = c.R.DE.Lo }
 
-func op4C(c *SM83) { c.r.bc.lo = c.r.hl.hi }
+func op4C(c *SM83) { c.R.BC.Lo = c.R.HL.Hi }
 
-func op4D(c *SM83) { c.r.bc.lo = c.r.hl.lo }
+func op4D(c *SM83) { c.R.BC.Lo = c.R.HL.Lo }
 
-func op4E(c *SM83) { c.r.bc.lo = c.bus.Read(c.r.hl.pack()) }
+func op4E(c *SM83) { c.R.BC.Lo = c.bus.Read(c.R.HL.pack()) }
 
-func op4F(c *SM83) { c.r.bc.lo = c.r.a }
+func op4F(c *SM83) { c.R.BC.Lo = c.R.A }
 
-func op50(c *SM83) { c.r.de.hi = c.r.bc.hi }
+func op50(c *SM83) { c.R.DE.Hi = c.R.BC.Hi }
 
-func op51(c *SM83) { c.r.de.hi = c.r.bc.lo }
+func op51(c *SM83) { c.R.DE.Hi = c.R.BC.Lo }
 
 func op52(c *SM83) { /* ld d, d */ }
 
-func op53(c *SM83) { c.r.de.hi = c.r.de.lo }
+func op53(c *SM83) { c.R.DE.Hi = c.R.DE.Lo }
 
-func op54(c *SM83) { c.r.de.hi = c.r.hl.hi }
+func op54(c *SM83) { c.R.DE.Hi = c.R.HL.Hi }
 
-func op55(c *SM83) { c.r.de.hi = c.r.hl.lo }
+func op55(c *SM83) { c.R.DE.Hi = c.R.HL.Lo }
 
-func op56(c *SM83) { c.r.de.hi = c.bus.Read(c.r.hl.pack()) }
+func op56(c *SM83) { c.R.DE.Hi = c.bus.Read(c.R.HL.pack()) }
 
-func op57(c *SM83) { c.r.de.hi = c.r.a }
+func op57(c *SM83) { c.R.DE.Hi = c.R.A }
 
-func op58(c *SM83) { c.r.de.lo = c.r.bc.hi }
+func op58(c *SM83) { c.R.DE.Lo = c.R.BC.Hi }
 
-func op59(c *SM83) { c.r.de.lo = c.r.bc.lo }
+func op59(c *SM83) { c.R.DE.Lo = c.R.BC.Lo }
 
 // ld e, d
-func op5A(c *SM83) { c.r.de.lo = c.r.de.hi }
+func op5A(c *SM83) { c.R.DE.Lo = c.R.DE.Hi }
 
 func op5B(c *SM83) { /* ld e, e */ }
 
-func op5C(c *SM83) { c.r.de.lo = c.r.hl.hi }
+func op5C(c *SM83) { c.R.DE.Lo = c.R.HL.Hi }
 
-func op5D(c *SM83) { c.r.de.lo = c.r.hl.lo }
+func op5D(c *SM83) { c.R.DE.Lo = c.R.HL.Lo }
 
-func op5E(c *SM83) { c.r.de.lo = c.bus.Read(c.r.hl.pack()) }
+func op5E(c *SM83) { c.R.DE.Lo = c.bus.Read(c.R.HL.pack()) }
 
-func op5F(c *SM83) { c.r.de.lo = c.r.a }
+func op5F(c *SM83) { c.R.DE.Lo = c.R.A }
 
-func op60(c *SM83) { c.r.hl.hi = c.r.bc.hi }
+func op60(c *SM83) { c.R.HL.Hi = c.R.BC.Hi }
 
-func op61(c *SM83) { c.r.hl.hi = c.r.bc.lo }
+func op61(c *SM83) { c.R.HL.Hi = c.R.BC.Lo }
 
-func op62(c *SM83) { c.r.hl.hi = c.r.de.hi }
+func op62(c *SM83) { c.R.HL.Hi = c.R.DE.Hi }
 
-func op63(c *SM83) { c.r.hl.hi = c.r.de.lo }
+func op63(c *SM83) { c.R.HL.Hi = c.R.DE.Lo }
 
 func op64(c *SM83) { /* ld h, h */ }
 
-func op65(c *SM83) { c.r.hl.hi = c.r.hl.lo }
+func op65(c *SM83) { c.R.HL.Hi = c.R.HL.Lo }
 
-func op66(c *SM83) { c.r.hl.hi = c.bus.Read(c.r.hl.pack()) }
+func op66(c *SM83) { c.R.HL.Hi = c.bus.Read(c.R.HL.pack()) }
 
-func op67(c *SM83) { c.r.hl.hi = c.r.a }
+func op67(c *SM83) { c.R.HL.Hi = c.R.A }
 
-func op68(c *SM83) { c.r.hl.lo = c.r.bc.hi }
+func op68(c *SM83) { c.R.HL.Lo = c.R.BC.Hi }
 
-func op69(c *SM83) { c.r.hl.lo = c.r.bc.lo }
+func op69(c *SM83) { c.R.HL.Lo = c.R.BC.Lo }
 
-func op6A(c *SM83) { c.r.hl.lo = c.r.de.hi }
+func op6A(c *SM83) { c.R.HL.Lo = c.R.DE.Hi }
 
-func op6B(c *SM83) { c.r.hl.lo = c.r.de.lo }
+func op6B(c *SM83) { c.R.HL.Lo = c.R.DE.Lo }
 
-func op6C(c *SM83) { c.r.hl.lo = c.r.hl.hi }
+func op6C(c *SM83) { c.R.HL.Lo = c.R.HL.Hi }
 
 func op6D(c *SM83) { /* ld l, l */ }
 
-func op6E(c *SM83) { c.r.hl.lo = c.bus.Read(c.r.hl.pack()) }
+func op6E(c *SM83) { c.R.HL.Lo = c.bus.Read(c.R.HL.pack()) }
 
-func op6F(c *SM83) { c.r.hl.lo = c.r.a }
+func op6F(c *SM83) { c.R.HL.Lo = c.R.A }
 
-func op70(c *SM83) { c.bus.Write(c.r.hl.pack(), c.r.bc.hi) }
+func op70(c *SM83) { c.bus.Write(c.R.HL.pack(), c.R.BC.Hi) }
 
-func op71(c *SM83) { c.bus.Write(c.r.hl.pack(), c.r.bc.lo) }
+func op71(c *SM83) { c.bus.Write(c.R.HL.pack(), c.R.BC.Lo) }
 
-func op72(c *SM83) { c.bus.Write(c.r.hl.pack(), c.r.de.hi) }
+func op72(c *SM83) { c.bus.Write(c.R.HL.pack(), c.R.DE.Hi) }
 
-func op73(c *SM83) { c.bus.Write(c.r.hl.pack(), c.r.de.lo) }
+func op73(c *SM83) { c.bus.Write(c.R.HL.pack(), c.R.DE.Lo) }
 
-func op74(c *SM83) { c.bus.Write(c.r.hl.pack(), c.r.hl.hi) }
+func op74(c *SM83) { c.bus.Write(c.R.HL.pack(), c.R.HL.Hi) }
 
-func op75(c *SM83) { c.bus.Write(c.r.hl.pack(), c.r.hl.lo) }
+func op75(c *SM83) { c.bus.Write(c.R.HL.pack(), c.R.HL.Lo) }
 
 func op76(c *SM83) { c.halt() }
 
-func op77(c *SM83) { c.bus.Write(c.r.hl.pack(), c.r.a) }
+func op77(c *SM83) { c.bus.Write(c.R.HL.pack(), c.R.A) }
 
-func op78(c *SM83) { c.r.a = c.r.bc.hi }
+func op78(c *SM83) { c.R.A = c.R.BC.Hi }
 
-func op79(c *SM83) { c.r.a = c.r.bc.lo }
+func op79(c *SM83) { c.R.A = c.R.BC.Lo }
 
-func op7A(c *SM83) { c.r.a = c.r.de.hi }
+func op7A(c *SM83) { c.R.A = c.R.DE.Hi }
 
-func op7B(c *SM83) { c.r.a = c.r.de.lo }
+func op7B(c *SM83) { c.R.A = c.R.DE.Lo }
 
-func op7C(c *SM83) { c.r.a = c.r.hl.hi }
+func op7C(c *SM83) { c.R.A = c.R.HL.Hi }
 
-func op7D(c *SM83) { c.r.a = c.r.hl.lo }
+func op7D(c *SM83) { c.R.A = c.R.HL.Lo }
 
-func op7E(c *SM83) { c.r.a = c.bus.Read(c.r.hl.pack()) }
+func op7E(c *SM83) { c.R.A = c.bus.Read(c.R.HL.pack()) }
 
 func op7F(c *SM83) { /* ld a, a */ }
 
-func op80(c *SM83) { c.add(c.r.bc.hi, false) }
+func op80(c *SM83) { c.add(c.R.BC.Hi, false) }
 
-func op81(c *SM83) { c.add(c.r.bc.lo, false) }
+func op81(c *SM83) { c.add(c.R.BC.Lo, false) }
 
-func op82(c *SM83) { c.add(c.r.de.hi, false) }
+func op82(c *SM83) { c.add(c.R.DE.Hi, false) }
 
-func op83(c *SM83) { c.add(c.r.de.lo, false) }
+func op83(c *SM83) { c.add(c.R.DE.Lo, false) }
 
-func op84(c *SM83) { c.add(c.r.hl.hi, false) }
+func op84(c *SM83) { c.add(c.R.HL.Hi, false) }
 
-func op85(c *SM83) { c.add(c.r.hl.lo, false) }
+func op85(c *SM83) { c.add(c.R.HL.Lo, false) }
 
-func op86(c *SM83) { c.add(c.bus.Read(c.r.hl.pack()), false) }
+func op86(c *SM83) { c.add(c.bus.Read(c.R.HL.pack()), false) }
 
-func op87(c *SM83) { c.add(c.r.a, false) }
+func op87(c *SM83) { c.add(c.R.A, false) }
 
-func op88(c *SM83) { c.add(c.r.bc.hi, c.r.f.c) }
+func op88(c *SM83) { c.add(c.R.BC.Hi, c.R.F.c) }
 
-func op89(c *SM83) { c.add(c.r.bc.lo, c.r.f.c) }
+func op89(c *SM83) { c.add(c.R.BC.Lo, c.R.F.c) }
 
-func op8A(c *SM83) { c.add(c.r.de.hi, c.r.f.c) }
+func op8A(c *SM83) { c.add(c.R.DE.Hi, c.R.F.c) }
 
-func op8B(c *SM83) { c.add(c.r.de.lo, c.r.f.c) }
+func op8B(c *SM83) { c.add(c.R.DE.Lo, c.R.F.c) }
 
-func op8C(c *SM83) { c.add(c.r.hl.hi, c.r.f.c) }
+func op8C(c *SM83) { c.add(c.R.HL.Hi, c.R.F.c) }
 
-func op8D(c *SM83) { c.add(c.r.hl.lo, c.r.f.c) }
+func op8D(c *SM83) { c.add(c.R.HL.Lo, c.R.F.c) }
 
-func op8E(c *SM83) { c.add(c.bus.Read(c.r.hl.pack()), c.r.f.c) }
+func op8E(c *SM83) { c.add(c.bus.Read(c.R.HL.pack()), c.R.F.c) }
 
-func op8F(c *SM83) { c.add(c.r.a, c.r.f.c) }
+func op8F(c *SM83) { c.add(c.R.A, c.R.F.c) }
 
-func op90(c *SM83) { c.sub(c.r.bc.hi, false) }
+func op90(c *SM83) { c.sub(c.R.BC.Hi, false) }
 
-func op91(c *SM83) { c.sub(c.r.bc.lo, false) }
+func op91(c *SM83) { c.sub(c.R.BC.Lo, false) }
 
-func op92(c *SM83) { c.sub(c.r.de.hi, false) }
+func op92(c *SM83) { c.sub(c.R.DE.Hi, false) }
 
-func op93(c *SM83) { c.sub(c.r.de.lo, false) } // sub a, e
+func op93(c *SM83) { c.sub(c.R.DE.Lo, false) } // sub a, e
 
-func op94(c *SM83) { c.sub(c.r.hl.hi, false) }
+func op94(c *SM83) { c.sub(c.R.HL.Hi, false) }
 
-func op95(c *SM83) { c.sub(c.r.hl.lo, false) }
+func op95(c *SM83) { c.sub(c.R.HL.Lo, false) }
 
-func op96(c *SM83) { c.sub(c.bus.Read(c.r.hl.pack()), false) }
+func op96(c *SM83) { c.sub(c.bus.Read(c.R.HL.pack()), false) }
 
-func op97(c *SM83) { c.sub(c.r.a, false) }
+func op97(c *SM83) { c.sub(c.R.A, false) }
 
-func op98(c *SM83) { c.sub(c.r.bc.hi, c.r.f.c) }
+func op98(c *SM83) { c.sub(c.R.BC.Hi, c.R.F.c) }
 
-func op99(c *SM83) { c.sub(c.r.bc.lo, c.r.f.c) }
+func op99(c *SM83) { c.sub(c.R.BC.Lo, c.R.F.c) }
 
-func op9A(c *SM83) { c.sub(c.r.de.hi, c.r.f.c) } // sbc a, d
+func op9A(c *SM83) { c.sub(c.R.DE.Hi, c.R.F.c) } // sbc a, d
 
-func op9B(c *SM83) { c.sub(c.r.de.lo, c.r.f.c) }
+func op9B(c *SM83) { c.sub(c.R.DE.Lo, c.R.F.c) }
 
-func op9C(c *SM83) { c.sub(c.r.hl.hi, c.r.f.c) }
+func op9C(c *SM83) { c.sub(c.R.HL.Hi, c.R.F.c) }
 
-func op9D(c *SM83) { c.sub(c.r.hl.lo, c.r.f.c) }
+func op9D(c *SM83) { c.sub(c.R.HL.Lo, c.R.F.c) }
 
-func op9E(c *SM83) { c.sub(c.bus.Read(c.r.hl.pack()), c.r.f.c) }
+func op9E(c *SM83) { c.sub(c.bus.Read(c.R.HL.pack()), c.R.F.c) }
 
-func op9F(c *SM83) { c.sub(c.r.a, c.r.f.c) }
+func op9F(c *SM83) { c.sub(c.R.A, c.R.F.c) }
 
 func opA0(c *SM83) {
-	c.r.a &= c.r.bc.hi
-	c.r.f.z, c.r.f.n, c.r.f.h, c.r.f.c = (c.r.a == 0), false, true, false
+	c.R.A &= c.R.BC.Hi
+	c.R.F.z, c.R.F.n, c.R.F.h, c.R.F.c = (c.R.A == 0), false, true, false
 }
 
 func opA1(c *SM83) {
-	c.r.a &= c.r.bc.lo
-	c.r.f.z, c.r.f.n, c.r.f.h, c.r.f.c = (c.r.a == 0), false, true, false
+	c.R.A &= c.R.BC.Lo
+	c.R.F.z, c.R.F.n, c.R.F.h, c.R.F.c = (c.R.A == 0), false, true, false
 }
 
 func opA2(c *SM83) {
-	c.r.a &= c.r.de.hi
-	c.r.f.z, c.r.f.n, c.r.f.h, c.r.f.c = (c.r.a == 0), false, true, false
+	c.R.A &= c.R.DE.Hi
+	c.R.F.z, c.R.F.n, c.R.F.h, c.R.F.c = (c.R.A == 0), false, true, false
 }
 
 func opA3(c *SM83) {
-	c.r.a &= c.r.de.lo
-	c.r.f.z, c.r.f.n, c.r.f.h, c.r.f.c = (c.r.a == 0), false, true, false
+	c.R.A &= c.R.DE.Lo
+	c.R.F.z, c.R.F.n, c.R.F.h, c.R.F.c = (c.R.A == 0), false, true, false
 }
 
 func opA4(c *SM83) {
-	c.r.a &= c.r.hl.hi
-	c.r.f.z, c.r.f.n, c.r.f.h, c.r.f.c = (c.r.a == 0), false, true, false
+	c.R.A &= c.R.HL.Hi
+	c.R.F.z, c.R.F.n, c.R.F.h, c.R.F.c = (c.R.A == 0), false, true, false
 }
 
 func opA5(c *SM83) {
-	c.r.a &= c.r.hl.lo
-	c.r.f.z, c.r.f.n, c.r.f.h, c.r.f.c = (c.r.a == 0), false, true, false
+	c.R.A &= c.R.HL.Lo
+	c.R.F.z, c.R.F.n, c.R.F.h, c.R.F.c = (c.R.A == 0), false, true, false
 }
 
 func opA6(c *SM83) {
-	c.r.a &= c.bus.Read(c.r.hl.pack())
-	c.r.f.z, c.r.f.n, c.r.f.h, c.r.f.c = (c.r.a == 0), false, true, false
+	c.R.A &= c.bus.Read(c.R.HL.pack())
+	c.R.F.z, c.R.F.n, c.R.F.h, c.R.F.c = (c.R.A == 0), false, true, false
 }
 
 func opA7(c *SM83) {
-	c.r.a &= c.r.a
-	c.r.f.z, c.r.f.n, c.r.f.h, c.r.f.c = (c.r.a == 0), false, true, false
+	c.R.A &= c.R.A
+	c.R.F.z, c.R.F.n, c.R.F.h, c.R.F.c = (c.R.A == 0), false, true, false
 }
 
 func opA8(c *SM83) {
-	c.r.a ^= c.r.bc.hi
-	c.r.f.z, c.r.f.n, c.r.f.h, c.r.f.c = (c.r.a == 0), false, false, false
+	c.R.A ^= c.R.BC.Hi
+	c.R.F.z, c.R.F.n, c.R.F.h, c.R.F.c = (c.R.A == 0), false, false, false
 }
 
 func opA9(c *SM83) {
-	c.r.a ^= c.r.bc.lo
-	c.r.f.z, c.r.f.n, c.r.f.h, c.r.f.c = (c.r.a == 0), false, false, false
+	c.R.A ^= c.R.BC.Lo
+	c.R.F.z, c.R.F.n, c.R.F.h, c.R.F.c = (c.R.A == 0), false, false, false
 }
 
 func opAA(c *SM83) {
-	c.r.a ^= c.r.de.hi
-	c.r.f.z, c.r.f.n, c.r.f.h, c.r.f.c = (c.r.a == 0), false, false, false
+	c.R.A ^= c.R.DE.Hi
+	c.R.F.z, c.R.F.n, c.R.F.h, c.R.F.c = (c.R.A == 0), false, false, false
 }
 
 func opAB(c *SM83) {
-	c.r.a ^= c.r.de.lo
-	c.r.f.z, c.r.f.n, c.r.f.h, c.r.f.c = (c.r.a == 0), false, false, false
+	c.R.A ^= c.R.DE.Lo
+	c.R.F.z, c.R.F.n, c.R.F.h, c.R.F.c = (c.R.A == 0), false, false, false
 }
 
 func opAC(c *SM83) {
-	c.r.a ^= c.r.hl.hi
-	c.r.f.z, c.r.f.n, c.r.f.h, c.r.f.c = (c.r.a == 0), false, false, false
+	c.R.A ^= c.R.HL.Hi
+	c.R.F.z, c.R.F.n, c.R.F.h, c.R.F.c = (c.R.A == 0), false, false, false
 }
 
 func opAD(c *SM83) {
-	c.r.a ^= c.r.hl.lo
-	c.r.f.z, c.r.f.n, c.r.f.h, c.r.f.c = (c.r.a == 0), false, false, false
+	c.R.A ^= c.R.HL.Lo
+	c.R.F.z, c.R.F.n, c.R.F.h, c.R.F.c = (c.R.A == 0), false, false, false
 }
 
 func opAE(c *SM83) {
-	c.r.a ^= c.bus.Read(c.r.hl.pack())
-	c.r.f.z, c.r.f.n, c.r.f.h, c.r.f.c = (c.r.a == 0), false, false, false
+	c.R.A ^= c.bus.Read(c.R.HL.pack())
+	c.R.F.z, c.R.F.n, c.R.F.h, c.R.F.c = (c.R.A == 0), false, false, false
 }
 
 func opAF(c *SM83) {
-	c.r.a ^= c.r.a
-	c.r.f.z, c.r.f.n, c.r.f.h, c.r.f.c = (c.r.a == 0), false, false, false
+	c.R.A ^= c.R.A
+	c.R.F.z, c.R.F.n, c.R.F.h, c.R.F.c = (c.R.A == 0), false, false, false
 }
 
 func opB0(c *SM83) {
-	c.r.a |= c.r.bc.hi
-	c.r.f.z, c.r.f.n, c.r.f.h, c.r.f.c = (c.r.a == 0), false, false, false
+	c.R.A |= c.R.BC.Hi
+	c.R.F.z, c.R.F.n, c.R.F.h, c.R.F.c = (c.R.A == 0), false, false, false
 }
 
 func opB1(c *SM83) {
-	c.r.a |= c.r.bc.lo
-	c.r.f.z, c.r.f.n, c.r.f.h, c.r.f.c = (c.r.a == 0), false, false, false
+	c.R.A |= c.R.BC.Lo
+	c.R.F.z, c.R.F.n, c.R.F.h, c.R.F.c = (c.R.A == 0), false, false, false
 }
 
 func opB2(c *SM83) {
-	c.r.a |= c.r.de.hi
-	c.r.f.z, c.r.f.n, c.r.f.h, c.r.f.c = (c.r.a == 0), false, false, false
+	c.R.A |= c.R.DE.Hi
+	c.R.F.z, c.R.F.n, c.R.F.h, c.R.F.c = (c.R.A == 0), false, false, false
 }
 
 func opB3(c *SM83) {
-	c.r.a |= c.r.de.lo
-	c.r.f.z, c.r.f.n, c.r.f.h, c.r.f.c = (c.r.a == 0), false, false, false
+	c.R.A |= c.R.DE.Lo
+	c.R.F.z, c.R.F.n, c.R.F.h, c.R.F.c = (c.R.A == 0), false, false, false
 }
 
 func opB4(c *SM83) {
-	c.r.a |= c.r.hl.hi
-	c.r.f.z, c.r.f.n, c.r.f.h, c.r.f.c = (c.r.a == 0), false, false, false
+	c.R.A |= c.R.HL.Hi
+	c.R.F.z, c.R.F.n, c.R.F.h, c.R.F.c = (c.R.A == 0), false, false, false
 }
 
 func opB5(c *SM83) {
-	c.r.a |= c.r.hl.lo
-	c.r.f.z, c.r.f.n, c.r.f.h, c.r.f.c = (c.r.a == 0), false, false, false
+	c.R.A |= c.R.HL.Lo
+	c.R.F.z, c.R.F.n, c.R.F.h, c.R.F.c = (c.R.A == 0), false, false, false
 }
 
 func opB6(c *SM83) {
-	c.r.a |= c.bus.Read(c.r.hl.pack())
-	c.r.f.z, c.r.f.n, c.r.f.h, c.r.f.c = (c.r.a == 0), false, false, false
+	c.R.A |= c.bus.Read(c.R.HL.pack())
+	c.R.F.z, c.R.F.n, c.R.F.h, c.R.F.c = (c.R.A == 0), false, false, false
 }
 
 func opB7(c *SM83) {
-	c.r.a |= c.r.a
-	c.r.f.z, c.r.f.n, c.r.f.h, c.r.f.c = (c.r.a == 0), false, false, false
+	c.R.A |= c.R.A
+	c.R.F.z, c.R.F.n, c.R.F.h, c.R.F.c = (c.R.A == 0), false, false, false
 }
 
-func opB8(c *SM83) { c.cp(c.r.bc.hi) }
+func opB8(c *SM83) { c.cp(c.R.BC.Hi) }
 
-func opB9(c *SM83) { c.cp(c.r.bc.lo) }
+func opB9(c *SM83) { c.cp(c.R.BC.Lo) }
 
-func opBA(c *SM83) { c.cp(c.r.de.hi) }
+func opBA(c *SM83) { c.cp(c.R.DE.Hi) }
 
-func opBB(c *SM83) { c.cp(c.r.de.lo) }
+func opBB(c *SM83) { c.cp(c.R.DE.Lo) }
 
-func opBC(c *SM83) { c.cp(c.r.hl.hi) }
+func opBC(c *SM83) { c.cp(c.R.HL.Hi) }
 
-func opBD(c *SM83) { c.cp(c.r.hl.lo) }
+func opBD(c *SM83) { c.cp(c.R.HL.Lo) }
 
-func opBE(c *SM83) { c.cp(c.bus.Read(c.r.hl.pack())) }
+func opBE(c *SM83) { c.cp(c.bus.Read(c.R.HL.pack())) }
 
-func opBF(c *SM83) { c.cp(c.r.a) }
+func opBF(c *SM83) { c.cp(c.R.A) }
 
 func opC0(c *SM83) {
-	if !c.r.f.z {
+	if !c.R.F.z {
 		c.ret()
 	}
 }
 
-func opC1(c *SM83) { c.r.bc.unpack(c.pop16()) }
+func opC1(c *SM83) { c.R.BC.Unpack(c.pop16()) }
 
 func opC2(c *SM83) {
 	lo := uint16(c.fetch())
 	hi := uint16(c.fetch())
-	if !c.r.f.z {
+	if !c.R.F.z {
 		c.branch((hi << 8) | lo)
 	}
 }
@@ -717,25 +717,25 @@ func opC3(c *SM83) {
 func opC4(c *SM83) {
 	lo := uint16(c.fetch())
 	hi := uint16(c.fetch())
-	if !c.r.f.z {
+	if !c.R.F.z {
 		c.call((hi << 8) | lo)
 	}
 }
 
-func opC5(c *SM83) { c.push16(c.r.bc.pack()) }
+func opC5(c *SM83) { c.push16(c.R.BC.pack()) }
 
 func opC6(c *SM83) {
-	a := c.r.a
+	a := c.R.A
 	val := c.fetch()
 	result := uint16(a) + uint16(val)
-	c.r.a = a + val
-	c.r.f.z, c.r.f.n, c.r.f.h, c.r.f.c = (c.r.a == 0), false, ((a&0x0F)+(val&0x0F) > 0x0F), (result > 0xFF)
+	c.R.A = a + val
+	c.R.F.z, c.R.F.n, c.R.F.h, c.R.F.c = (c.R.A == 0), false, ((a&0x0F)+(val&0x0F) > 0x0F), (result > 0xFF)
 }
 
 func opC7(c *SM83) { c.call(0x00) }
 
 func opC8(c *SM83) {
-	if c.r.f.z {
+	if c.R.F.z {
 		c.ret()
 	}
 }
@@ -745,7 +745,7 @@ func opC9(c *SM83) { c.ret() }
 func opCA(c *SM83) {
 	lo := uint16(c.fetch())
 	hi := uint16(c.fetch())
-	if c.r.f.z {
+	if c.R.F.z {
 		c.branch((hi << 8) | lo)
 	}
 }
@@ -762,7 +762,7 @@ func opCB(c *SM83) {
 func opCC(c *SM83) {
 	lo := uint16(c.fetch())
 	hi := uint16(c.fetch())
-	if c.r.f.z {
+	if c.R.F.z {
 		c.call((hi << 8) | lo)
 	}
 }
@@ -773,22 +773,22 @@ func opCD(c *SM83) {
 	c.call((hi << 8) | lo)
 }
 
-func opCE(c *SM83) { c.add(c.fetch(), c.r.f.c) } // adc a, u8
+func opCE(c *SM83) { c.add(c.fetch(), c.R.F.c) } // adc a, u8
 
 func opCF(c *SM83) { c.call(0x08) }
 
 func opD0(c *SM83) {
-	if !c.r.f.c {
+	if !c.R.F.c {
 		c.ret()
 	}
 }
 
-func opD1(c *SM83) { c.r.de.unpack(c.pop16()) }
+func opD1(c *SM83) { c.R.DE.Unpack(c.pop16()) }
 
 func opD2(c *SM83) {
 	lo := uint16(c.fetch())
 	hi := uint16(c.fetch())
-	if !c.r.f.c {
+	if !c.R.F.c {
 		c.branch((hi << 8) | lo)
 	}
 }
@@ -796,25 +796,25 @@ func opD2(c *SM83) {
 func opD4(c *SM83) {
 	lo := uint16(c.fetch())
 	hi := uint16(c.fetch())
-	if !c.r.f.c {
+	if !c.R.F.c {
 		c.call((hi << 8) | lo)
 	}
 }
 
-func opD5(c *SM83) { c.push16(c.r.de.pack()) }
+func opD5(c *SM83) { c.push16(c.R.DE.pack()) }
 
 // sub a, u8
 func opD6(c *SM83) {
-	a, val := c.r.a, c.fetch()
+	a, val := c.R.A, c.fetch()
 	diff := int(a) - int(val)
-	c.r.a = uint8(diff)
-	c.r.f.z, c.r.f.n, c.r.f.h, c.r.f.c = (c.r.a == 0), true, (int(a&0x0F)-int(val&0x0F) < 0), (diff < 0)
+	c.R.A = uint8(diff)
+	c.R.F.z, c.R.F.n, c.R.F.h, c.R.F.c = (c.R.A == 0), true, (int(a&0x0F)-int(val&0x0F) < 0), (diff < 0)
 }
 
 func opD7(c *SM83) { c.call(0x10) }
 
 func opD8(c *SM83) {
-	if c.r.f.c {
+	if c.R.F.c {
 		c.ret()
 	}
 }
@@ -828,7 +828,7 @@ func opD9(c *SM83) {
 func opDA(c *SM83) {
 	lo := uint16(c.fetch())
 	hi := uint16(c.fetch())
-	if c.r.f.c {
+	if c.R.F.c {
 		c.branch((hi << 8) | lo)
 	}
 }
@@ -837,124 +837,124 @@ func opDA(c *SM83) {
 func opDC(c *SM83) {
 	lo := uint16(c.fetch())
 	hi := uint16(c.fetch())
-	if c.r.f.c {
+	if c.R.F.c {
 		c.call((hi << 8) | lo)
 	}
 }
 
 // sbc a, u8
 func opDE(c *SM83) {
-	carry := util.Btou8(c.r.f.c)
-	a, val := c.r.a, c.fetch()
+	carry := util.Btou8(c.R.F.c)
+	a, val := c.R.A, c.fetch()
 	result := int(a) - int(val) - int(carry)
-	c.r.a = uint8(result)
-	c.r.f.z, c.r.f.n, c.r.f.h, c.r.f.c = (c.r.a == 0), true, (int(a&0x0F)-int(val&0x0F)-int(carry) < 0), (result < 0)
+	c.R.A = uint8(result)
+	c.R.F.z, c.R.F.n, c.R.F.h, c.R.F.c = (c.R.A == 0), true, (int(a&0x0F)-int(val&0x0F)-int(carry) < 0), (result < 0)
 }
 
 func opDF(c *SM83) { c.call(0x18) }
 
 func opE0(c *SM83) {
 	addr := 0xFF00 | uint16(c.fetch())
-	c.bus.Write(addr, c.r.a)
+	c.bus.Write(addr, c.R.A)
 }
 
-func opE1(c *SM83) { c.r.hl.unpack(c.pop16()) } // pop hl
+func opE1(c *SM83) { c.R.HL.Unpack(c.pop16()) } // pop hl
 
 func opE2(c *SM83) {
-	addr := 0xFF00 | uint16(c.r.bc.lo)
-	c.bus.Write(addr, c.r.a)
+	addr := 0xFF00 | uint16(c.R.BC.Lo)
+	c.bus.Write(addr, c.R.A)
 }
 
-func opE5(c *SM83) { c.push16(c.r.hl.pack()) } // push hl
+func opE5(c *SM83) { c.push16(c.R.HL.pack()) } // push hl
 
 // and a, u8
 func opE6(c *SM83) {
-	c.r.a &= c.fetch()
-	c.r.f.z, c.r.f.n, c.r.f.h, c.r.f.c = (c.r.a == 0), false, true, false
+	c.R.A &= c.fetch()
+	c.R.F.z, c.R.F.n, c.R.F.h, c.R.F.c = (c.R.A == 0), false, true, false
 }
 
 func opE7(c *SM83) { c.call(0x20) }
 
 func opE8(c *SM83) {
-	sp := c.r.sp
+	sp := c.R.SP
 	rel := int8(c.fetch())
 	val := sp + uint16(rel)
-	c.r.sp = val
-	c.r.f.z, c.r.f.n, c.r.f.h, c.r.f.c = false, false, ((sp&0x0F)+(uint16(rel)&0x0F) > 0x0F), ((val & 0xFF) < (sp & 0xFF))
+	c.R.SP = val
+	c.R.F.z, c.R.F.n, c.R.F.h, c.R.F.c = false, false, ((sp&0x0F)+(uint16(rel)&0x0F) > 0x0F), ((val & 0xFF) < (sp & 0xFF))
 }
 
-func opE9(c *SM83) { c.branch(c.r.hl.pack()) }
+func opE9(c *SM83) { c.branch(c.R.HL.pack()) }
 
 func opEA(c *SM83) {
 	lo := uint16(c.fetch())
 	hi := uint16(c.fetch())
 	addr := (hi << 8) | lo
-	c.bus.Write(addr, c.r.a)
+	c.bus.Write(addr, c.R.A)
 }
 
 // xor a, u8
 func opEE(c *SM83) {
-	c.r.a ^= c.fetch()
-	c.r.f.z, c.r.f.n, c.r.f.h, c.r.f.c = (c.r.a == 0), false, false, false
+	c.R.A ^= c.fetch()
+	c.R.F.z, c.R.F.n, c.R.F.h, c.R.F.c = (c.R.A == 0), false, false, false
 }
 
 func opEF(c *SM83) { c.call(0x28) }
 
 func opF0(c *SM83) {
 	addr := 0xFF00 | uint16(c.fetch())
-	c.r.a = c.bus.Read(addr)
+	c.R.A = c.bus.Read(addr)
 }
 
 func opF1(c *SM83) {
 	af := c.pop16()
-	c.r.a = uint8(af >> 8)
-	c.r.f.unpack(uint8(af))
+	c.R.A = uint8(af >> 8)
+	c.R.F.Unpack(uint8(af))
 }
 
 func opF2(c *SM83) {
-	addr := 0xFF00 | uint16(c.r.bc.lo)
-	c.r.a = c.bus.Read(addr)
+	addr := 0xFF00 | uint16(c.R.BC.Lo)
+	c.R.A = c.bus.Read(addr)
 }
 
 func opF3(c *SM83) { c.IME = false }
 
 // push af
 func opF5(c *SM83) {
-	a := uint16(c.r.a)
-	f := uint16(c.r.f.pack())
+	a := uint16(c.R.A)
+	f := uint16(c.R.F.pack())
 	af := (a << 8) | f
 	c.push16(af)
 }
 
 func opF6(c *SM83) {
-	c.r.a |= c.fetch()
-	c.r.f.z, c.r.f.n, c.r.f.h, c.r.f.c = (c.r.a == 0), false, false, false
+	c.R.A |= c.fetch()
+	c.R.F.z, c.R.F.n, c.R.F.h, c.R.F.c = (c.R.A == 0), false, false, false
 }
 
 func opF7(c *SM83) { c.call(0x30) }
 
 func opF8(c *SM83) {
 	rel := int8(c.fetch())
-	val := c.r.sp + uint16(rel)
-	c.r.hl.unpack(val)
-	c.r.f.z, c.r.f.n, c.r.f.h, c.r.f.c = false, false, ((c.r.sp&0x0F)+(uint16(rel)&0x0F) > 0x0F), ((int(c.r.sp)&0xFF)+int(rel)&0xFF) > 0xFF
+	val := c.R.SP + uint16(rel)
+	c.R.HL.Unpack(val)
+	c.R.F.z, c.R.F.n, c.R.F.h, c.R.F.c = false, false, ((c.R.SP&0x0F)+(uint16(rel)&0x0F) > 0x0F), ((int(c.R.SP)&0xFF)+int(rel)&0xFF) > 0xFF
 }
 
-func opF9(c *SM83) { c.r.sp = c.r.hl.pack() }
+func opF9(c *SM83) { c.R.SP = c.R.HL.pack() }
 
 func opFA(c *SM83) {
 	lo := uint16(c.fetch())
 	hi := uint16(c.fetch())
 	addr := (hi << 8) | lo
-	c.r.a = c.bus.Read(addr)
+	c.R.A = c.bus.Read(addr)
 }
 
 func opFB(c *SM83) { c.IME = true }
 
 func opFE(c *SM83) {
 	val := c.fetch()
-	diff := int(c.r.a) - int(val)
-	c.r.f.z, c.r.f.n, c.r.f.h, c.r.f.c = (diff == 0), true, ((c.r.a & 0x0F) < (val & 0x0F)), (diff < 0)
+	diff := int(c.R.A) - int(val)
+	c.R.F.z, c.R.F.n, c.R.F.h, c.R.F.c = (diff == 0), true, ((c.R.A & 0x0F) < (val & 0x0F)), (diff < 0)
 }
 
 func opFF(c *SM83) { c.call(0x38) }

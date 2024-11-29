@@ -12,21 +12,19 @@ func (p *PPU) hblank() {
 		p.r.DrawScanline(p.ly, p.screen[p.ly*160:(p.ly+1)*160])
 	}
 	if !statIRQAsserted(oldStat) && statIRQAsserted(p.stat) {
-		p.irq(1)
+		p.cpu.IRQ(1)
 	}
-	if p.onHBlank != nil {
-		p.onHBlank()
-	}
+	p.cpu.HBlank()
 }
 
 // Mode 1
 func (p *PPU) vblank() {
 	oldStat := p.stat
 	p.stat = (p.stat & 0xFC) | 1
-	p.irq(0)
+	p.cpu.IRQ(0)
 
 	if !statIRQAsserted(oldStat) && statIRQAsserted(p.stat) {
-		p.irq(1)
+		p.cpu.IRQ(1)
 	}
 }
 
@@ -35,7 +33,7 @@ func (p *PPU) scanOAM() {
 	oldStat := p.stat
 	p.stat = (p.stat & 0xFC) | 2
 	if !statIRQAsserted(oldStat) && statIRQAsserted(p.stat) {
-		p.irq(1)
+		p.cpu.IRQ(1)
 	}
 }
 
@@ -48,9 +46,9 @@ func (p *PPU) drawing() {
 	if util.Bit(p.lcdc, 2) {
 		h = 16
 	}
-	o := 0
+	o := uint8(0)
 	for i := 0; i < 40; i++ {
-		y := int(p.oam[i*4]) - 16
+		y := int(p.OAM[i*4]) - 16
 		if y <= p.ly && p.ly < y+h {
 			o++
 		}

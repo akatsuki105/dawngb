@@ -31,7 +31,7 @@ func run() exitCode {
 	if flag.NArg() > 0 {
 		defer profile.Start(profile.ProfilePath("./build/profile")).Stop()
 
-		c := gb.New(nil)
+		c := gb.New(gb.MODEL_CGB, nil)
 
 		rom, err := os.ReadFile(flag.Arg(0))
 		if err != nil {

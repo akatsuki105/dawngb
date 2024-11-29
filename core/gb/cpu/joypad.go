@@ -16,14 +16,10 @@ func newJoypad(irq func(n int)) *joypad {
 	}
 }
 
-func (j *joypad) reset(hasBIOS bool) {
+func (j *joypad) reset() {
 	j.p14, j.p15 = false, false
 	j.joyp = 0x0F
 	j.inputs = 0xFF
-	if !hasBIOS {
-		j.write(0x30)
-		j.write(0xCF)
-	}
 }
 
 // poll inputs

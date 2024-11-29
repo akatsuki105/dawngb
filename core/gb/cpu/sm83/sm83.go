@@ -10,7 +10,7 @@ type Bus interface {
 }
 
 type SM83 struct {
-	r    Registers
+	R    Registers
 	bus  Bus
 	inst struct {
 		opcode uint8
@@ -19,39 +19,28 @@ type SM83 struct {
 	}
 	IME        bool
 	halt, stop func()
-	_tick      func(mastercycles int64)
+	tick       func(clockCycles int64)
 }
 
 func New(bus Bus, halt, stop func(), tick func(int64)) *SM83 {
+	if tick == nil {
+		panic("tick function is required")
+	}
 	return &SM83{
-		bus:   bus,
-		halt:  halt,
-		stop:  stop,
-		_tick: tick,
+		bus:  bus,
+		halt: halt,
+		stop: stop,
+		tick: tick,
 	}
 }
 
-func (c *SM83) Reset(hasBIOS bool) {
-	c.r = Registers{}
+func (c *SM83) Reset() {
+	c.R.reset()
 	c.IME = false
-	if !hasBIOS {
-		c.skipBIOS()
-	}
-}
-
-func (c *SM83) skipBIOS() {
-	c.r.a = 0x11
-	c.r.f.unpack(0x80)
-	c.r.bc.unpack(0x0000)
-	c.r.de.unpack(0xFF56)
-	c.r.hl.unpack(0x000D)
-
-	c.r.sp = 0xFFFE
-	c.r.pc = 0x100
 }
 
 func (c *SM83) Step() {
-	pc := c.r.pc
+	pc := c.R.PC
 	c.inst.addr = pc
 	opcode := c.fetch()
 	c.inst.opcode = opcode
@@ -69,13 +58,7 @@ func (c *SM83) Step() {
 }
 
 func (c *SM83) fetch() uint8 {
-	pc := c.r.pc
-	c.r.pc++
+	pc := c.R.PC
+	c.R.PC++
 	return c.bus.Read(pc)
-}
-
-func (c *SM83) tick(mastercycles int64) {
-	if c._tick != nil {
-		c._tick(mastercycles)
-	}
 }

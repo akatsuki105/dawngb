@@ -16,12 +16,11 @@ type rtc struct {
 }
 
 type mbc3 struct {
-	c          *Cartridge
-	ramEnabled bool
-	romBank    uint
-	ramBank    uint
-	rtc        rtc
-	ramBankMax uint
+	c                *Cartridge
+	ramEnabled       bool
+	romBank, ramBank uint8
+	rtc              rtc
+	ramBankMax       uint8
 }
 
 func newMBC3(c *Cartridge) mbc {
@@ -39,19 +38,19 @@ func newMBC3(c *Cartridge) mbc {
 // ポケモンクリスタルなどは、MBC30と呼ばれる特殊なMBC3を使っている
 // これを見分ける方法は今のところ、カートリッジヘッダのROMサイズとRAMサイズを見るしかない
 func (m *mbc3) isMBC30() bool {
-	return (len(m.c.rom) > int(2*MB)) || (len(m.c.ram) > int(32*KB))
+	return (len(m.c.ROM) > int(2*MB)) || (len(m.c.ram) > int(32*KB))
 }
 
 func (m *mbc3) read(addr uint16) uint8 {
 	switch addr >> 12 {
 	case 0x0, 0x1, 0x2, 0x3:
-		return m.c.rom[addr&0x3FFF]
+		return m.c.ROM[addr&0x3FFF]
 	case 0x4, 0x5, 0x6, 0x7:
-		return m.c.rom[(m.romBank<<14)|uint(addr&0x3FFF)]
+		return m.c.ROM[(uint(m.romBank)<<14)|uint(addr&0x3FFF)]
 	case 0xA, 0xB:
 		if m.ramEnabled {
 			if m.ramBank < m.ramBankMax {
-				return m.c.ram[(m.ramBank<<13)|uint(addr&0x1FFF)]
+				return m.c.ram[(uint(m.ramBank)<<13)|uint(addr&0x1FFF)]
 			}
 
 			// RTC
@@ -81,16 +80,16 @@ func (m *mbc3) write(addr uint16, val uint8) {
 	case 0x0, 0x1:
 		m.ramEnabled = (val&0x0F == 0x0A)
 	case 0x2, 0x3:
-		m.romBank = uint(val & 0b111_1111)
+		m.romBank = (val & 0b111_1111)
 		if m.isMBC30() {
-			m.romBank = uint(val)
+			m.romBank = val
 		}
 		if m.romBank == 0 {
 			m.romBank = 1
 		}
 	case 0x4, 0x5:
 		if val <= 0x0C {
-			m.ramBank = uint(val)
+			m.ramBank = val
 		}
 	case 0x6, 0x7:
 		// 現在のRTCの値をlatch(保存), これで特定の瞬間のRTCの値を取得できる
@@ -99,7 +98,7 @@ func (m *mbc3) write(addr uint16, val uint8) {
 	case 0xA, 0xB:
 		if m.ramEnabled {
 			if m.ramBank < m.ramBankMax {
-				m.c.ram[(m.ramBank<<13)|uint(addr&0x1FFF)] = val
+				m.c.ram[(uint(m.ramBank)<<13)|uint(addr&0x1FFF)] = val
 			} else {
 				switch m.ramBank {
 				case 0xC:

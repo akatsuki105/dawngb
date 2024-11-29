@@ -7,6 +7,7 @@ import (
 	"github.com/akatsuki105/dawngb/core/gb/apu/psg"
 )
 
+// SoCに組み込まれているため、`/cpu`にある方が正確ではある
 type APU struct {
 	cycles int64 // 8MHzのマスターサイクル単位
 	*psg.PSG
@@ -27,8 +28,8 @@ func New(audioBuffer io.Writer) *APU {
 	}
 }
 
-func (a *APU) Reset(hasBIOS bool) {
-	a.PSG.Reset(hasBIOS)
+func (a *APU) Reset() {
+	a.PSG.Reset()
 	a.cycles = 0
 	clear(a.samples[:])
 	a.sampleCount = 0

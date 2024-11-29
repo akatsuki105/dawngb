@@ -18,7 +18,7 @@ You can play on [web](https://dawngb.vercel.app/)!
 ## Features
 
 - GB(DMG) and GBC(CGB) support
-- MBC1, MBC3, MBC5, MBC30 support
+- MBC1, MBC2, MBC3, MBC5, MBC30 support
 - Sound(APU) support
 - Libretro support(run `make libretro`)
 - Multiplatform support

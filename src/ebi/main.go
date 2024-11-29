@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/akatsuki105/dawngb/core/gb"
 	"github.com/hajimehoshi/ebiten/v2"
 )
 
@@ -21,7 +22,8 @@ const (
 
 var (
 	turbo = flag.Int("t", 1, "Emulator speed xN")
-	sound = flag.Bool("s", false, "Enable sound")
+	sound = flag.Bool("s", true, "Enable sound")
+	model = flag.Uint("m", uint(gb.MODEL_CGB), "Model: 0: DMG, 1: SGB, 2: CGB")
 )
 
 func main() {
@@ -31,7 +33,7 @@ func main() {
 func Run() exitCode {
 	flag.Parse()
 
-	e := createEmu()
+	e := createEmu(uint8(*model))
 
 	if flag.NArg() > 0 {
 		err := e.LoadROMFromPath(flag.Arg(0))

@@ -24,12 +24,9 @@ func newTimer(irq func(n int), clock *int64) *timer {
 	}
 }
 
-func (t *timer) reset(hasBIOS bool) {
+func (t *timer) reset() {
 	t.cycles = 0
 	t.counter, t.tima, t.tma, t.tac = 0, 0, 0, 0
-	if !hasBIOS {
-		t.tac = 0xF8
-	}
 }
 
 func (t *timer) run(cycles8MHz int64) {

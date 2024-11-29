@@ -75,7 +75,7 @@ type Emu struct {
 	taskQueue []func() // Run at the start of the frame, so safe to access the core
 }
 
-func createEmu() *Emu {
+func createEmu(model uint8) *Emu {
 	if emu != nil {
 		return emu
 	}
@@ -85,7 +85,7 @@ func createEmu() *Emu {
 		volume:       1,
 		taskQueue:    make([]func(), 0, 10),
 	}
-	e.c = gb.New(e.sampleBuffer)
+	e.c = gb.New(gb.Model(model), e.sampleBuffer)
 
 	// init Audio
 	op := oto.NewContextOptions{

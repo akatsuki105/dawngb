@@ -1,9 +1,26 @@
 {
-    "[go]": {
-        "editor.tabSize": 2,
-        "editor.formatOnSave": true,
-        "editor.codeActionsOnSave": {
-            "source.organizeImports": "explicit"
-        }
+  "[go]": {
+    "editor.tabSize": 2,
+    "editor.formatOnSave": true,
+    "editor.codeActionsOnSave": {
+      "source.organizeImports": "explicit"
+    }
+  },
+  "[cpp]": {
+    "editor.formatOnSave": true,
+    "editor.tabSize": 2,
+    "editor.foldingStrategy": "indentation",
+  },
+  "[c]": {
+    "editor.foldingStrategy": "indentation",
+  },
+  "gopls": {
+    "codelenses": { // CodeLens はエディタ画面から直接コマンドを実行できる機能 (packageの上にクリックすると静的解析を行うボタンが出てくる)
+      "gc_details": true
     },
+    "ui.diagnostic.annotations": {
+      "escape": true,
+      // "inline": true,
+    }
+  }
 }

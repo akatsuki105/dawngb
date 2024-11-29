@@ -4,6 +4,7 @@ import (
 	"image/color"
 
 	"github.com/akatsuki105/dawngb/core/gb/ppu/renderer"
+	"github.com/akatsuki105/dawngb/core/gb/ppu/renderer/software"
 	"github.com/akatsuki105/dawngb/util"
 )
 
@@ -11,13 +12,17 @@ const KB = 1024
 
 const CYCLE = 2
 
+// 便宜的にPPU構造体に入れているが、正確にはボード上にある
 type VRAM struct {
 	data [16 * KB]uint8
-	bank uint
+	bank uint8 // 0 or 1; VBK(0xFF4F)
 }
 
-type Bus interface {
+type CPU interface {
 	Read(addr uint16) uint8
+	IRQ(id int)
+	HBlank()
+	IsCGBMode() bool // CGBモードかどうか
 }
 
 // OAM DMA
@@ -27,8 +32,9 @@ type DMA struct {
 	until  int64
 }
 
+// SoCに組み込まれているため、`/cpu`にある方が正確ではある
 type PPU struct {
-	bus             Bus
+	cpu             CPU
 	cycles          int64 // 遅れているサイクル数(8.38MHzのマスターサイクル単位)
 	screen          [160 * 144]color.NRGBA
 	FrameCounter    uint64
@@ -37,41 +43,38 @@ type PPU struct {
 	ram             VRAM
 	DMA             *DMA
 	lcdc, stat, lyc uint8
-	irq             func(id int)
-	onHBlank        func()
-	oam             [160]uint8
+	OAM             [160]uint8
+	Palette         [(4 * 8) * 2]uint16 // 4bppの8パレットが BG と OBJ　の1つずつ
 	ioreg           [0x30]uint8
 	enableLatch     bool // LCDC.7をセットしてPPUを有効にすると、次のフレームから表示が開始される そうじゃないとゴミが表示される
-	objCount        int
+	objCount        uint8
+	bgpi, obpi      uint8
 }
 
-func New(bus Bus, irq func(id int), onHBlank func()) *PPU {
+func New(cpu CPU) *PPU {
 	p := &PPU{
-		bus:      bus,
-		DMA:      &DMA{},
-		irq:      irq,
-		onHBlank: onHBlank,
-		stat:     0x80,
+		cpu: cpu,
+		DMA: &DMA{},
 	}
-	p.r = renderer.New("dummy", p.ram.data[:], p.oam[:], 0)
 	return p
 }
 
-func (p *PPU) Reset(model int, hasBIOS bool) {
-	p.r = renderer.New("software", p.ram.data[:], p.oam[:], model)
+func (p *PPU) Reset() {
+	p.r = software.New(p.ram.data[:], p.Palette[:], p.OAM[:], p.cpu.IsCGBMode)
 	p.lx, p.ly = 0, 0
 	p.stat = 0x80
 	p.ram.bank = 0
 	p.objCount = 0
 	p.DMA.active, p.DMA.src, p.DMA.until = false, 0, 0
-	if !hasBIOS {
-		p.skipBIOS()
-	}
+	p.bgpi, p.obpi = 0, 0
+	clear(p.Palette[:])
 }
 
-func (p *PPU) skipBIOS() {
+func (p *PPU) SkipBIOS() {
 	p.Write(0xFF40, 0x91) // LCDC
 	p.Write(0xFF47, 0xFC) // BGP
+	copy(p.Palette[:4], dmgPalette[:])
+	copy(p.Palette[32:36], dmgPalette[:])
 }
 
 func (p *PPU) Screen() []color.NRGBA {
@@ -98,7 +101,7 @@ func (p *PPU) step() {
 				p.scanOAM()
 			case 80:
 				p.drawing()
-			case 252 + (p.objCount * 6):
+			case 252 + (int(p.objCount) * 6):
 				p.hblank()
 			}
 		}
@@ -128,7 +131,31 @@ func (p *PPU) compareLYC() {
 	oldStat := p.stat
 	p.stat = util.SetBit(p.stat, 2, p.ly == int(p.lyc))
 	if !statIRQAsserted(oldStat) && statIRQAsserted(p.stat) {
-		p.irq(1)
+		p.cpu.IRQ(1)
+	}
+}
+
+// GBCのBIOSがやる、DMGゲームに対する色付け処理
+func (p *PPU) ColorizeDMG() {
+	copy(p.Palette[:4], cgbPalette[:])
+	copy(p.Palette[32:36], cgbPalette[4:])
+}
+
+func (p *PPU) runDMA(cycles8MHz int64) {
+	p.DMA.until -= cycles8MHz
+	if p.DMA.until <= 0 {
+		for i := uint16(0); i < 160; i++ {
+			p.Write(0xFE00+i, p.cpu.Read(p.DMA.src+i))
+		}
+		p.DMA.active = false
+	}
+}
+
+func (p *PPU) TriggerDMA(src uint16, m int64) {
+	if !p.DMA.active {
+		p.DMA.active = true
+		p.DMA.src = src
+		p.DMA.until = 160 * m
 	}
 }
 
@@ -145,22 +172,4 @@ func statIRQAsserted(stat uint8) bool {
 		return util.Bit(stat, 5)
 	}
 	return false
-}
-
-func (p *PPU) runDMA(cycles8MHz int64) {
-	p.DMA.until -= cycles8MHz
-	if p.DMA.until <= 0 {
-		for i := uint16(0); i < 160; i++ {
-			p.Write(0xFE00+i, p.bus.Read(p.DMA.src+i))
-		}
-		p.DMA.active = false
-	}
-}
-
-func (p *PPU) TriggerDMA(src uint16, m int64) {
-	if !p.DMA.active {
-		p.DMA.active = true
-		p.DMA.src = src
-		p.DMA.until = 160 * m
-	}
 }

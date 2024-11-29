@@ -13,9 +13,14 @@ import (
 
 const KB, MB = 1024, 1024 * 1024
 
+type Model uint8
+
+// ハードウェアの種類
 const (
-	MODEL_DMG = iota
+	MODEL_DMG Model = iota
+	MODEL_SGB
 	MODEL_CGB
+	MODEL_AGB
 )
 
 type LoadCmd = uint8
@@ -35,46 +40,62 @@ const (
 var buttons = [8]string{"A", "B", "SELECT", "START", "RIGHT", "LEFT", "UP", "DOWN"}
 
 type GB struct {
+	model     Model // ハードウェアの種類
 	cpu       *cpu.CPU
 	ppu       *ppu.PPU
 	apu       *apu.APU
 	cartridge *cartridge.Cartridge
 	inputs    uint8 // 押されている時にビットを立てる; bit0: A, bit1: B, bit2: SELECT, bit3: START, bit4: RIGHT, bit5: LEFT, bit6: UP, bit7: DOWN
 	wram      [(4 * KB) * 8]uint8
-	wramBank  uint // SVBK(0xFF70, CGB only)
+	wramBank  uint8 // SVBK(0xFF70, 0..7, CGB only)
 }
 
-func New(audioBuffer io.Writer) *GB {
-	g := &GB{}
-	g.cpu = cpu.New(g)
-	g.ppu = ppu.New(g, g.cpu.IRQ, g.cpu.StartHDMA)
+func New(model Model, audioBuffer io.Writer) *GB {
+	g := &GB{
+		model:    model,
+		wramBank: 1,
+	}
+	g.cpu = cpu.New(g.IsCGB(), g)
+	g.ppu = ppu.New(g.cpu)
 	g.apu = apu.New(audioBuffer)
 	g.wramBank = 1
 	return g
 }
 
 func (g *GB) Reset(hasBIOS bool) {
-	model := MODEL_DMG
-	if g.cartridge != nil && g.cartridge.IsCGB() {
-		model = MODEL_CGB
-	}
+	if g.cartridge != nil {
+		clear(g.wram[:])
+		g.wramBank = 1
+		g.cpu.Reset()
+		g.ppu.Reset()
+		g.apu.Reset()
+		g.inputs = 0
 
-	clear(g.wram[:])
-	g.wramBank = 1
-	g.cpu.Reset(hasBIOS)
-	g.ppu.Reset(model, hasBIOS)
-	g.apu.Reset(hasBIOS)
-	g.inputs = 0
-
-	if !hasBIOS {
-		g.Write(0xFF02, 0x7F) // SC
-		g.Write(0xFF0F, 0xE1) // IF
-		if model == MODEL_CGB {
-			g.Write(0xFF4D, 0x7E) // KEY1
-			g.Write(0xFF4F, 0xFE) // VBK
+		if !hasBIOS {
+			g.skipBIOS()
 		}
 	}
 }
+
+func (g *GB) skipBIOS() {
+	g.cpu.SkipBIOS()
+	g.ppu.SkipBIOS()
+	g.apu.SkipBIOS()
+	g.Write(0xFF02, 0x7F) // SC
+	g.Write(0xFF0F, 0xE1) // IF
+	cgbflag := g.cartridge.ROM[0x143]
+	if cgbflag&0x80 == 0 {
+		g.Write(0xFF4C, 4) // KEY0
+	}
+	g.Write(0xFF4D, 0x7E) // KEY1
+	g.Write(0xFF4F, 0xFE) // VBK
+
+	if g.IsCGB() && cgbflag&0x80 == 0 {
+		g.ppu.ColorizeDMG()
+	}
+}
+
+func (g *GB) Model() Model { return g.model }
 
 var errInvalidCmd = fmt.Errorf("invalid command")
 
@@ -84,11 +105,11 @@ func (g *GB) Load(cmd LoadCmd, args ...any) error {
 		if len(args) != 1 {
 			return fmt.Errorf("LOAD_ROM command requires []uint8")
 		}
-		rom, ok := args[0].([]uint8)
+		data, ok := args[0].([]uint8)
 		if !ok {
 			return fmt.Errorf("LOAD_ROM command requires []uint8")
 		}
-		cartridge, err := cartridge.New(rom)
+		cartridge, err := cartridge.New(data)
 		if err != nil {
 			return err
 		}
@@ -186,6 +207,11 @@ func (g *GB) Title() string {
 		return ""
 	}
 	return g.cartridge.Title()
+}
+
+// IsCGBMode returns true if the hardware has CGB features (i.e., it's a CGB or AGB).
+func (g *GB) IsCGB() bool {
+	return g.model == MODEL_CGB || g.model == MODEL_AGB
 }
 
 func (g *GB) Serialize(state io.Writer) {
