@@ -144,7 +144,7 @@ func retro_get_system_av_info(info *C.struct_retro_system_av_info) {
 		return
 	}
 	width, height := console.Resolution()
-	info.timing.fps = C.double(59.7275)
+	info.timing.fps = C.double(60)
 	info.timing.sample_rate = C.double(32768.0)
 
 	info.geometry.base_width = C.uint(width)

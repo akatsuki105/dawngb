@@ -13,7 +13,7 @@ type APU struct {
 	*psg.PSG
 	sampleWriter io.Writer
 
-	samples     [547 * 2]int16 // [[left, right]...], 547 = 32768 / 60
+	samples     [549 * 2]int16 // [[left, right]...], 549 = 32768 / 59.7275
 	sampleCount uint16
 }
 
