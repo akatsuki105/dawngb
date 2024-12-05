@@ -1,9 +1,6 @@
 package cpu
 
 import (
-	"encoding/binary"
-	"io"
-
 	"github.com/akatsuki105/dawngb/util"
 )
 
@@ -82,18 +79,26 @@ func (t *timer) Write(addr uint16, val uint8) {
 	}
 }
 
-func (t *timer) Serialize(s io.Writer) {
-	data := []uint8{}
-	binary.LittleEndian.PutUint64(data, uint64(t.cycles))  // 8
-	data = append(data, t.tima, t.tma, t.tac)              // 3
-	binary.LittleEndian.PutUint64(data, uint64(t.counter)) // 8
-	s.Write(data)
+type timerSnapshot struct {
+	Cycles, Counter int64
+	Tima, Tma, Tac  uint8
 }
 
-func (t *timer) Deserialize(s io.Reader) {
-	data := make([]uint8, 19)
-	s.Read(data)
-	t.cycles = int64(binary.LittleEndian.Uint64(data[0:8]))
-	t.tima, t.tma, t.tac = data[8], data[9], data[10]
-	t.counter = int64(binary.LittleEndian.Uint64(data[11:19]))
+func (t *timer) CreateSnapshot() timerSnapshot {
+	return timerSnapshot{
+		Cycles:  t.cycles,
+		Counter: t.counter,
+		Tima:    t.tima,
+		Tma:     t.tma,
+		Tac:     t.tac,
+	}
+}
+
+func (t *timer) RestoreSnapshot(snap timerSnapshot) bool {
+	t.cycles = snap.Cycles
+	t.counter = snap.Counter
+	t.tima = snap.Tima
+	t.tma = snap.Tma
+	t.tac = snap.Tac
+	return true
 }
