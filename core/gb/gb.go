@@ -77,6 +77,8 @@ func (g *GB) Reset(hasBIOS bool) {
 	}
 }
 
+func (g *GB) Quit() {}
+
 func (g *GB) skipBIOS() {
 	g.cpu.SkipBIOS()
 	g.ppu.SkipBIOS()
@@ -151,6 +153,19 @@ func (g *GB) Load(cmd LoadCmd, args ...any) error {
 	return nil
 }
 
+func (g *GB) LoadROM(rom []uint8, _ bool) error {
+	err := g.Load(LOAD_ROM, rom)
+	if err != nil {
+		return err
+	}
+	g.Reset(false)
+	return nil
+}
+
+func (g *GB) LoadSave(savedata []uint8) error {
+	return g.Load(LOAD_SAVE, savedata)
+}
+
 func (g *GB) Dump(cmd DumpCmd, args ...any) ([]uint8, error) {
 	switch cmd {
 	case DUMP_SAVE:
@@ -171,8 +186,8 @@ func (g *GB) RunFrame() {
 		const FRAME = 70224 * ppu.CYCLE
 		start := g.cpu.Cycles
 
-		frame := g.ppu.FrameCounter
-		for frame == g.ppu.FrameCounter && ((g.cpu.Cycles - start) < FRAME) {
+		frame := g.ppu.Frame()
+		for frame == g.ppu.Frame() && ((g.cpu.Cycles - start) < FRAME) {
 			g.step()
 		}
 		g.apu.FlushSamples()
@@ -214,10 +229,12 @@ func (g *GB) IsCGB() bool {
 	return g.model == MODEL_CGB || g.model == MODEL_AGB
 }
 
-func (g *GB) Serialize(state io.Writer) {
+func (g *GB) Serialize(state io.Writer) bool {
 	// TODO: implement
+	return false
 }
 
-func (g *GB) Deserialize(state io.Reader) {
+func (g *GB) Deserialize(state io.Reader) bool {
 	// TODO: implement
+	return false
 }
