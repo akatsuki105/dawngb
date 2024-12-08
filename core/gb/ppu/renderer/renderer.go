@@ -2,6 +2,7 @@ package renderer
 
 import (
 	"image/color"
+	"unsafe"
 )
 
 type Renderer interface {
@@ -13,4 +14,7 @@ type Renderer interface {
 	SetSCY(val uint8)
 	SetWX(val uint8)
 	SetWY(val uint8)
+
+	// Debug
+	GetTilemap(buffer unsafe.Pointer, id int)
 }

@@ -1,6 +1,8 @@
 package software
 
 import (
+	"unsafe"
+
 	"github.com/akatsuki105/dawngb/util"
 )
 
@@ -78,6 +80,58 @@ func (l *bgLayer) drawScanline(y int) {
 						l.scanline[x].priority = attr&(1<<7) != 0
 					}
 				}
+			}
+		}
+	}
+}
+
+func (l *bgLayer) drawTilemap(buffer unsafe.Pointer, n int) {
+	var tilebase, mapbase uint16
+	switch n {
+	case 0: // Auto
+		tilebase, mapbase = uint16(l.tiledata), l.tilemap
+	case 1: // Tile: 0x0, Map: 0x1800
+		tilebase, mapbase = 0, 0x1800
+	case 2: // Tile: 0x800, Map: 0x1800
+		tilebase, mapbase = 0x800, 0x1800
+	case 3: // Tile: 0x0, Map: 0x1C00
+		tilebase, mapbase = 0, 0x1C00
+	case 4: // Tile: 0x800, Map: 0x1C00
+		tilebase, mapbase = 0x800, 0x1C00
+	}
+	tilemap := l.r.vram[mapbase : mapbase+1024]
+
+	for i := 0; i < 1024; i++ {
+		tx, ty := (i%32)*8, (i/32)*8
+
+		var tileID int
+		if tilebase == 0x0 {
+			tileID = int(tilemap[i])
+		} else {
+			tileID = int(int8(tilemap[i])) + 256
+		}
+
+		tile := l.r.vram[tileID*16 : (tileID+1)*16]
+
+		for y := 0; y < 8; y++ {
+			py := ty + y
+
+			lo := tile[y*2]
+			hi := tile[y*2+1]
+			for x := 0; x < 8; x++ {
+				px := tx + x
+
+				loBit := (lo >> (7 - x)) & 0b1
+				hiBit := (hi >> (7 - x)) & 0b1
+				colorID := uint8((hiBit << 1) | loBit)
+				rgb555 := l.getColor(0, colorID)
+
+				r5, g5, b5 := uint8(rgb555&0x1F), uint8((rgb555>>5)&0x1F), uint8((rgb555>>10)&0x1F)
+				pixel := (*[4]uint8)(unsafe.Pointer(uintptr(buffer) + uintptr((py*256+px)*4)))
+				pixel[0] = (r5 << 3) | (r5 >> 2)
+				pixel[1] = (g5 << 3) | (g5 >> 2)
+				pixel[2] = (b5 << 3) | (b5 >> 2)
+				pixel[3] = 0xFF
 			}
 		}
 	}

@@ -2,6 +2,7 @@ package dummy
 
 import (
 	"image/color"
+	"unsafe"
 )
 
 type Renderer struct{}
@@ -19,3 +20,4 @@ func (r *Renderer) SetSCX(val uint8)                           {}
 func (r *Renderer) SetSCY(val uint8)                           {}
 func (r *Renderer) SetWX(val uint8)                            {}
 func (r *Renderer) SetWY(val uint8)                            {}
+func (r *Renderer) GetTilemap(buffer unsafe.Pointer, id int)   {}

@@ -10,6 +10,7 @@ func (p *PPU) GetTileImage(ppuID, tileID int, buffer unsafe.Pointer, bpp, palett
 }
 
 func (p *PPU) GetTilemap(ppuID int, buffer unsafe.Pointer, w, h, n int) {
+	p.r.GetTilemap(buffer, n)
 }
 
 func (p *PPU) GetPalette(paletteID uint8) unsafe.Pointer {
