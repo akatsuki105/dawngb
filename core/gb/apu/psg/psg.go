@@ -115,7 +115,7 @@ func (a *PSG) Sample() (lsample, rsample uint8) {
 	left, right := uint8(0), uint8(0)
 
 	if a.enabled {
-		ch1, ch2, ch3, ch4 := a.ch1.getOutput(), a.ch2.getOutput(), a.ch3.getOutput(), a.ch4.getOutput()
+		ch1, ch2, ch3, ch4 := a.ch1.GetOutput(), a.ch2.GetOutput(), a.ch3.GetOutput(), a.ch4.GetOutput()
 		if a.leftEnables[0] {
 			left += ch1
 		}

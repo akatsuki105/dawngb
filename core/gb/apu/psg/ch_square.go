@@ -102,7 +102,8 @@ func (ch *square) update() {
 	ch.output = dutyTable[ch.dutyCounter] != 0
 }
 
-func (ch *square) getOutput() uint8 {
+// GetOutput gets 4bit sample (0..15)
+func (ch *square) GetOutput() uint8 {
 	if ch.enabled && ch.output {
 		return ch.envelope.volume
 	}

@@ -104,7 +104,8 @@ func (ch *noise) calcFreqency() uint32 {
 	return uint32(noisePeriodTable[ch.divisor]) << ch.octave
 }
 
-func (ch *noise) getOutput() uint8 {
+// GetOutput gets 4bit sample (0..15)
+func (ch *noise) GetOutput() uint8 {
 	if ch.enabled {
 		return ch.output
 	}

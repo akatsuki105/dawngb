@@ -80,7 +80,8 @@ func (ch *wave) clockTimer() {
 	}
 }
 
-func (ch *wave) getOutput() uint8 {
+// GetOutput gets 4bit sample (0..15)
+func (ch *wave) GetOutput() uint8 {
 	if ch.enabled {
 		shift := volumeShift[ch.volume]
 		return ch.output >> shift
