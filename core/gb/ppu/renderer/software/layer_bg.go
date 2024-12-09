@@ -100,6 +100,7 @@ func (l *bgLayer) drawTilemap(buffer unsafe.Pointer, n int) {
 		tilebase, mapbase = 0x800, 0x1C00
 	}
 	tilemap := l.r.vram[mapbase : mapbase+1024]
+	attrmap := l.r.vram[(8*KB)+mapbase : (8*KB)+mapbase+1024] // CGBモードのみ
 
 	for i := 0; i < 1024; i++ {
 		tx, ty := (i%32)*8, (i/32)*8
@@ -111,23 +112,31 @@ func (l *bgLayer) drawTilemap(buffer unsafe.Pointer, n int) {
 			tileID = int(int8(tilemap[i])) + 256
 		}
 
-		tile := l.r.vram[tileID*16 : (tileID+1)*16]
+		attr := attrmap[i]
+		if !l.r.isCGB() {
+			attr = 0 // DMGモードでは属性マップは常に0
+		}
+		palID := attr & 0b111
+		tileBank := int((attr >> 3) & 0b1)
+		xflip, yflip := (attr&(1<<5)) != 0, (attr&(1<<6)) != 0
 
-		for y := 0; y < 8; y++ {
-			py := ty + y
+		tile := l.r.vram[((8*KB)*tileBank)+(tileID*16) : ((8*KB)*tileBank)+((tileID+1)*16)]
 
-			lo := tile[y*2]
-			hi := tile[y*2+1]
-			for x := 0; x < 8; x++ {
-				px := tx + x
+		for py := 0; py < 8; py++ {
+			y := ty + flip(8, yflip, py)
 
-				loBit := (lo >> (7 - x)) & 0b1
-				hiBit := (hi >> (7 - x)) & 0b1
+			lo := tile[py*2]
+			hi := tile[py*2+1]
+			for px := 0; px < 8; px++ {
+				x := tx + flip(8, xflip, px)
+
+				loBit := (lo >> (7 - px)) & 0b1
+				hiBit := (hi >> (7 - px)) & 0b1
 				colorID := uint8((hiBit << 1) | loBit)
-				rgb555 := l.getColor(0, colorID)
+				rgb555 := l.getColor(palID, colorID)
 
 				r5, g5, b5 := uint8(rgb555&0x1F), uint8((rgb555>>5)&0x1F), uint8((rgb555>>10)&0x1F)
-				pixel := (*[4]uint8)(unsafe.Pointer(uintptr(buffer) + uintptr((py*256+px)*4)))
+				pixel := (*[4]uint8)(unsafe.Pointer(uintptr(buffer) + uintptr((y*256+x)*4)))
 				pixel[0] = (r5 << 3) | (r5 >> 2)
 				pixel[1] = (g5 << 3) | (g5 >> 2)
 				pixel[2] = (b5 << 3) | (b5 >> 2)

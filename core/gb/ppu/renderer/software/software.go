@@ -112,8 +112,13 @@ func (s *Software) SetSCY(val uint8)       { s.bg.scy = val }
 func (s *Software) SetWX(val uint8)        { s.win.wx = int(val) - 7 }
 func (s *Software) SetWY(val uint8)        { s.win.wy = int(val) }
 
-func (r *Software) GetTilemap(buffer unsafe.Pointer, id int) {
-	r.bg.drawTilemap(buffer, id)
+func (r *Software) GetTilemap(id int, buffer unsafe.Pointer, n int) {
+	switch id {
+	case 0: // BG
+		r.bg.drawTilemap(buffer, n)
+	case 1: // Window
+		r.win.drawTilemap(buffer, n)
+	}
 }
 
 // Helper functions

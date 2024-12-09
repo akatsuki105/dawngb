@@ -16,5 +16,5 @@ type Renderer interface {
 	SetWY(val uint8)
 
 	// Debug
-	GetTilemap(buffer unsafe.Pointer, id int)
+	GetTilemap(id int, buffer unsafe.Pointer, n int)
 }
