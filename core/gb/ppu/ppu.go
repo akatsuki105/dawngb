@@ -39,7 +39,10 @@ type LCDStatIRQInfo struct {
 	Lx, Ly    uint8
 }
 
-// SoCに組み込まれているため、`/cpu`にある方が正確ではある
+/*
+SoCに組み込まれているため、`/cpu`にある方が正確ではある
+また、コードをシンプルにしたいのでスキャンライン単位で描画を行うことにしている(スキャンライン中にSCX,SCYやWX, WYを変更するようなゲームでは正しく描画されない場合がある)
+*/
 type PPU struct {
 	cpu             CPU
 	cycles          int64 // 遅れているサイクル数(8.38MHzのマスターサイクル単位)
