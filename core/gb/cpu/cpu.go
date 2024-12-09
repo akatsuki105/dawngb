@@ -171,6 +171,7 @@ func (c *CPU) step() int64 {
 	return c.Cycles - prev
 }
 
+// IRQ id: 0: VBLANK, 1: LCDSTAT, 2: TIMER, 3: SERIAL, 4: JOYPAD
 func (c *CPU) IRQ(id int) { c.interrupt[id] = true }
 
 func (c *CPU) SendInputs(inputs uint8) {

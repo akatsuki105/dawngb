@@ -13,6 +13,8 @@ func (p *PPU) hblank() {
 	}
 	if !statIRQAsserted(oldStat) && statIRQAsserted(p.stat) {
 		p.cpu.IRQ(1)
+		p.StatIRQ.Triggered = true
+		p.StatIRQ.Mode, p.StatIRQ.Lx, p.StatIRQ.Ly = 0, uint8(p.lx), uint8(p.ly)
 	}
 	p.cpu.HBlank()
 }
@@ -25,6 +27,8 @@ func (p *PPU) vblank() {
 
 	if !statIRQAsserted(oldStat) && statIRQAsserted(p.stat) {
 		p.cpu.IRQ(1)
+		p.StatIRQ.Triggered = true
+		p.StatIRQ.Mode, p.StatIRQ.Lx, p.StatIRQ.Ly = 1, uint8(p.lx), uint8(p.ly)
 	}
 }
 
@@ -34,6 +38,8 @@ func (p *PPU) scanOAM() {
 	p.stat = (p.stat & 0xFC) | 2
 	if !statIRQAsserted(oldStat) && statIRQAsserted(p.stat) {
 		p.cpu.IRQ(1)
+		p.StatIRQ.Triggered = true
+		p.StatIRQ.Mode, p.StatIRQ.Lx, p.StatIRQ.Ly = 2, uint8(p.lx), uint8(p.ly)
 	}
 }
 

@@ -32,6 +32,13 @@ type DMA struct {
 	until  int64
 }
 
+// フレームの間に起きたLCDSTAT IRQに関する情報(フレームの始まりにリセットされる)
+type LCDStatIRQInfo struct {
+	Triggered bool
+	Mode      uint8
+	Lx, Ly    uint8
+}
+
 // SoCに組み込まれているため、`/cpu`にある方が正確ではある
 type PPU struct {
 	cpu             CPU
@@ -49,6 +56,9 @@ type PPU struct {
 	enableLatch     bool // LCDC.7をセットしてPPUを有効にすると、次のフレームから表示が開始される そうじゃないとゴミが表示される
 	objCount        uint8
 	bgpi, obpi      uint8
+
+	// For debugging
+	StatIRQ LCDStatIRQInfo
 }
 
 func New(cpu CPU) *PPU {
@@ -61,6 +71,7 @@ func New(cpu CPU) *PPU {
 
 func (p *PPU) Reset() {
 	p.r = software.New(p.ram.data[:], p.Palette[:], p.OAM[:], p.cpu.IsCGBMode)
+	p.FrameCounter = 0
 	p.lx, p.ly = 0, 0
 	p.stat = 0x80
 	p.ram.bank = 0
@@ -94,10 +105,14 @@ func (p *PPU) Run(cycles8MHz int64) {
 }
 
 func (p *PPU) step() {
-	if util.Bit(p.lcdc, 7) {
+	if (p.lcdc & (1 << 7)) != 0 {
 		if p.ly < 144 {
 			switch p.lx {
 			case 0:
+				if p.ly == 0 {
+					p.StatIRQ.Triggered = false
+					p.StatIRQ.Mode, p.StatIRQ.Lx, p.StatIRQ.Ly = 0, 0, 0
+				}
 				p.scanOAM()
 			case 80:
 				p.drawing()

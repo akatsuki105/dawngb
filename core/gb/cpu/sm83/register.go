@@ -6,7 +6,7 @@ type pair struct {
 	Lo, Hi uint8
 }
 
-func (p *pair) pack() uint16 {
+func (p *pair) Pack() uint16 {
 	return uint16(p.Hi)<<8 | uint16(p.Lo)
 }
 
@@ -36,7 +36,7 @@ type psr struct {
 	z, n, h, c bool
 }
 
-func (p *psr) pack() uint8 {
+func (p *psr) Pack() uint8 {
 	packed := uint8(0)
 	packed = util.SetBit(packed, 7, p.z)
 	packed = util.SetBit(packed, 6, p.n)

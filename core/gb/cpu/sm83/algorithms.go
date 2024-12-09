@@ -87,7 +87,7 @@ func (c *SM83) sub(val uint8, carry bool) {
 }
 
 func (c *SM83) set_hl(bit int, b bool) {
-	hl := c.R.HL.pack()
+	hl := c.R.HL.Pack()
 	val := c.bus.Read(hl)
 	val = util.SetBit(val, bit, b)
 	c.bus.Write(hl, val)

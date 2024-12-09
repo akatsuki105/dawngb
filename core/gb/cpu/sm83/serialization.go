@@ -9,10 +9,10 @@ type Snapshot struct {
 func (c *SM83) CreateSnapshot() Snapshot {
 	return Snapshot{
 		A:   c.R.A,
-		F:   c.R.F.pack(),
-		BC:  c.R.BC.pack(),
-		DE:  c.R.DE.pack(),
-		HL:  c.R.HL.pack(),
+		F:   c.R.F.Pack(),
+		BC:  c.R.BC.Pack(),
+		DE:  c.R.DE.Pack(),
+		HL:  c.R.HL.Pack(),
 		SP:  c.R.SP,
 		PC:  c.R.PC,
 		IME: c.IME,
