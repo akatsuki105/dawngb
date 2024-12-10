@@ -57,11 +57,11 @@ func (g *GB) ViewMemory(memID int, addr uint32, width int, flag uint32) uint32 {
 	addr16 := uint16(addr)
 	switch width {
 	case 1:
-		return uint32(g.Read(addr16))
+		return uint32(g.read(addr16, true))
 	case 2:
-		return uint32(g.Read(addr16)) | (uint32(g.Read(addr16+1)) << 8)
+		return uint32(g.read(addr16, true)) | (uint32(g.read(addr16+1, true)) << 8)
 	case 4:
-		return uint32(g.Read(addr16)) | (uint32(g.Read(addr16+1)) << 8) | (uint32(g.Read(addr16+2)) << 16) | (uint32(g.Read(addr16+3)) << 24)
+		return uint32(g.read(addr16, true)) | (uint32(g.read(addr16+1, true)) << 8) | (uint32(g.read(addr16+2, true)) << 16) | (uint32(g.read(addr16+3, true)) << 24)
 	default:
 		return 0
 	}

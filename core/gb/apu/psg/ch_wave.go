@@ -130,6 +130,14 @@ func (ch *wave) write(addr uint16, val uint8) {
 	}
 }
 
+func (ch *wave) Peek(addr uint16) uint8 {
+	bank := uint16(0)
+	if ch.model == MODEL_GBA {
+		bank = uint16(ch.curBank) * 16
+	}
+	return ch.RAM[bank|(addr&0xF)]
+}
+
 func (ch *wave) windowStepCycle() uint16 {
 	return 2 * (2048 - ch.period)
 }

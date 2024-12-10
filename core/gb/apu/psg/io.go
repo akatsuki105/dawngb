@@ -37,7 +37,7 @@ const (
 	NR52 = 0xFF26
 )
 
-func (a *PSG) Read(addr uint16) uint8 {
+func (a *PSG) Read(addr uint16, peek bool) uint8 {
 	switch addr {
 	case NR52:
 		val := uint8(0)
@@ -50,6 +50,9 @@ func (a *PSG) Read(addr uint16) uint8 {
 	}
 
 	if addr >= 0xFF30 && addr < 0xFF40 {
+		if peek {
+			return a.CH3.Peek(addr)
+		}
 		return a.CH3.read(addr)
 	}
 
