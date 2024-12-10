@@ -19,7 +19,7 @@ type PSG struct {
 
 	CH1, CH2 *square
 	CH3      *wave
-	CH4      *noise
+	CH4      *Noise
 
 	sequencerCounter int16 // (フレームシーケンサの)512Hzを生み出すためのカウンタ (ref: https://gbdev.io/pandocs/Audio_details.html#div-apu)
 	sequencerStep    uint8 // 512Hzから 64, 128, 256Hzなどの生み出すためのカウンタ
@@ -111,33 +111,34 @@ func (a *PSG) Step() {
 }
 
 // 0..63 の値を返す
-func (a *PSG) Sample() (lsample, rsample uint8) {
+func (a *PSG) Sample(mask uint8) (lsample, rsample uint8) {
 	left, right := uint8(0), uint8(0)
 
 	if a.enabled {
 		ch1, ch2, ch3, ch4 := a.CH1.GetOutput(), a.CH2.GetOutput(), a.CH3.GetOutput(), a.CH4.GetOutput()
-		if a.leftEnables[0] {
+		mask1, mask2, mask3, mask4 := (mask&(1<<0)) != 0, (mask&(1<<1)) != 0, (mask&(1<<2)) != 0, (mask&(1<<3)) != 0
+		if mask1 && a.leftEnables[0] {
 			left += ch1
 		}
-		if a.leftEnables[1] {
+		if mask2 && a.leftEnables[1] {
 			left += ch2
 		}
-		if a.leftEnables[2] {
+		if mask3 && a.leftEnables[2] {
 			left += ch3
 		}
-		if a.leftEnables[3] {
+		if mask4 && a.leftEnables[3] {
 			left += ch4
 		}
-		if a.rightEnables[0] {
+		if mask1 && a.rightEnables[0] {
 			right += ch1
 		}
-		if a.rightEnables[1] {
+		if mask2 && a.rightEnables[1] {
 			right += ch2
 		}
-		if a.rightEnables[2] {
+		if mask3 && a.rightEnables[2] {
 			right += ch3
 		}
-		if a.rightEnables[3] {
+		if mask4 && a.rightEnables[3] {
 			right += ch4
 		}
 	}
