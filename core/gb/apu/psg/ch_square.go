@@ -41,15 +41,19 @@ func newSquareChannel(hasSweep bool) *square {
 	return ch
 }
 
-func (ch *square) reset() {
-	ch.enabled = false
-	ch.length, ch.stop = 0, false
+func (ch *square) Reset() {
+	ch.TurnOff()
 	ch.envelope.reset()
 	if ch.sweep != nil {
 		ch.sweep.reset()
 	}
-	ch.duty, ch.dutyCounter = 0, 0
 	ch.period, ch.freqCounter = 0, 0
+}
+
+func (ch *square) TurnOff() {
+	ch.enabled = false
+	ch.length, ch.stop = 0, false
+	ch.duty, ch.dutyCounter = 0, 0
 	ch.output = false
 }
 

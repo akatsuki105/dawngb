@@ -39,6 +39,11 @@ const (
 
 func (a *PSG) Read(addr uint16, peek bool) uint8 {
 	switch addr {
+	case NR30:
+		if a.CH3.dacEnable {
+			return 1
+		}
+		return 0
 	case NR52:
 		val := uint8(0)
 		val = setBit(val, 7, a.enabled)
@@ -61,7 +66,14 @@ func (a *PSG) Read(addr uint16, peek bool) uint8 {
 
 func (a *PSG) Write(addr uint16, val uint8) {
 	if addr == NR52 {
+		prev := a.enabled
 		a.enabled = getBit(val, 7)
+		if prev && !a.enabled { // APUがオンからオフになったとき
+			a.CH1.TurnOff()
+			a.CH2.TurnOff()
+			a.CH3.TurnOff()
+			a.CH4.TurnOff()
+		}
 		return
 	}
 

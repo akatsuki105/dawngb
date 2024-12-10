@@ -41,15 +41,19 @@ func newWaveChannel(model uint8) *wave {
 	}
 }
 
-func (ch *wave) reset() {
+func (ch *wave) Reset() {
+	ch.TurnOff()
+	ch.period, ch.freqCounter = 0, 0
+	ch.sample, ch.window = 0, 0
+	clear(ch.RAM[:])
+	ch.output = 0
+	ch.mode, ch.Bank, ch.curBank = 0, 0, 0
+}
+
+func (ch *wave) TurnOff() {
 	ch.enabled = false
 	ch.dacEnable = false
-	ch.volume, ch.stop, ch.length = 0, false, 0
-	ch.period, ch.freqCounter = 0, 0
-	clear(ch.RAM[:])
-	ch.window = 0
-	ch.mode, ch.Bank, ch.curBank = 0, 0, 0
-	ch.output = 0
+	ch.volume, ch.length, ch.stop = 0, 0, false
 }
 
 func (ch *wave) reload() {

@@ -41,10 +41,10 @@ func New(model uint8) *PSG {
 
 func (a *PSG) Reset() {
 	a.enabled = false
-	a.CH1.reset()
-	a.CH2.reset()
-	a.CH3.reset()
-	a.CH4.reset()
+	a.CH1.Reset()
+	a.CH2.Reset()
+	a.CH3.Reset()
+	a.CH4.Reset()
 	a.sequencerCounter, a.sequencerStep = 0, 0
 	clear(a.ioreg[:])
 	a.leftVolume, a.rightVolume = 7, 7

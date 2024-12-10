@@ -32,15 +32,19 @@ func newNoiseChannel() *Noise {
 	}
 }
 
-func (ch *Noise) reset() {
-	ch.enabled = false
-	ch.length, ch.stop = 0, false
+func (ch *Noise) Reset() {
+	ch.TurnOff()
 	ch.envelope.reset()
 	ch.LFSR = 0
 	ch.divisor, ch.octave = 0, 0
 	ch.period = 0
 	ch.narrow = false
 	ch.output = 0
+}
+
+func (ch *Noise) TurnOff() {
+	ch.enabled = false
+	ch.length, ch.stop = 0, false
 }
 
 func (ch *Noise) reload() {
