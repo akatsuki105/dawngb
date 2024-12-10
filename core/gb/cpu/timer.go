@@ -80,8 +80,9 @@ func (t *timer) Write(addr uint16, val uint8) {
 }
 
 type timerSnapshot struct {
-	Cycles, Counter int64
-	Tima, Tma, Tac  uint8
+	Cycles         int64
+	Counter        int64
+	Tima, Tma, Tac uint8
 }
 
 func (t *timer) CreateSnapshot() timerSnapshot {

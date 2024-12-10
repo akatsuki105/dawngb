@@ -228,13 +228,3 @@ func (g *GB) Title() string {
 func (g *GB) IsCGB() bool {
 	return g.model == MODEL_CGB || g.model == MODEL_AGB
 }
-
-func (g *GB) Serialize(state io.Writer) bool {
-	// TODO: implement
-	return false
-}
-
-func (g *GB) Deserialize(state io.Reader) bool {
-	// TODO: implement
-	return false
-}
