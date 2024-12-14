@@ -31,6 +31,10 @@ func (s *sweep) reset() {
 	s.step = 0
 }
 
+func (s *sweep) TurnOff() {
+	s.shift, s.negate, s.interval = 0, false, 0
+}
+
 func (s *sweep) reload() {
 	s.periodLatch = s.square.period
 	s.step = s.interval

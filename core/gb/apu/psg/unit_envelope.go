@@ -29,6 +29,12 @@ func (e *envelope) reset() {
 	e.speed, e.step = 0, 8
 }
 
+func (e *envelope) TurnOff() {
+	e.speed = 0
+	e.direction = false
+	e.initialVolume = 0
+}
+
 func (e *envelope) reload() {
 	e.volume = e.initialVolume
 	e.step = e.speed

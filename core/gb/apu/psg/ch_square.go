@@ -54,6 +54,10 @@ func (ch *square) TurnOff() {
 	ch.enabled = false
 	ch.length, ch.stop = 0, false
 	ch.duty, ch.dutyCounter = 0, 0
+	ch.envelope.TurnOff()
+	if ch.sweep != nil {
+		ch.sweep.TurnOff()
+	}
 	ch.output = false
 }
 

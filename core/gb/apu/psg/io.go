@@ -63,6 +63,9 @@ func (a *PSG) Write(addr uint16, val uint8) {
 		prev := a.enabled
 		a.enabled = getBit(val, 7)
 		if prev && !a.enabled { // APUがオンからオフになったとき
+			a.rightVolume, a.leftVolume = 0, 0
+			a.rightEnables[0], a.rightEnables[1], a.rightEnables[2], a.rightEnables[3] = false, false, false, false
+			a.leftEnables[0], a.leftEnables[1], a.leftEnables[2], a.leftEnables[3] = false, false, false, false
 			a.CH1.TurnOff()
 			a.CH2.TurnOff()
 			a.CH3.TurnOff()

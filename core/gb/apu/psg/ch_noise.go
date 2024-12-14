@@ -44,7 +44,8 @@ func (ch *Noise) Reset() {
 
 func (ch *Noise) TurnOff() {
 	ch.enabled = false
-	ch.length, ch.stop = 0, false
+	ch.length, ch.stop, ch.divisor, ch.narrow, ch.octave = 0, false, 0, false, 0
+	ch.envelope.TurnOff()
 }
 
 func (ch *Noise) reload() {

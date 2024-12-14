@@ -51,9 +51,9 @@ func (ch *wave) Reset() {
 }
 
 func (ch *wave) TurnOff() {
-	ch.enabled = false
 	ch.dacEnable = false
-	ch.volume, ch.length, ch.stop = 0, 0, false
+	ch.length, ch.volume, ch.stop, ch.period = 0, 0, false, 0
+	ch.enabled = false
 }
 
 func (ch *wave) reload() {
