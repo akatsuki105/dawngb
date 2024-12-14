@@ -39,11 +39,6 @@ const (
 
 func (a *PSG) Read(addr uint16, peek bool) uint8 {
 	switch addr {
-	case NR30:
-		if a.CH3.dacEnable {
-			return 1
-		}
-		return 0
 	case NR52:
 		val := uint8(0)
 		val = setBit(val, 7, a.enabled)
@@ -53,7 +48,6 @@ func (a *PSG) Read(addr uint16, peek bool) uint8 {
 		val = setBit(val, 3, a.CH4.enabled)
 		return val
 	}
-
 	if addr >= 0xFF30 && addr < 0xFF40 {
 		if peek {
 			return a.CH3.Peek(addr)
