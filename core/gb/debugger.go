@@ -1,9 +1,5 @@
 package gb
 
-func (g *GB) GetCPU(_ int) any {
-	return g.CPU
-}
-
 func (g *GB) VideoUnit() any {
 	return g.PPU
 }
