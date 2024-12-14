@@ -1,11 +1,11 @@
 package gb
 
 func (g *GB) GetCPU(_ int) any {
-	return g.cpu
+	return g.CPU
 }
 
 func (g *GB) VideoUnit() any {
-	return g.ppu
+	return g.PPU
 }
 
 // GetValue returns the value of the specified state.
@@ -16,19 +16,19 @@ func (g *GB) GetValue(which uint64) uint64 {
 		target := which & 0xFF
 		switch target {
 		case 0: // Register (AF)
-			val := uint64(g.cpu.R.A)
-			val |= uint64(g.cpu.R.F.Pack()) << 8
+			val := uint64(g.CPU.R.A)
+			val |= uint64(g.CPU.R.F.Pack()) << 8
 			return val
 		case 1: // BC
-			return uint64(g.cpu.R.BC.Pack())
+			return uint64(g.CPU.R.BC.Pack())
 		case 2: // DE
-			return uint64(g.cpu.R.DE.Pack())
+			return uint64(g.CPU.R.DE.Pack())
 		case 3: // HL
-			return uint64(g.cpu.R.HL.Pack())
+			return uint64(g.CPU.R.HL.Pack())
 		case 4: // SP
-			return uint64(g.cpu.R.SP)
+			return uint64(g.CPU.R.SP)
 		case 5: // PC
-			return uint64(g.cpu.R.PC)
+			return uint64(g.CPU.R.PC)
 		}
 	case 1: // PPU
 		subcategory := (which >> 48) & 0xFF
@@ -37,16 +37,16 @@ func (g *GB) GetValue(which uint64) uint64 {
 			target := which & 0xFF
 			switch target {
 			case 0: // IRQ is triggered
-				if !g.ppu.StatIRQ.Triggered {
+				if !g.PPU.StatIRQ.Triggered {
 					return 0
 				}
 				return 1
 			case 1: // IRQ mode
-				return uint64(g.ppu.StatIRQ.Mode)
+				return uint64(g.PPU.StatIRQ.Mode)
 			case 2: // IRQ line X
-				return uint64(g.ppu.StatIRQ.Lx)
+				return uint64(g.PPU.StatIRQ.Lx)
 			case 3: // IRQ line Y
-				return uint64(g.ppu.StatIRQ.Ly)
+				return uint64(g.PPU.StatIRQ.Ly)
 			}
 		}
 	}

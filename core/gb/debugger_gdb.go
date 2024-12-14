@@ -15,7 +15,7 @@ func (g *GB) HandleGDB(data string) string {
 	switch data {
 	case "g": // 全部のレジスタを返す
 		reply = "%04X%04X%04X%04X%04X%04Xxxxxxxxxxxxxxxxxxxxxxxxxxxxx" // AF BC DE HL SP PC
-		reply = fmt.Sprintf(reply, ((uint16(g.cpu.R.A) << 8) | uint16(g.cpu.R.F.Pack())), g.cpu.R.BC.Pack(), g.cpu.R.DE.Pack(), g.cpu.R.HL.Pack(), g.cpu.R.SP, g.cpu.R.PC)
+		reply = fmt.Sprintf(reply, ((uint16(g.CPU.R.A) << 8) | uint16(g.CPU.R.F.Pack())), g.CPU.R.BC.Pack(), g.CPU.R.DE.Pack(), g.CPU.R.HL.Pack(), g.CPU.R.SP, g.CPU.R.PC)
 	default:
 		switch data[0] {
 		case 'm': // e.g. 'm34,c': アドレス0x0034 から 12バイト読み込んで返す
