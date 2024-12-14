@@ -14,5 +14,5 @@ func (p *PPU) GetTilemap(id int, buffer unsafe.Pointer, w, h, n int) {
 }
 
 func (p *PPU) GetPalette(paletteID uint8) unsafe.Pointer {
-	return nil
+	return unsafe.Pointer(&p.Palette[0])
 }
