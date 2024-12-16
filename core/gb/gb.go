@@ -183,6 +183,8 @@ func (g *GB) RunFrame() {
 		g.CPU.SendInputs(g.inputs ^ 0xFF) // ボタンの状態をCPUに送る(ただし、押されてないボタンのビットを立てる)
 		g.inputs = 0
 
+		g.CPU.Usage = 0
+
 		const FRAME = 70224 * ppu.CYCLE
 		start := g.CPU.Cycles
 

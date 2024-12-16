@@ -97,6 +97,7 @@ func (c *CPU) SkipBIOS() {
 
 func (c *CPU) wait(n int64) {
 	c.Cycles += n * c.Clock
+	c.Usage += uint32(n * c.Clock)
 }
 
 func (c *CPU) LoadBIOS(bios []uint8) error {

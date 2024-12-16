@@ -9,22 +9,28 @@ func (g *GB) GetValue(which uint64) uint64 {
 	category := which >> 56
 	switch category {
 	case 0: // CPU
-		target := which & 0xFF
-		switch target {
-		case 0: // Register (AF)
-			val := uint64(g.CPU.R.A)
-			val |= uint64(g.CPU.R.F.Pack()) << 8
-			return val
-		case 1: // BC
-			return uint64(g.CPU.R.BC.Pack())
-		case 2: // DE
-			return uint64(g.CPU.R.DE.Pack())
-		case 3: // HL
-			return uint64(g.CPU.R.HL.Pack())
-		case 4: // SP
-			return uint64(g.CPU.R.SP)
-		case 5: // PC
-			return uint64(g.CPU.R.PC)
+		subcategory := (which >> 48) & 0xFF
+		switch subcategory {
+		case 0: // Registers
+			target := which & 0xFF
+			switch target {
+			case 0: // Register (AF)
+				val := uint64(g.CPU.R.A)
+				val |= uint64(g.CPU.R.F.Pack()) << 8
+				return val
+			case 1: // BC
+				return uint64(g.CPU.R.BC.Pack())
+			case 2: // DE
+				return uint64(g.CPU.R.DE.Pack())
+			case 3: // HL
+				return uint64(g.CPU.R.HL.Pack())
+			case 4: // SP
+				return uint64(g.CPU.R.SP)
+			case 5: // PC
+				return uint64(g.CPU.R.PC)
+			}
+		case 1: // Usage
+			return uint64(g.CPU.Usage)
 		}
 	case 1: // PPU
 		subcategory := (which >> 48) & 0xFF
