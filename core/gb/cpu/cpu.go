@@ -34,6 +34,7 @@ type CPU struct {
 	key0             uint8   // FF4C
 	key1             uint8   // FF4D
 	ff72, ff73, ff74 uint8
+	Usage            uint32 // フレーム中のCPU使用率(haltしてないときのみカウントしたサイクル数)
 }
 
 // a.k.a. Boot ROM
