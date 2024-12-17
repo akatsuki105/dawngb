@@ -69,6 +69,17 @@ func (g *GB) ViewMemory(memID int, addr uint32, width int, flag uint32) uint32 {
 	}
 }
 
-func (g *GB) GetChunk(chunkID uint8) []uint8 {
+func (g *GB) GetChunk(chunkID uint64) []uint8 {
+	memory := (chunkID >> 56) & 0xFF
+	switch memory {
+	case 0: // CPUアドレス空間全体 (0x0000..FFFF)
+		return nil
+	case 1: // ROM(バンクも含む全部)
+		return nil
+	case 2: // VRAM(バンクも含む全部)
+		return nil
+	case 3: // WRAM(バンクも含む全部)
+		return nil
+	}
 	return nil
 }
