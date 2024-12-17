@@ -178,16 +178,16 @@ func (p *PPU) TriggerDMA(src uint16, m int64) {
 }
 
 func statIRQAsserted(stat uint8) bool {
-	if util.Bit(stat, 6) && util.Bit(stat, 2) {
+	if ((stat & (1 << 6)) != 0) && ((stat & (1 << 2)) != 0) {
 		return true
 	}
 	switch stat & 0b11 {
 	case 0:
-		return util.Bit(stat, 3)
+		return ((stat & (1 << 3)) != 0)
 	case 1:
-		return util.Bit(stat, 4)
+		return ((stat & (1 << 4)) != 0)
 	case 2:
-		return util.Bit(stat, 5)
+		return ((stat & (1 << 5)) != 0)
 	}
 	return false
 }

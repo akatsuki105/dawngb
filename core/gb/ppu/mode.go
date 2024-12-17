@@ -1,14 +1,10 @@
 package ppu
 
-import (
-	"github.com/akatsuki105/dawngb/util"
-)
-
 // Mode 0
 func (p *PPU) hblank() {
 	oldStat := p.stat
 	p.stat = (p.stat & 0xFC)
-	if util.Bit(p.lcdc, 7) && !p.enableLatch {
+	if ((p.lcdc & (1 << 7)) != 0) && !p.enableLatch {
 		p.r.DrawScanline(p.ly, p.screen[p.ly*160:(p.ly+1)*160])
 	}
 	if !statIRQAsserted(oldStat) && statIRQAsserted(p.stat) {
@@ -49,7 +45,7 @@ func (p *PPU) drawing() {
 
 	// Count scanline objects
 	h := 8
-	if util.Bit(p.lcdc, 2) {
+	if (p.lcdc & (1 << 2)) != 0 {
 		h = 16
 	}
 	o := uint8(0)

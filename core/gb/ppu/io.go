@@ -1,9 +1,5 @@
 package ppu
 
-import (
-	"github.com/akatsuki105/dawngb/util"
-)
-
 func (p *PPU) Read(addr uint16) uint8 {
 	if addr >= 0xFE00 && addr <= 0xFE9F {
 		return p.OAM[addr&0xFF]
@@ -21,7 +17,7 @@ func (p *PPU) Read(addr uint16) uint8 {
 	case 0xFF40:
 		return p.lcdc
 	case 0xFF41:
-		if !util.Bit(p.lcdc, 7) {
+		if (p.lcdc & (1 << 7)) == 0 {
 			return 0x80
 		}
 		return p.stat | 0x80
@@ -113,7 +109,7 @@ func (p *PPU) Write(addr uint16, val uint8) {
 }
 
 func (p *PPU) canAccessVRAM() bool {
-	if util.Bit(p.lcdc, 7) {
+	if (p.lcdc & (1 << 7)) != 0 {
 		mode := p.stat & 0b11
 		switch mode {
 		case 2:

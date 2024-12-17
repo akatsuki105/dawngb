@@ -1,9 +1,5 @@
 package cpu
 
-import (
-	"github.com/akatsuki105/dawngb/util"
-)
-
 var timaClock = [4]int64{64, 1, 4, 16}
 
 type timer struct {
@@ -39,7 +35,7 @@ func (t *timer) update() {
 	x := (*t.clock) / 4
 
 	t.counter++
-	if util.Bit(t.tac, 2) {
+	if (t.tac & (1 << 2)) != 0 {
 		if (t.counter % (timaClock[t.tac&0b11] * x)) == 0 {
 			t.tima++
 			if t.tima == 0 {

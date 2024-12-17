@@ -2,8 +2,6 @@ package cartridge
 
 import (
 	"fmt"
-
-	"github.com/akatsuki105/dawngb/util"
 )
 
 const KB, MB = 1024, 1024 * 1024
@@ -28,7 +26,7 @@ type Cartridge struct {
 }
 
 func New(rom []uint8) (*Cartridge, error) {
-	isCGB := util.Bit(rom[0x143], 7)
+	isCGB := (rom[0x143] & (1 << 7)) != 0
 
 	title := string(rom[0x134:0x13F])
 	if !isCGB {

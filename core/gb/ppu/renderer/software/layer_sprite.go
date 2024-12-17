@@ -1,9 +1,5 @@
 package software
 
-import (
-	"github.com/akatsuki105/dawngb/util"
-)
-
 type spriteLayer struct {
 	enable   bool // LCDC.1
 	r        *Software
@@ -127,7 +123,7 @@ func (l *spriteLayer) getSprite(spriteIdx int, s *sprite) {
 
 	s.x, s.y = int(byte1)-8, int(byte0)-16
 	s.tileID = int(byte2)
-	s.xflip, s.yflip = util.Bit(byte3, 5), util.Bit(byte3, 6)
+	s.xflip, s.yflip = (byte3&(1<<5)) != 0, (byte3&(1<<6)) != 0
 	s.palID, s.bank, s.priority = palID, bank, (byte3&(1<<7)) == 0
 }
 
