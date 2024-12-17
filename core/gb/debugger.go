@@ -1,5 +1,7 @@
 package gb
 
+import "github.com/akatsuki105/dawngb/internal/unsafeslice"
+
 func (g *GB) VideoUnit() any {
 	return g.PPU
 }
@@ -80,6 +82,15 @@ func (g *GB) GetChunk(chunkID uint64) []uint8 {
 		return g.PPU.RAM.Data[:]
 	case 3: // WRAM(バンクも含む全部)
 		return g.wram[:]
+	case 4: // Palette
+		target := chunkID & 0xFF
+		if target < 16 {
+			return unsafeslice.ByteSliceFromUint16Slice(g.PPU.Palette[target*4 : (target+1)*4])
+		}
+		switch target {
+		case 0xFF:
+			return unsafeslice.ByteSliceFromUint16Slice(g.PPU.Palette[:])
+		}
 	}
 	return nil
 }
