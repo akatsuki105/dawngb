@@ -10,7 +10,7 @@ func (p *PPU) Read(addr uint16) uint8 {
 		if !p.canAccessVRAM() {
 			return 0xFF
 		}
-		return p.ram.data[(uint(p.ram.bank)<<13)|uint(addr&0x1FFF)]
+		return p.RAM.Data[(uint(p.RAM.bank)<<13)|uint(addr&0x1FFF)]
 	}
 
 	switch addr {
@@ -26,7 +26,7 @@ func (p *PPU) Read(addr uint16) uint8 {
 	case 0xFF45:
 		return p.lyc
 	case 0xFF4F:
-		return 0xFE | (p.ram.bank & 1)
+		return 0xFE | (p.RAM.bank & 1)
 	case 0xFF69:
 		// ゲームによってはパレットの値を読み取ることがある(ロックマンX1など)
 		return uint8(p.Palette[(p.bgpi>>1)] >> ((p.bgpi & 1) * 8))
@@ -49,7 +49,7 @@ func (p *PPU) Write(addr uint16, val uint8) {
 
 	switch addr >> 12 {
 	case 0x8, 0x9:
-		p.ram.data[(uint(p.ram.bank)<<13)|uint(addr&0x1FFF)] = val
+		p.RAM.Data[(uint(p.RAM.bank)<<13)|uint(addr&0x1FFF)] = val
 		return
 	}
 
@@ -93,7 +93,7 @@ func (p *PPU) Write(addr uint16, val uint8) {
 	case 0xFF4B:
 		p.r.SetWX(val)
 	case 0xFF4F:
-		p.ram.bank = val & 0b1
+		p.RAM.bank = val & 0b1
 	case 0xFF68:
 		p.bgpi = val
 	case 0xFF69:

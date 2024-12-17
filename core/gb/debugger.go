@@ -75,11 +75,11 @@ func (g *GB) GetChunk(chunkID uint64) []uint8 {
 	case 0: // CPUアドレス空間全体 (0x0000..FFFF)
 		return nil
 	case 1: // ROM(バンクも含む全部)
-		return nil
+		return g.cartridge.ROM[:]
 	case 2: // VRAM(バンクも含む全部)
-		return nil
+		return g.PPU.RAM.Data[:]
 	case 3: // WRAM(バンクも含む全部)
-		return nil
+		return g.wram[:]
 	}
 	return nil
 }

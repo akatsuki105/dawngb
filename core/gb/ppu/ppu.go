@@ -12,9 +12,9 @@ const KB = 1024
 
 const CYCLE = 2
 
-// 便宜的にPPU構造体に入れているが、正確にはボード上にある
+// 便宜的にPPU構造体に入れているが、PPUチップ内にはなくボード上にある
 type VRAM struct {
-	data [16 * KB]uint8
+	Data [16 * KB]uint8
 	bank uint8 // 0 or 1; VBK(0xFF4F)
 }
 
@@ -50,7 +50,7 @@ type PPU struct {
 	FrameCounter    uint64
 	lx, ly          int
 	r               renderer.Renderer
-	ram             VRAM
+	RAM             VRAM
 	DMA             *DMA
 	lcdc, stat, lyc uint8
 	OAM             [160]uint8
@@ -73,11 +73,11 @@ func New(cpu CPU) *PPU {
 }
 
 func (p *PPU) Reset() {
-	p.r = software.New(p.ram.data[:], p.Palette[:], p.OAM[:], p.cpu.IsCGBMode)
+	p.r = software.New(p.RAM.Data[:], p.Palette[:], p.OAM[:], p.cpu.IsCGBMode)
 	p.FrameCounter = 0
 	p.lx, p.ly = 0, 0
 	p.stat = 0x80
-	p.ram.bank = 0
+	p.RAM.bank = 0
 	p.objCount = 0
 	p.DMA.active, p.DMA.src, p.DMA.until = false, 0, 0
 	p.bgpi, p.obpi = 0, 0
