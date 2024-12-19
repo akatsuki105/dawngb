@@ -91,6 +91,8 @@ func (g *GB) GetChunk(chunkID uint64) []uint8 {
 		case 0xFF:
 			return unsafeslice.ByteSliceFromUint16Slice(g.PPU.Palette[:])
 		}
+	case 5: // OAM
+		return g.PPU.OAM[:]
 	}
 	return nil
 }
