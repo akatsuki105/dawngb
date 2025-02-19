@@ -1,12 +1,7 @@
 package psg
 
-import (
-	"encoding/binary"
-	"io"
-)
-
 // 音の三要素 のうち、 音の大きさ (振幅)
-type envelope struct {
+type Envelope struct {
 	initialVolume uint8 // 初期音量(リスタート時にセット)
 	volume        uint8 // 0..15
 	direction     bool  // 音量変更の方向(trueで大きくなっていく)
@@ -17,19 +12,25 @@ type envelope struct {
 	step  uint8 // 音量変更を行うタイミングをカウントするためのカウンタ
 }
 
-func newEnvelope() *envelope {
-	return &envelope{
+func newEnvelope() *Envelope {
+	return &Envelope{
 		step: 8,
 	}
 }
 
-func (e *envelope) reset() {
+func (e *Envelope) reset() {
 	e.initialVolume, e.volume = 0, 0
 	e.direction = false
 	e.speed, e.step = 0, 8
 }
 
-func (e *envelope) reload() {
+func (e *Envelope) TurnOff() {
+	e.speed = 0
+	e.direction = false
+	e.initialVolume = 0
+}
+
+func (e *Envelope) reload() {
 	e.volume = e.initialVolume
 	e.step = e.speed
 	if e.speed == 0 {
@@ -37,7 +38,7 @@ func (e *envelope) reload() {
 	}
 }
 
-func (e *envelope) update() {
+func (e *Envelope) update() {
 	if e.speed != 0 {
 		e.step--
 		if e.step == 0 {
@@ -47,7 +48,7 @@ func (e *envelope) update() {
 	}
 }
 
-func (e *envelope) updateVolume() {
+func (e *Envelope) updateVolume() {
 	if e.direction {
 		if e.volume < 15 {
 			e.volume++
@@ -59,18 +60,29 @@ func (e *envelope) updateVolume() {
 	}
 }
 
-func (e *envelope) serialize(s io.Writer) {
-	binary.Write(s, binary.LittleEndian, e.initialVolume)
-	binary.Write(s, binary.LittleEndian, e.volume)
-	binary.Write(s, binary.LittleEndian, e.direction)
-	binary.Write(s, binary.LittleEndian, e.speed)
-	binary.Write(s, binary.LittleEndian, e.step)
+type EnvelopeSnapshot struct {
+	Header                uint64
+	InitialVolume, Volume uint8
+	Direction             bool
+	Speed, Step           uint8
+	Reserved              [7]uint8
 }
 
-func (e *envelope) deserialize(d io.Reader) {
-	binary.Read(d, binary.LittleEndian, &e.initialVolume)
-	binary.Read(d, binary.LittleEndian, &e.volume)
-	binary.Read(d, binary.LittleEndian, &e.direction)
-	binary.Read(d, binary.LittleEndian, &e.speed)
-	binary.Read(d, binary.LittleEndian, &e.step)
+func (e *Envelope) CreateSnapshot() EnvelopeSnapshot {
+	s := EnvelopeSnapshot{
+		InitialVolume: e.initialVolume,
+		Volume:        e.volume,
+		Direction:     e.direction,
+		Speed:         e.speed,
+		Step:          e.step,
+	}
+	return s
+}
+
+func (e *Envelope) RestoreSnapshot(snap EnvelopeSnapshot) bool {
+	e.initialVolume, e.volume = snap.InitialVolume, snap.Volume
+	e.direction = snap.Direction
+	e.speed = snap.Speed
+	e.step = snap.Step
+	return true
 }

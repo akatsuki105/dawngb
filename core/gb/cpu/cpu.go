@@ -4,7 +4,7 @@ import (
 	"errors"
 
 	"github.com/akatsuki105/dawngb/core/gb/cpu/sm83"
-	"github.com/akatsuki105/dawngb/util"
+	"github.com/akatsuki105/dawngb/internal/debugger"
 )
 
 const (
@@ -29,11 +29,12 @@ type CPU struct {
 	bios             BIOS
 	HRAM             [0x7F]uint8
 	halted           bool
-	IE               uint8
-	interrupt        [5]bool // IF
-	key0             uint8   // FF4C
-	key1             uint8   // FF4D
+	IE, IF           uint8
+	key0             uint8 // FF4C
+	key1             uint8 // FF4D
 	ff72, ff73, ff74 uint8
+	Usage            uint32 // フレーム中のCPU使用率(haltしてないときのみカウントしたサイクル数)
+	Debugger         debugger.Debugger
 }
 
 // a.k.a. Boot ROM
@@ -65,7 +66,7 @@ func (c *CPU) Reset() {
 	c.serial.reset()
 	clear(c.HRAM[:])
 	c.halted = false
-	c.IE, c.interrupt = 0, [5]bool{}
+	c.IE, c.IF = 0, 0
 	c.bios.ff50 = true
 	c.key0, c.key1 = 0, 0
 	c.ff72, c.ff73, c.ff74 = 0, 0, 0
@@ -96,6 +97,7 @@ func (c *CPU) SkipBIOS() {
 
 func (c *CPU) wait(n int64) {
 	c.Cycles += n * c.Clock
+	c.Usage += uint32(n * c.Clock)
 }
 
 func (c *CPU) LoadBIOS(bios []uint8) error {
@@ -157,29 +159,38 @@ func (c *CPU) step() int64 {
 	if irqID >= 0 {
 		c.halted = false
 		if c.IME {
-			c.interrupt[irqID] = false
+			c.IF &^= uint8(1 << irqID)
 			c.Interrupt(irqID)
 		} else {
-			c.SM83.Step()
+			c.instruction()
 		}
 	} else if c.halted {
 		c.Cycles++
 	} else {
-		c.SM83.Step()
+		c.instruction()
 	}
 
 	return c.Cycles - prev
 }
 
-func (c *CPU) IRQ(id int) { c.interrupt[id] = true }
+func (c *CPU) instruction() {
+	if c.Debugger != nil {
+		c.Debugger.InstructionHook(0, uint64(c.R.PC))
+	}
+	c.SM83.Step()
+}
+
+// IRQ id: 0: VBLANK, 1: LCDSTAT, 2: TIMER, 3: SERIAL, 4: JOYPAD
+func (c *CPU) IRQ(id int) { c.IF |= (1 << id) }
 
 func (c *CPU) SendInputs(inputs uint8) {
 	c.joypad.inputs = inputs
 }
 
 func (c *CPU) checkInterrupt() int {
+	irq := c.IE & c.IF
 	for i := 0; i < 5; i++ {
-		if util.Bit(c.IE, i) && c.interrupt[i] {
+		if (irq & (1 << i)) != 0 {
 			return i
 		}
 	}

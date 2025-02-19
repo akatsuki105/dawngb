@@ -1,6 +1,10 @@
 package cpu
 
 func (c *CPU) Read(addr uint16) uint8 {
+	if c.Debugger != nil {
+		c.Debugger.ReadMemoryHook(0, uint64(addr), 1)
+	}
+
 	if c.bios.ff50 {
 		if addr < 0x100 {
 			return c.bios.data[addr]
@@ -16,6 +20,10 @@ func (c *CPU) Read(addr uint16) uint8 {
 }
 
 func (c *CPU) Write(addr uint16, val uint8) {
+	if c.Debugger != nil {
+		c.Debugger.WriteMemoryHook(0, uint64(addr), 1, uint64(val))
+	}
+
 	if addr >= 0xFF80 && addr <= 0xFFFE { // HRAM
 		c.HRAM[addr&0x7F] = val
 		return

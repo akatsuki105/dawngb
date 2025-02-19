@@ -1,12 +1,5 @@
 package cpu
 
-import (
-	"encoding/binary"
-	"io"
-
-	"github.com/akatsuki105/dawngb/util"
-)
-
 var timaClock = [4]int64{64, 1, 4, 16}
 
 type timer struct {
@@ -42,7 +35,7 @@ func (t *timer) update() {
 	x := (*t.clock) / 4
 
 	t.counter++
-	if util.Bit(t.tac, 2) {
+	if (t.tac & (1 << 2)) != 0 {
 		if (t.counter % (timaClock[t.tac&0b11] * x)) == 0 {
 			t.tima++
 			if t.tima == 0 {
@@ -82,18 +75,27 @@ func (t *timer) Write(addr uint16, val uint8) {
 	}
 }
 
-func (t *timer) Serialize(s io.Writer) {
-	data := []uint8{}
-	binary.LittleEndian.PutUint64(data, uint64(t.cycles))  // 8
-	data = append(data, t.tima, t.tma, t.tac)              // 3
-	binary.LittleEndian.PutUint64(data, uint64(t.counter)) // 8
-	s.Write(data)
+type TimerSnapshot struct {
+	Header         uint64
+	Cycles         int64
+	Tima, Tma, Tac uint8
+	Counter        int64
+	Reserved       [7]uint8
 }
 
-func (t *timer) Deserialize(s io.Reader) {
-	data := make([]uint8, 19)
-	s.Read(data)
-	t.cycles = int64(binary.LittleEndian.Uint64(data[0:8]))
-	t.tima, t.tma, t.tac = data[8], data[9], data[10]
-	t.counter = int64(binary.LittleEndian.Uint64(data[11:19]))
+func (t *timer) CreateSnapshot() TimerSnapshot {
+	return TimerSnapshot{
+		Cycles:  t.cycles,
+		Tima:    t.tima,
+		Tma:     t.tma,
+		Tac:     t.tac,
+		Counter: t.counter,
+	}
+}
+
+func (t *timer) RestoreSnapshot(snap TimerSnapshot) bool {
+	t.cycles = snap.Cycles
+	t.tima, t.tma, t.tac = snap.Tima, snap.Tma, snap.Tac
+	t.counter = snap.Counter
+	return true
 }

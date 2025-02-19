@@ -9,14 +9,16 @@ type Bus interface {
 	Write(addr uint16, val uint8)
 }
 
+type Context struct {
+	Opcode uint8
+	Addr   uint16
+	CB     bool
+}
+
 type SM83 struct {
-	R    Registers
-	bus  Bus
-	inst struct {
-		opcode uint8
-		addr   uint16
-		cb     bool
-	}
+	R          Registers
+	bus        Bus
+	inst       Context
 	IME        bool
 	halt, stop func()
 	tick       func(clockCycles int64)
@@ -41,14 +43,13 @@ func (c *SM83) Reset() {
 
 func (c *SM83) Step() {
 	pc := c.R.PC
-	c.inst.addr = pc
+	c.inst.Addr = pc
 	opcode := c.fetch()
-	c.inst.opcode = opcode
-	c.inst.cb = false
+	c.inst.Opcode = opcode
+	c.inst.CB = false
 
 	fn := opTable[opcode]
 	if fn != nil {
-		// fmt.Printf("0x%02X in 0x%04X\n", opcode, pc)
 		fn(c)
 	} else {
 		panic(fmt.Sprintf("illegal opcode: 0x%02X in 0x%04X", opcode, pc))
@@ -61,4 +62,11 @@ func (c *SM83) fetch() uint8 {
 	pc := c.R.PC
 	c.R.PC++
 	return c.bus.Read(pc)
+}
+
+func btou8(b bool) uint8 {
+	if b {
+		return 1
+	}
+	return 0
 }

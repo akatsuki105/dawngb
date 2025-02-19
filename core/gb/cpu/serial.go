@@ -46,3 +46,24 @@ func (s *serial) dummyTransfer() {
 	s.sb = 0xFF
 	s.irq(IRQ_SERIAL)
 }
+
+type SerialSnapshot struct {
+	Header   uint64
+	Until    int64
+	SB, SC   uint8
+	Reserved [14]uint8
+}
+
+func (s *serial) CreateSnapshot() SerialSnapshot {
+	return SerialSnapshot{
+		Until: s.until,
+		SB:    s.sb,
+		SC:    s.sc,
+	}
+}
+
+func (s *serial) RestoreSnapshot(snap SerialSnapshot) bool {
+	s.until = snap.Until
+	s.sb, s.sc = snap.SB, snap.SC
+	return true
+}

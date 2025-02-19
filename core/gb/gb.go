@@ -9,6 +9,7 @@ import (
 	"github.com/akatsuki105/dawngb/core/gb/cartridge"
 	"github.com/akatsuki105/dawngb/core/gb/cpu"
 	"github.com/akatsuki105/dawngb/core/gb/ppu"
+	"github.com/akatsuki105/dawngb/internal/debugger"
 )
 
 const KB, MB = 1024, 1024 * 1024
@@ -40,62 +41,61 @@ const (
 var buttons = [8]string{"A", "B", "SELECT", "START", "RIGHT", "LEFT", "UP", "DOWN"}
 
 type GB struct {
-	model     Model // ハードウェアの種類
-	cpu       *cpu.CPU
-	ppu       *ppu.PPU
-	apu       *apu.APU
-	cartridge *cartridge.Cartridge
-	inputs    uint8 // 押されている時にビットを立てる; bit0: A, bit1: B, bit2: SELECT, bit3: START, bit4: RIGHT, bit5: LEFT, bit6: UP, bit7: DOWN
-	wram      [(4 * KB) * 8]uint8
-	wramBank  uint8 // SVBK(0xFF70, 0..7, CGB only)
+	Model    Model // ハードウェアの種類
+	CPU      *cpu.CPU
+	PPU      *ppu.PPU
+	APU      *apu.APU
+	Cart     *cartridge.Cartridge
+	inputs   uint8 // 押されている時にビットを立てる; bit0: A, bit1: B, bit2: SELECT, bit3: START, bit4: RIGHT, bit5: LEFT, bit6: UP, bit7: DOWN
+	wram     [(4 * KB) * 8]uint8
+	wramBank uint8 // SVBK(0xFF70, 0..7, CGB only)
+	debugger.Debugger
 }
 
 func New(model Model, audioBuffer io.Writer) *GB {
 	g := &GB{
-		model:    model,
+		Model:    model,
 		wramBank: 1,
 	}
-	g.cpu = cpu.New(g.IsCGB(), g)
-	g.ppu = ppu.New(g.cpu)
-	g.apu = apu.New(audioBuffer)
+	g.CPU = cpu.New(g.IsColor(), g)
+	g.PPU = ppu.New(g.CPU)
+	g.APU = apu.New(audioBuffer)
 	g.wramBank = 1
 	return g
 }
 
-func (g *GB) Reset(hasBIOS bool) {
-	if g.cartridge != nil {
+func (g *GB) Reset() {
+	if g.Cart != nil {
 		clear(g.wram[:])
 		g.wramBank = 1
-		g.cpu.Reset()
-		g.ppu.Reset()
-		g.apu.Reset()
+		g.CPU.Reset()
+		g.PPU.Reset()
+		g.APU.Reset()
 		g.inputs = 0
-
-		if !hasBIOS {
-			g.skipBIOS()
-		}
 	}
 }
 
+func (g *GB) DirectBoot() { g.skipBIOS() }
+
+func (g *GB) Quit() {}
+
 func (g *GB) skipBIOS() {
-	g.cpu.SkipBIOS()
-	g.ppu.SkipBIOS()
-	g.apu.SkipBIOS()
+	g.CPU.SkipBIOS()
+	g.PPU.SkipBIOS()
+	g.APU.SkipBIOS()
 	g.Write(0xFF02, 0x7F) // SC
 	g.Write(0xFF0F, 0xE1) // IF
-	cgbflag := g.cartridge.ROM[0x143]
+	cgbflag := g.Cart.ROM[0x143]
 	if cgbflag&0x80 == 0 {
 		g.Write(0xFF4C, 4) // KEY0
 	}
 	g.Write(0xFF4D, 0x7E) // KEY1
 	g.Write(0xFF4F, 0xFE) // VBK
 
-	if g.IsCGB() && cgbflag&0x80 == 0 {
-		g.ppu.ColorizeDMG()
+	if g.IsColor() && cgbflag&0x80 == 0 {
+		g.PPU.ColorizeDMG()
 	}
 }
-
-func (g *GB) Model() Model { return g.model }
 
 var errInvalidCmd = fmt.Errorf("invalid command")
 
@@ -113,20 +113,20 @@ func (g *GB) Load(cmd LoadCmd, args ...any) error {
 		if err != nil {
 			return err
 		}
-		g.cartridge = cartridge
+		g.Cart = cartridge
 
 	case LOAD_SAVE:
 		if len(args) != 1 {
 			return fmt.Errorf("LOAD_SAVE command requires []uint8")
 		}
-		if g.cartridge == nil {
+		if g.Cart == nil {
 			return fmt.Errorf("no cartridge loaded")
 		}
 		sram, ok := args[0].([]uint8)
 		if !ok {
 			return fmt.Errorf("LOAD_SAVE command requires []uint8")
 		}
-		err := g.cartridge.LoadSRAM(sram)
+		err := g.Cart.LoadSRAM(sram)
 		if err != nil {
 			return err
 		}
@@ -139,7 +139,7 @@ func (g *GB) Load(cmd LoadCmd, args ...any) error {
 		if !ok {
 			return fmt.Errorf("LOAD_BIOS command requires []uint8")
 		}
-		err := g.cpu.LoadBIOS(bios)
+		err := g.CPU.LoadBIOS(bios)
 		if err != nil {
 			return err
 		}
@@ -151,45 +151,58 @@ func (g *GB) Load(cmd LoadCmd, args ...any) error {
 	return nil
 }
 
+func (g *GB) LoadROM(rom []uint8) error {
+	err := g.Load(LOAD_ROM, rom)
+	if err != nil {
+		return err
+	}
+	g.Reset()
+	g.DirectBoot()
+	return nil
+}
+
+func (g *GB) LoadSave(savedata []uint8) error {
+	return g.Load(LOAD_SAVE, savedata)
+}
+
 func (g *GB) Dump(cmd DumpCmd, args ...any) ([]uint8, error) {
 	switch cmd {
 	case DUMP_SAVE:
-		if g.cartridge == nil {
+		if g.Cart == nil {
 			return []uint8{}, fmt.Errorf("no cartridge loaded")
 		}
-		return g.cartridge.SRAM(), nil
+		return g.Cart.SRAM(), nil
 	default:
 		return nil, errInvalidCmd
 	}
 }
 
 func (g *GB) RunFrame() {
-	if g.cartridge != nil {
-		g.cpu.SendInputs(g.inputs ^ 0xFF) // ボタンの状態をCPUに送る(ただし、押されてないボタンのビットを立てる)
+	if g.Cart != nil {
+		g.CPU.SendInputs(g.inputs ^ 0xFF) // ボタンの状態をCPUに送る(ただし、押されてないボタンのビットを立てる)
 		g.inputs = 0
 
-		const FRAME = 70224 * ppu.CYCLE
-		start := g.cpu.Cycles
+		g.CPU.Usage = 0
 
-		frame := g.ppu.FrameCounter
-		for frame == g.ppu.FrameCounter && ((g.cpu.Cycles - start) < FRAME) {
+		const FRAME = 70224 * ppu.CYCLE
+		start := g.CPU.Cycles
+
+		frame := g.PPU.Frame()
+		for frame == g.PPU.Frame() && ((g.CPU.Cycles - start) < FRAME) {
 			g.step()
 		}
-		g.apu.FlushSamples()
+		g.APU.FlushSamples()
 	}
 }
 
 func (g *GB) step() {
-	delta := g.cpu.Step() // CPUで1命令実行して、その後に他のコンポーネントを同期させる
-	g.ppu.Run(delta)
-	g.apu.Run(delta)
+	delta := g.CPU.Step() // CPUで1命令実行して、その後に他のコンポーネントを同期させる
+	g.PPU.Run(delta)
+	g.APU.Run(delta)
 }
 
 func (g *GB) Resolution() (w int, h int) { return 160, 144 }
-
-func (g *GB) Screen() []color.NRGBA {
-	return g.ppu.Screen()
-}
+func (g *GB) Screen() []color.NRGBA      { return g.PPU.Screen() }
 
 func (g *GB) SetKeyInput(key string, press bool) {
 	if press {
@@ -202,22 +215,7 @@ func (g *GB) SetKeyInput(key string, press bool) {
 	}
 }
 
-func (g *GB) Title() string {
-	if g.cartridge == nil {
-		return ""
-	}
-	return g.cartridge.Title()
-}
-
 // IsCGBMode returns true if the hardware has CGB features (i.e., it's a CGB or AGB).
-func (g *GB) IsCGB() bool {
-	return g.model == MODEL_CGB || g.model == MODEL_AGB
-}
-
-func (g *GB) Serialize(state io.Writer) {
-	// TODO: implement
-}
-
-func (g *GB) Deserialize(state io.Reader) {
-	// TODO: implement
+func (g *GB) IsColor() bool {
+	return g.Model == MODEL_CGB || g.Model == MODEL_AGB
 }

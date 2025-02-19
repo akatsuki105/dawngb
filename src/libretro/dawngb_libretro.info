@@ -14,7 +14,7 @@ systemname = "Game Boy/Game Boy Color"
 systemid = "game_boy"
 
 # Libretro Features
-savestate = "false"
+savestate = "true"
 savestate_features = "deterministic"
 cheats = "false"
 input_descriptors = "false"

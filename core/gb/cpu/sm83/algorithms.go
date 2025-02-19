@@ -7,10 +7,10 @@ import (
 )
 
 func todo(c *SM83) {
-	if c.inst.cb {
-		panic(fmt.Sprintf("todo opcode: 0xCB+0x%02X in 0x%04X", c.inst.opcode, c.inst.addr))
+	if c.inst.CB {
+		panic(fmt.Sprintf("todo opcode: 0xCB+0x%02X in 0x%04X", c.inst.Opcode, c.inst.Addr))
 	} else {
-		panic(fmt.Sprintf("todo opcode: 0x%02X in 0x%04X", c.inst.opcode, c.inst.addr))
+		panic(fmt.Sprintf("todo opcode: 0x%02X in 0x%04X", c.inst.Opcode, c.inst.Addr))
 	}
 }
 
@@ -72,14 +72,14 @@ func (c *SM83) cp(val uint8) {
 }
 
 func (c *SM83) add(val uint8, carry bool) {
-	x := uint16(c.R.A) + uint16(val) + uint16(util.Btou8(carry))
-	y := uint16(c.R.A&0xF) + uint16(val&0xF) + uint16(util.Btou8(carry))
+	x := uint16(c.R.A) + uint16(val) + uint16(btou8(carry))
+	y := uint16(c.R.A&0xF) + uint16(val&0xF) + uint16(btou8(carry))
 	c.R.F.z, c.R.F.n, c.R.F.h, c.R.F.c = (uint8(x) == 0), false, (y > 0x0F), (x > 0xFF)
 	c.R.A = uint8(x)
 }
 
 func (c *SM83) sub(val uint8, carry bool) {
-	cf := util.Btou8(carry)
+	cf := btou8(carry)
 	x := uint16(c.R.A) - uint16(val) - uint16(cf)
 	y := (c.R.A & 0xF) - (val & 0xF) - cf
 	c.R.F.z, c.R.F.n, c.R.F.h, c.R.F.c = (uint8(x) == 0), true, (y > 0x0F), (x > 0xFF)
@@ -87,14 +87,14 @@ func (c *SM83) sub(val uint8, carry bool) {
 }
 
 func (c *SM83) set_hl(bit int, b bool) {
-	hl := c.R.HL.pack()
+	hl := c.R.HL.Pack()
 	val := c.bus.Read(hl)
 	val = util.SetBit(val, bit, b)
 	c.bus.Write(hl, val)
 }
 
 func (c *SM83) rr(r *uint8) {
-	carry := util.Btou8(c.R.F.c)
+	carry := btou8(c.R.F.c)
 	c.R.F.c = util.Bit(*r, 0)
 	*r = (*r >> 1) | (carry << 7)
 	c.R.F.z, c.R.F.n, c.R.F.h = (*r == 0), false, false
@@ -107,7 +107,7 @@ func (c *SM83) rrc(r *uint8) {
 
 func (c *SM83) rl(r *uint8) {
 	carry := util.Bit(*r, 7)
-	*r = (*r << 1) | util.Btou8(c.R.F.c)
+	*r = (*r << 1) | btou8(c.R.F.c)
 	c.R.F.z, c.R.F.n, c.R.F.h, c.R.F.c = (*r == 0), false, false, carry
 }
 

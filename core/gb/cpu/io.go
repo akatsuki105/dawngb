@@ -1,7 +1,5 @@
 package cpu
 
-import "github.com/akatsuki105/dawngb/util"
-
 func (c *CPU) ReadIO(addr uint16) uint8 {
 	switch addr {
 	case 0xFF00:
@@ -13,11 +11,7 @@ func (c *CPU) ReadIO(addr uint16) uint8 {
 	case 0xFF04, 0xFF05, 0xFF06, 0xFF07:
 		return c.timer.Read(addr)
 	case 0xFF0F:
-		val := uint8(0)
-		for i := 0; i < 5; i++ {
-			val |= (util.Btou8(c.interrupt[i]) << i)
-		}
-		return val
+		return c.IF & 0x1F
 	case 0xFF4C:
 		return c.key0
 	case 0xFF4D:
@@ -55,9 +49,7 @@ func (c *CPU) WriteIO(addr uint16, val uint8) {
 	case 0xFF04, 0xFF05, 0xFF06, 0xFF07:
 		c.timer.Write(addr, val)
 	case 0xFF0F:
-		for i := 0; i < 5; i++ {
-			c.interrupt[i] = (val & (1 << i)) != 0
-		}
+		c.IF = val & 0x1F
 	case 0xFF4C:
 		if c.key0 == 0 {
 			c.key0 = val

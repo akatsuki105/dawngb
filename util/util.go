@@ -17,10 +17,3 @@ func SetBit[V uint | uint8 | uint16 | uint32 | int8](val V, idx int, b bool) V {
 	}
 	return val
 }
-
-func Btou8(b bool) uint8 {
-	if b {
-		return 1
-	}
-	return 0
-}

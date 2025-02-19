@@ -54,7 +54,7 @@ func cb05(c *SM83) { c.rlc(&c.R.HL.Lo) }
 
 // rlc (hl)
 func cb06(c *SM83) {
-	hl := c.R.HL.pack()
+	hl := c.R.HL.Pack()
 	val := c.bus.Read(hl)
 	val = (val << 1) | (val >> 7)
 	c.bus.Write(hl, val)
@@ -77,7 +77,7 @@ func cb0D(c *SM83) { c.rrc(&c.R.HL.Lo) }
 
 // rrc (hl)
 func cb0E(c *SM83) {
-	hl := c.R.HL.pack()
+	hl := c.R.HL.Pack()
 	val := c.bus.Read(hl)
 	val = (val << 7) | (val >> 1)
 	c.bus.Write(hl, val)
@@ -100,10 +100,10 @@ func cb15(c *SM83) { c.rl(&c.R.HL.Lo) }
 
 // rl (hl)
 func cb16(c *SM83) {
-	hl := c.R.HL.pack()
+	hl := c.R.HL.Pack()
 	val := c.bus.Read(hl)
 	carry := util.Bit(val, 7)
-	val = (val << 1) | util.Btou8(c.R.F.c)
+	val = (val << 1) | btou8(c.R.F.c)
 	c.bus.Write(hl, val)
 	c.R.F.z, c.R.F.n, c.R.F.h, c.R.F.c = (val == 0), false, false, carry
 }
@@ -124,9 +124,9 @@ func cb1D(c *SM83) { c.rr(&c.R.HL.Lo) }
 
 // rr (hl)
 func cb1E(c *SM83) {
-	hl := c.R.HL.pack()
+	hl := c.R.HL.Pack()
 	val := c.bus.Read(hl)
-	carry := util.Btou8(c.R.F.c)
+	carry := btou8(c.R.F.c)
 	c.R.F.c = util.Bit(val, 0)
 	val = (val >> 1) | (carry << 7)
 	c.bus.Write(hl, val)
@@ -149,7 +149,7 @@ func cb25(c *SM83) { c.sla(&c.R.HL.Lo) }
 
 // sla (hl)
 func cb26(c *SM83) {
-	hl := c.R.HL.pack()
+	hl := c.R.HL.Pack()
 	val := c.bus.Read(hl)
 	c.R.F.c = util.Bit(val, 7)
 	val <<= 1
@@ -173,7 +173,7 @@ func cb2D(c *SM83) { c.sra(&c.R.HL.Lo) }
 
 // sra (hl)
 func cb2E(c *SM83) {
-	hl := c.R.HL.pack()
+	hl := c.R.HL.Pack()
 	val := c.bus.Read(hl)
 	c.R.F.c = util.Bit(val, 0)
 	val = uint8(int8(val) >> 1)
@@ -197,7 +197,7 @@ func cb35(c *SM83) { c.swap(&c.R.HL.Lo) }
 
 // swap (hl)
 func cb36(c *SM83) {
-	addr := c.R.HL.pack()
+	addr := c.R.HL.Pack()
 	val := c.bus.Read(addr)
 	val = (val << 4) | (val >> 4)
 	c.bus.Write(addr, val)
@@ -220,7 +220,7 @@ func cb3D(c *SM83) { c.srl(&c.R.HL.Lo) }
 
 // srl (hl)
 func cb3E(c *SM83) {
-	hl := c.R.HL.pack()
+	hl := c.R.HL.Pack()
 	val := c.bus.Read(hl)
 	c.R.F.c = util.Bit(val, 0)
 	val >>= 1
@@ -242,7 +242,7 @@ func cb44(c *SM83) { c.bit(c.R.HL.Hi, 0) }
 
 func cb45(c *SM83) { c.bit(c.R.HL.Lo, 0) }
 
-func cb46(c *SM83) { c.bit(c.bus.Read(c.R.HL.pack()), 0) }
+func cb46(c *SM83) { c.bit(c.bus.Read(c.R.HL.Pack()), 0) }
 
 func cb47(c *SM83) { c.bit(c.R.A, 0) }
 
@@ -258,7 +258,7 @@ func cb4C(c *SM83) { c.bit(c.R.HL.Hi, 1) }
 
 func cb4D(c *SM83) { c.bit(c.R.HL.Lo, 1) }
 
-func cb4E(c *SM83) { c.bit(c.bus.Read(c.R.HL.pack()), 1) }
+func cb4E(c *SM83) { c.bit(c.bus.Read(c.R.HL.Pack()), 1) }
 
 func cb4F(c *SM83) { c.bit(c.R.A, 1) }
 
@@ -274,7 +274,7 @@ func cb54(c *SM83) { c.bit(c.R.HL.Hi, 2) }
 
 func cb55(c *SM83) { c.bit(c.R.HL.Lo, 2) }
 
-func cb56(c *SM83) { c.bit(c.bus.Read(c.R.HL.pack()), 2) }
+func cb56(c *SM83) { c.bit(c.bus.Read(c.R.HL.Pack()), 2) }
 
 func cb57(c *SM83) { c.bit(c.R.A, 2) }
 
@@ -290,7 +290,7 @@ func cb5C(c *SM83) { c.bit(c.R.HL.Hi, 3) }
 
 func cb5D(c *SM83) { c.bit(c.R.HL.Lo, 3) }
 
-func cb5E(c *SM83) { c.bit(c.bus.Read(c.R.HL.pack()), 3) }
+func cb5E(c *SM83) { c.bit(c.bus.Read(c.R.HL.Pack()), 3) }
 
 func cb5F(c *SM83) { c.bit(c.R.A, 3) }
 
@@ -306,7 +306,7 @@ func cb64(c *SM83) { c.bit(c.R.HL.Hi, 4) }
 
 func cb65(c *SM83) { c.bit(c.R.HL.Lo, 4) }
 
-func cb66(c *SM83) { c.bit(c.bus.Read(c.R.HL.pack()), 4) }
+func cb66(c *SM83) { c.bit(c.bus.Read(c.R.HL.Pack()), 4) }
 
 func cb67(c *SM83) { c.bit(c.R.A, 4) }
 
@@ -322,7 +322,7 @@ func cb6C(c *SM83) { c.bit(c.R.HL.Hi, 5) }
 
 func cb6D(c *SM83) { c.bit(c.R.HL.Lo, 5) }
 
-func cb6E(c *SM83) { c.bit(c.bus.Read(c.R.HL.pack()), 5) }
+func cb6E(c *SM83) { c.bit(c.bus.Read(c.R.HL.Pack()), 5) }
 
 func cb6F(c *SM83) { c.bit(c.R.A, 5) }
 
@@ -338,7 +338,7 @@ func cb74(c *SM83) { c.bit(c.R.HL.Hi, 6) }
 
 func cb75(c *SM83) { c.bit(c.R.HL.Lo, 6) }
 
-func cb76(c *SM83) { c.bit(c.bus.Read(c.R.HL.pack()), 6) }
+func cb76(c *SM83) { c.bit(c.bus.Read(c.R.HL.Pack()), 6) }
 
 func cb77(c *SM83) { c.bit(c.R.A, 6) }
 
@@ -354,7 +354,7 @@ func cb7C(c *SM83) { c.bit(c.R.HL.Hi, 7) }
 
 func cb7D(c *SM83) { c.bit(c.R.HL.Lo, 7) }
 
-func cb7E(c *SM83) { c.bit(c.bus.Read(c.R.HL.pack()), 7) }
+func cb7E(c *SM83) { c.bit(c.bus.Read(c.R.HL.Pack()), 7) }
 
 func cb7F(c *SM83) { c.bit(c.R.A, 7) }
 

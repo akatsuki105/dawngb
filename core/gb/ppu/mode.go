@@ -1,18 +1,16 @@
 package ppu
 
-import (
-	"github.com/akatsuki105/dawngb/util"
-)
-
 // Mode 0
 func (p *PPU) hblank() {
 	oldStat := p.stat
 	p.stat = (p.stat & 0xFC)
-	if util.Bit(p.lcdc, 7) && !p.enableLatch {
+	if ((p.lcdc & (1 << 7)) != 0) && !p.enableLatch {
 		p.r.DrawScanline(p.ly, p.screen[p.ly*160:(p.ly+1)*160])
 	}
 	if !statIRQAsserted(oldStat) && statIRQAsserted(p.stat) {
 		p.cpu.IRQ(1)
+		p.StatIRQ.Triggered = true
+		p.StatIRQ.Mode, p.StatIRQ.Lx, p.StatIRQ.Ly = 0, uint8(p.lx), uint8(p.ly)
 	}
 	p.cpu.HBlank()
 }
@@ -25,6 +23,8 @@ func (p *PPU) vblank() {
 
 	if !statIRQAsserted(oldStat) && statIRQAsserted(p.stat) {
 		p.cpu.IRQ(1)
+		p.StatIRQ.Triggered = true
+		p.StatIRQ.Mode, p.StatIRQ.Lx, p.StatIRQ.Ly = 1, uint8(p.lx), uint8(p.ly)
 	}
 }
 
@@ -34,6 +34,8 @@ func (p *PPU) scanOAM() {
 	p.stat = (p.stat & 0xFC) | 2
 	if !statIRQAsserted(oldStat) && statIRQAsserted(p.stat) {
 		p.cpu.IRQ(1)
+		p.StatIRQ.Triggered = true
+		p.StatIRQ.Mode, p.StatIRQ.Lx, p.StatIRQ.Ly = 2, uint8(p.lx), uint8(p.ly)
 	}
 }
 
@@ -43,7 +45,7 @@ func (p *PPU) drawing() {
 
 	// Count scanline objects
 	h := 8
-	if util.Bit(p.lcdc, 2) {
+	if (p.lcdc & (1 << 2)) != 0 {
 		h = 16
 	}
 	o := uint8(0)

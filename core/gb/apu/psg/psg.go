@@ -1,10 +1,5 @@
 package psg
 
-import (
-	"encoding/binary"
-	"io"
-)
-
 // .model
 const (
 	MODEL_GB = iota
@@ -17,9 +12,9 @@ type PSG struct {
 
 	enabled bool // NR52.7
 
-	ch1, ch2 *square
-	ch3      *wave
-	ch4      *noise
+	CH1, CH2 *Square
+	CH3      *wave
+	CH4      *Noise
 
 	sequencerCounter int16 // (フレームシーケンサの)512Hzを生み出すためのカウンタ (ref: https://gbdev.io/pandocs/Audio_details.html#div-apu)
 	sequencerStep    uint8 // 512Hzから 64, 128, 256Hzなどの生み出すためのカウンタ
@@ -32,19 +27,19 @@ type PSG struct {
 func New(model uint8) *PSG {
 	return &PSG{
 		model: model,
-		ch1:   newSquareChannel(true),
-		ch2:   newSquareChannel(false),
-		ch3:   newWaveChannel(model),
-		ch4:   newNoiseChannel(),
+		CH1:   newSquareChannel(true),
+		CH2:   newSquareChannel(false),
+		CH3:   newWaveChannel(model),
+		CH4:   newNoiseChannel(),
 	}
 }
 
 func (a *PSG) Reset() {
 	a.enabled = false
-	a.ch1.reset()
-	a.ch2.reset()
-	a.ch3.reset()
-	a.ch4.reset()
+	a.CH1.Reset()
+	a.CH2.Reset()
+	a.CH3.Reset()
+	a.CH4.Reset()
 	a.sequencerCounter, a.sequencerStep = 0, 0
 	clear(a.ioreg[:])
 	a.leftVolume, a.rightVolume = 7, 7
@@ -86,58 +81,59 @@ func (a *PSG) Step() {
 			is256Hz := a.sequencerStep == 0 || a.sequencerStep == 2 || a.sequencerStep == 4 || a.sequencerStep == 6 // Sound length
 
 			if is256Hz {
-				a.ch1.clock256Hz()
-				a.ch2.clock256Hz()
-				a.ch3.clock256Hz()
-				a.ch4.clock256Hz()
+				a.CH1.clock256Hz()
+				a.CH2.clock256Hz()
+				a.CH3.clock256Hz()
+				a.CH4.clock256Hz()
 			}
 			if is128Hz {
-				a.ch1.clock128Hz()
+				a.CH1.clock128Hz()
 			}
 			if is64Hz {
-				a.ch1.clock64Hz()
-				a.ch2.clock64Hz()
-				a.ch4.clock64Hz()
+				a.CH1.clock64Hz()
+				a.CH2.clock64Hz()
+				a.CH4.clock64Hz()
 			}
 			a.sequencerStep = (a.sequencerStep + 1) & 7
 			a.sequencerCounter = 8192 // 512Hz = 4194304/8192
 		}
 
-		a.ch1.clockTimer()
-		a.ch2.clockTimer()
-		a.ch3.clockTimer()
-		a.ch4.clockTimer()
+		a.CH1.clockTimer()
+		a.CH2.clockTimer()
+		a.CH3.clockTimer()
+		a.CH4.clockTimer()
 	}
 }
 
 // 0..63 の値を返す
-func (a *PSG) Sample() (lsample, rsample uint8) {
+func (a *PSG) Sample(mask uint8) (lsample, rsample uint8) {
 	left, right := uint8(0), uint8(0)
 
 	if a.enabled {
-		ch1, ch2, ch3, ch4 := a.ch1.getOutput(), a.ch2.getOutput(), a.ch3.getOutput(), a.ch4.getOutput()
-		if a.leftEnables[0] {
+		ch1, ch2, ch3, ch4 := a.CH1.GetOutput(), a.CH2.GetOutput(), a.CH3.GetOutput(), a.CH4.GetOutput()
+		mask1, mask2, mask3, mask4 := (mask&(1<<0)) != 0, (mask&(1<<1)) != 0, (mask&(1<<2)) != 0, (mask&(1<<3)) != 0
+		if mask1 && a.leftEnables[0] {
 			left += ch1
 		}
-		if a.leftEnables[1] {
+		if mask2 && a.leftEnables[1] {
 			left += ch2
 		}
-		if a.leftEnables[2] {
+		if mask3 && a.leftEnables[2] {
 			left += ch3
 		}
-		if a.leftEnables[3] {
+		if mask4 && a.leftEnables[3] {
 			left += ch4
 		}
-		if a.rightEnables[0] {
+		if mask1 && a.rightEnables[0] {
 			right += ch1
 		}
-		if a.rightEnables[1] {
+		if mask2 && a.rightEnables[1] {
 			right += ch2
 		}
-		if a.rightEnables[2] {
+		if mask3 && a.rightEnables[2] {
 			right += ch3
 		}
-		if a.rightEnables[3] {
+		if mask4 && a.rightEnables[3] {
 			right += ch4
 		}
 	}
@@ -147,28 +143,4 @@ func (a *PSG) Sample() (lsample, rsample uint8) {
 // Volume returns the volume of the NR50 (n: 0..7)
 func (a *PSG) Volume() (left, right uint8) {
 	return a.leftVolume, a.rightVolume
-}
-
-func (a *PSG) Serialize(s io.Writer) {
-	binary.Write(s, binary.LittleEndian, a.enabled)
-	binary.Write(s, binary.LittleEndian, a.model)
-	a.ch1.serialize(s)
-	a.ch2.serialize(s)
-	a.ch3.serialize(s)
-	a.ch4.serialize(s)
-	binary.Write(s, binary.LittleEndian, a.sequencerCounter)
-	binary.Write(s, binary.LittleEndian, a.sequencerStep)
-	binary.Write(s, binary.LittleEndian, a.ioreg)
-}
-
-func (a *PSG) Deserialize(s io.Reader) {
-	binary.Read(s, binary.LittleEndian, &a.enabled)
-	binary.Read(s, binary.LittleEndian, &a.model)
-	a.ch1.deserialize(s)
-	a.ch2.deserialize(s)
-	a.ch3.deserialize(s)
-	a.ch4.deserialize(s)
-	binary.Read(s, binary.LittleEndian, &a.sequencerCounter)
-	binary.Read(s, binary.LittleEndian, &a.sequencerStep)
-	binary.Read(s, binary.LittleEndian, &a.ioreg)
 }

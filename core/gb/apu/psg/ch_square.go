@@ -1,10 +1,5 @@
 package psg
 
-import (
-	"encoding/binary"
-	"io"
-)
-
 var squareDutyTable = [4][8]uint8{
 	{0, 0, 0, 0, 0, 0, 0, 1}, // 12.5%
 	{1, 0, 0, 0, 0, 0, 0, 1}, // 25%
@@ -12,13 +7,13 @@ var squareDutyTable = [4][8]uint8{
 	{0, 1, 1, 1, 1, 1, 1, 0}, // 75%
 }
 
-type square struct {
+type Square struct {
 	enabled bool // NR52.0(ch1), NR52.1(ch2)
 
 	length uint8 // NR11.0-5; 音の残り再生時間
 	stop   bool  // NR14.6; .length が 0 になったときに音を止めるかどうか
 
-	envelope *envelope
+	envelope *Envelope
 	sweep    *sweep
 
 	duty        uint8 // NR11.6-7, (squareDutyTable の index)
@@ -30,8 +25,8 @@ type square struct {
 	output bool // 0 or 1; 矩形波の出力が1かどうか
 }
 
-func newSquareChannel(hasSweep bool) *square {
-	ch := &square{
+func newSquareChannel(hasSweep bool) *Square {
+	ch := &Square{
 		envelope: newEnvelope(),
 	}
 
@@ -41,19 +36,27 @@ func newSquareChannel(hasSweep bool) *square {
 	return ch
 }
 
-func (ch *square) reset() {
-	ch.enabled = false
-	ch.length, ch.stop = 0, false
+func (ch *Square) Reset() {
+	ch.TurnOff()
 	ch.envelope.reset()
 	if ch.sweep != nil {
 		ch.sweep.reset()
 	}
-	ch.duty, ch.dutyCounter = 0, 0
 	ch.period, ch.freqCounter = 0, 0
+}
+
+func (ch *Square) TurnOff() {
+	ch.enabled = false
+	ch.length, ch.stop = 0, false
+	ch.duty, ch.dutyCounter = 0, 0
+	ch.envelope.TurnOff()
+	if ch.sweep != nil {
+		ch.sweep.TurnOff()
+	}
 	ch.output = false
 }
 
-func (ch *square) reload() {
+func (ch *Square) reload() {
 	ch.enabled = ch.dacEnable()
 	ch.freqCounter = ch.dutyStepCycle()
 	ch.envelope.reload()
@@ -65,19 +68,19 @@ func (ch *square) reload() {
 	}
 }
 
-func (ch *square) clock64Hz() {
+func (ch *Square) clock64Hz() {
 	if ch.enabled {
 		ch.envelope.update()
 	}
 }
 
-func (ch *square) clock128Hz() {
+func (ch *Square) clock128Hz() {
 	if ch.sweep != nil {
 		ch.sweep.update()
 	}
 }
 
-func (ch *square) clock256Hz() {
+func (ch *Square) clock256Hz() {
 	if ch.stop && ch.length > 0 {
 		ch.length--
 		if ch.length == 0 {
@@ -86,7 +89,7 @@ func (ch *square) clock256Hz() {
 	}
 }
 
-func (ch *square) clockTimer() {
+func (ch *Square) clockTimer() {
 	if ch.freqCounter > 0 {
 		ch.freqCounter--
 		if ch.freqCounter == 0 {
@@ -96,13 +99,14 @@ func (ch *square) clockTimer() {
 	}
 }
 
-func (ch *square) update() {
+func (ch *Square) update() {
 	ch.dutyCounter = (ch.dutyCounter + 1) & 7
 	dutyTable := (squareDutyTable[ch.duty])[:]
 	ch.output = dutyTable[ch.dutyCounter] != 0
 }
 
-func (ch *square) getOutput() uint8 {
+// GetOutput gets 4bit sample (0..15)
+func (ch *Square) GetOutput() uint8 {
 	if ch.enabled && ch.output {
 		return ch.envelope.volume
 	}
@@ -110,40 +114,56 @@ func (ch *square) getOutput() uint8 {
 }
 
 // デューティ比の1ステップの長さをAPUサイクル数で返す
-func (ch *square) dutyStepCycle() uint16 {
+func (ch *Square) dutyStepCycle() uint16 {
 	// hz := (1048576 / (2048 - ch.period)) // freqency
 	// return 4194304 / hz
 	return 4 * (2048 - ch.period)
 }
 
-func (ch *square) dacEnable() bool {
+func (ch *Square) dacEnable() bool {
 	return ((ch.envelope.initialVolume != 0) || ch.envelope.direction)
 }
 
-func (ch *square) serialize(s io.Writer) {
-	binary.Write(s, binary.LittleEndian, ch.enabled)
-	binary.Write(s, binary.LittleEndian, ch.length)
-	binary.Write(s, binary.LittleEndian, ch.stop)
-	ch.envelope.serialize(s)
-	if ch.sweep != nil {
-		ch.sweep.serialize(s)
-	}
-	binary.Write(s, binary.LittleEndian, ch.duty)
-	binary.Write(s, binary.LittleEndian, ch.dutyCounter)
-	binary.Write(s, binary.LittleEndian, ch.period)
-	binary.Write(s, binary.LittleEndian, ch.freqCounter)
+type SquareSnapshot struct {
+	Header              uint64
+	Enabled             bool
+	Length              uint8
+	Stop                bool
+	Envelope            EnvelopeSnapshot
+	Duty, DutyCounter   uint8
+	Period, FreqCounter uint16
+	Output              bool
+	Sweep               SweepSnapshot
+	Reserved            [16]uint8
 }
 
-func (ch *square) deserialize(s io.Reader) {
-	binary.Read(s, binary.LittleEndian, &ch.enabled)
-	binary.Read(s, binary.LittleEndian, &ch.length)
-	binary.Read(s, binary.LittleEndian, &ch.stop)
-	ch.envelope.deserialize(s)
-	if ch.sweep != nil {
-		ch.sweep.deserialize(s)
+func (ch *Square) CreateSnapshot() SquareSnapshot {
+	s := SquareSnapshot{
+		Enabled:     ch.enabled,
+		Length:      ch.length,
+		Stop:        ch.stop,
+		Envelope:    ch.envelope.CreateSnapshot(),
+		Duty:        ch.duty,
+		DutyCounter: ch.dutyCounter,
+		Period:      ch.period,
+		FreqCounter: ch.freqCounter,
+		Output:      ch.output,
 	}
-	binary.Read(s, binary.LittleEndian, &ch.duty)
-	binary.Read(s, binary.LittleEndian, &ch.dutyCounter)
-	binary.Read(s, binary.LittleEndian, &ch.period)
-	binary.Read(s, binary.LittleEndian, &ch.freqCounter)
+	if ch.sweep != nil {
+		s.Sweep = ch.sweep.CreateSnapshot()
+	}
+	return s
+}
+
+func (ch *Square) RestoreSnapshot(snap SquareSnapshot) bool {
+	ch.enabled = snap.Enabled
+	ch.length, ch.stop = snap.Length, snap.Stop
+	ch.duty, ch.dutyCounter = snap.Duty, snap.DutyCounter
+	ch.period, ch.freqCounter = snap.Period, snap.FreqCounter
+	ch.output = snap.Output
+	if ch.sweep != nil {
+		ch.sweep.RestoreSnapshot(snap.Sweep)
+	}
+	ch.envelope.RestoreSnapshot(snap.Envelope)
+	return true
 }

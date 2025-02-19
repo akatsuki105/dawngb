@@ -58,7 +58,7 @@ func (l *bgLayer) drawScanline(y int) {
 					attr = 0 // DMGモードでは属性マップは常に0
 				}
 				palID := attr & 0b111
-				tileBank := uint(util.Btou8(util.Bit(attr, 3)))
+				tileBank := uint((attr >> 3) & 0b1)
 				hflip := util.Bit(attr, 5)
 
 				tiledata := l.r.vram[(8*KB)*tileBank:]

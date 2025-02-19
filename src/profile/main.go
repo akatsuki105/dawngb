@@ -44,7 +44,8 @@ func run() exitCode {
 			return ExitCodeError
 		}
 
-		c.Reset(false)
+		c.Reset()
+		c.DirectBoot()
 		fmt.Printf("Run emulator for %d seconds\n", *s)
 
 		for i := 0; i < (*s)*60; i++ {

@@ -12,10 +12,10 @@ const KB = 1024
 
 const CYCLE = 2
 
-// 便宜的にPPU構造体に入れているが、正確にはボード上にある
+// 便宜的にPPU構造体に入れているが、PPUチップ内にはなくボード上にある
 type VRAM struct {
-	data [16 * KB]uint8
-	bank uint8 // 0 or 1; VBK(0xFF4F)
+	Data [16 * KB]uint8
+	Bank uint8 // 0 or 1; VBK(0xFF4F)
 }
 
 type CPU interface {
@@ -27,21 +27,31 @@ type CPU interface {
 
 // OAM DMA
 type DMA struct {
-	active bool
-	src    uint16
-	until  int64
+	Active bool
+	Src    uint16
+	Until  int64
 }
 
-// SoCに組み込まれているため、`/cpu`にある方が正確ではある
+// フレームの間に起きたLCDSTAT IRQに関する情報(フレームの始まりにリセットされる)
+type LCDStatIRQInfo struct {
+	Triggered bool
+	Mode      uint8
+	Lx, Ly    uint8
+}
+
+/*
+SoCに組み込まれているため、`/cpu`にある方が正確ではある
+また、コードをシンプルにしたいのでスキャンライン単位で描画を行うことにしている(スキャンライン中にSCX,SCYやWX, WYを変更するようなゲームでは正しく描画されない場合がある)
+*/
 type PPU struct {
 	cpu             CPU
 	cycles          int64 // 遅れているサイクル数(8.38MHzのマスターサイクル単位)
 	screen          [160 * 144]color.NRGBA
-	FrameCounter    uint64
+	frameCounter    uint64
 	lx, ly          int
 	r               renderer.Renderer
-	ram             VRAM
-	DMA             *DMA
+	RAM             VRAM
+	DMA             DMA
 	lcdc, stat, lyc uint8
 	OAM             [160]uint8
 	Palette         [(4 * 8) * 2]uint16 // 4bppの8パレットが BG と OBJ　の1つずつ
@@ -49,23 +59,26 @@ type PPU struct {
 	enableLatch     bool // LCDC.7をセットしてPPUを有効にすると、次のフレームから表示が開始される そうじゃないとゴミが表示される
 	objCount        uint8
 	bgpi, obpi      uint8
+
+	// For debugging
+	StatIRQ LCDStatIRQInfo
 }
 
 func New(cpu CPU) *PPU {
 	p := &PPU{
 		cpu: cpu,
-		DMA: &DMA{},
 	}
 	return p
 }
 
 func (p *PPU) Reset() {
-	p.r = software.New(p.ram.data[:], p.Palette[:], p.OAM[:], p.cpu.IsCGBMode)
+	p.r = software.New(p.RAM.Data[:], p.Palette[:], p.OAM[:], p.cpu.IsCGBMode)
+	p.frameCounter = 0
 	p.lx, p.ly = 0, 0
 	p.stat = 0x80
-	p.ram.bank = 0
+	p.RAM.Bank = 0
 	p.objCount = 0
-	p.DMA.active, p.DMA.src, p.DMA.until = false, 0, 0
+	p.DMA.Active, p.DMA.Src, p.DMA.Until = false, 0, 0
 	p.bgpi, p.obpi = 0, 0
 	clear(p.Palette[:])
 }
@@ -77,12 +90,16 @@ func (p *PPU) SkipBIOS() {
 	copy(p.Palette[32:36], dmgPalette[:])
 }
 
+func (p *PPU) Frame() uint64 {
+	return p.frameCounter
+}
+
 func (p *PPU) Screen() []color.NRGBA {
 	return p.screen[:]
 }
 
 func (p *PPU) Run(cycles8MHz int64) {
-	if p.DMA.active {
+	if p.DMA.Active {
 		p.runDMA(cycles8MHz)
 	}
 
@@ -94,10 +111,14 @@ func (p *PPU) Run(cycles8MHz int64) {
 }
 
 func (p *PPU) step() {
-	if util.Bit(p.lcdc, 7) {
+	if (p.lcdc & (1 << 7)) != 0 {
 		if p.ly < 144 {
 			switch p.lx {
 			case 0:
+				if p.ly == 0 {
+					p.StatIRQ.Triggered = false
+					p.StatIRQ.Mode, p.StatIRQ.Lx, p.StatIRQ.Ly = 0, 0, 0
+				}
 				p.scanOAM()
 			case 80:
 				p.drawing()
@@ -122,7 +143,7 @@ func (p *PPU) incrementLY() {
 	case 154:
 		p.ly = 0
 		p.enableLatch = false
-		p.FrameCounter++
+		p.frameCounter++
 	}
 	p.compareLYC()
 }
@@ -139,37 +160,38 @@ func (p *PPU) compareLYC() {
 func (p *PPU) ColorizeDMG() {
 	copy(p.Palette[:4], cgbPalette[:])
 	copy(p.Palette[32:36], cgbPalette[4:])
+	copy(p.Palette[36:40], cgbPalette[4:])
 }
 
 func (p *PPU) runDMA(cycles8MHz int64) {
-	p.DMA.until -= cycles8MHz
-	if p.DMA.until <= 0 {
+	p.DMA.Until -= cycles8MHz
+	if p.DMA.Until <= 0 {
 		for i := uint16(0); i < 160; i++ {
-			p.Write(0xFE00+i, p.cpu.Read(p.DMA.src+i))
+			p.Write(0xFE00+i, p.cpu.Read(p.DMA.Src+i))
 		}
-		p.DMA.active = false
+		p.DMA.Active = false
 	}
 }
 
 func (p *PPU) TriggerDMA(src uint16, m int64) {
-	if !p.DMA.active {
-		p.DMA.active = true
-		p.DMA.src = src
-		p.DMA.until = 160 * m
+	if !p.DMA.Active {
+		p.DMA.Active = true
+		p.DMA.Src = src
+		p.DMA.Until = 160 * m
 	}
 }
 
 func statIRQAsserted(stat uint8) bool {
-	if util.Bit(stat, 6) && util.Bit(stat, 2) {
+	if ((stat & (1 << 6)) != 0) && ((stat & (1 << 2)) != 0) {
 		return true
 	}
 	switch stat & 0b11 {
 	case 0:
-		return util.Bit(stat, 3)
+		return ((stat & (1 << 3)) != 0)
 	case 1:
-		return util.Bit(stat, 4)
+		return ((stat & (1 << 4)) != 0)
 	case 2:
-		return util.Bit(stat, 5)
+		return ((stat & (1 << 5)) != 0)
 	}
 	return false
 }

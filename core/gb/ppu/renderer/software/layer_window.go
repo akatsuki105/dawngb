@@ -8,9 +8,9 @@ type windowLayer struct {
 
 	/*
 		ウィンドウは、機能的にはLYに似た内部ラインカウンタを保持している。
-		これはウィンドウが表示されているときのみインクリメントされる。 この行カウンタによって、現在の走査線上にレンダリングされるウィンドウの行が決定される。
+		これはウィンドウが表示されているときのみインクリメントされる。 このラインカウンタによって、現在の走査線上にレンダリングされるウィンドウの行が決定される。
 	*/
-	y uint8
+	ly uint8
 }
 
 func newWindow(r *Software) *windowLayer {
@@ -22,16 +22,21 @@ func newWindow(r *Software) *windowLayer {
 
 func (l *windowLayer) drawScanline(y int) {
 	rendered := false
+
 	if l.enable {
-		if (l.wx >= 0 && l.wx < 160) && (l.wy >= 0 && l.wy < 144) {
+		if (l.wx < 160) && (l.wy >= 0 && l.wy < 144) {
 			if y >= l.wy {
-				y = int(l.y)
+				y = int(l.ly)
+
 				tilemap := l.r.vram[l.tilemap : l.tilemap+1024]
 				attrmap := l.r.vram[(8*KB)+uint(l.tilemap) : (8*KB)+uint(l.tilemap)+1024]
-				for i := 0; i < 160; i++ {
-					if i >= l.wx {
-						rendered = true
 
+				for i := 0; i < 160; i++ {
+					if i == l.wx {
+						rendered = true // wx が 0..159 の範囲にある場合、ウィンドウが表示されているとみなす (wx=-6とかでもウィンドウは表示される?が、表示されたと見なされない; SaGa1などでタイトル画面の描画に必要)
+					}
+
+					if i >= l.wx {
 						x := i - l.wx
 
 						// 8pxずつ描画
@@ -79,6 +84,6 @@ func (l *windowLayer) drawScanline(y int) {
 
 	// ウィンドウが表示されているときのみラインカウンタをインクリメント
 	if rendered {
-		l.y++
+		l.ly++
 	}
 }

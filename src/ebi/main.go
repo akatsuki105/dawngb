@@ -22,7 +22,7 @@ const (
 
 var (
 	turbo = flag.Int("t", 1, "Emulator speed xN")
-	sound = flag.Bool("s", true, "Enable sound")
+	sound = flag.Bool("s", false, "Enable sound")
 	model = flag.Uint("m", uint(gb.MODEL_CGB), "Model: 0: DMG, 1: SGB, 2: CGB")
 )
 

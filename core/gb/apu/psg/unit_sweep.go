@@ -1,13 +1,8 @@
 package psg
 
-import (
-	"encoding/binary"
-	"io"
-)
-
 type sweep struct {
 	enabled bool
-	square  *square
+	square  *Square
 
 	// スイープ開始時の周波数(スイープ中に0xFF13と0xFF14に書き込まれて.square.periodが変更されても影響を受けないようにするためのもの)
 	periodLatch uint16
@@ -19,7 +14,7 @@ type sweep struct {
 	step uint8 // スイープ間隔(.interval)をカウントするためのカウンタ
 }
 
-func newSweep(ch *square) *sweep {
+func newSweep(ch *Square) *sweep {
 	return &sweep{
 		square: ch,
 	}
@@ -29,6 +24,10 @@ func (s *sweep) reset() {
 	s.enabled = false
 	s.periodLatch, s.interval, s.negate, s.shift = 0, 0, false, 0
 	s.step = 0
+}
+
+func (s *sweep) TurnOff() {
+	s.shift, s.negate, s.interval = 0, false, 0
 }
 
 func (s *sweep) reload() {
@@ -93,20 +92,32 @@ func (s *sweep) checkOverflow() {
 	}
 }
 
-func (s *sweep) serialize(w io.Writer) {
-	binary.Write(w, binary.LittleEndian, s.enabled)
-	binary.Write(w, binary.LittleEndian, s.periodLatch)
-	binary.Write(w, binary.LittleEndian, s.interval)
-	binary.Write(w, binary.LittleEndian, s.negate)
-	binary.Write(w, binary.LittleEndian, s.shift)
-	binary.Write(w, binary.LittleEndian, s.step)
+type SweepSnapshot struct {
+	Header         uint64
+	Enabled        bool
+	PeriodLatch    uint16
+	Shift          uint8
+	Negate         bool
+	Interval, Step uint8
+	Reserved       [7]uint8
 }
 
-func (s *sweep) deserialize(r io.Reader) {
-	binary.Read(r, binary.LittleEndian, &s.enabled)
-	binary.Read(r, binary.LittleEndian, &s.periodLatch)
-	binary.Read(r, binary.LittleEndian, &s.interval)
-	binary.Read(r, binary.LittleEndian, &s.negate)
-	binary.Read(r, binary.LittleEndian, &s.shift)
-	binary.Read(r, binary.LittleEndian, &s.step)
+func (s *sweep) CreateSnapshot() SweepSnapshot {
+	return SweepSnapshot{
+		Enabled:     s.enabled,
+		PeriodLatch: s.periodLatch,
+		Shift:       s.shift,
+		Negate:      s.negate,
+		Interval:    s.interval,
+		Step:        s.step,
+	}
+}
+
+func (s *sweep) RestoreSnapshot(snap SweepSnapshot) bool {
+	s.enabled = snap.Enabled
+	s.periodLatch = snap.PeriodLatch
+	s.shift = snap.Shift
+	s.negate = snap.Negate
+	s.interval, s.step = snap.Interval, snap.Step
+	return true
 }

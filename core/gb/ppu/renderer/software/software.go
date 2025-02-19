@@ -39,7 +39,7 @@ func New(vram []uint8, palette []rgb555, oam []uint8, isCGB func() bool) *Softwa
 
 func (s *Software) DrawScanline(y int, scanline []color.NRGBA) {
 	if y == 0 {
-		s.win.y = 0
+		s.win.ly = 0
 	}
 	for i := 0; i < 160; i++ {
 		s.bg.scanline[i].colorID = 0

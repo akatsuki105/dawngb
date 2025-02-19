@@ -1,6 +1,8 @@
 package main
 
-// #include "./libretro.h"
+/*
+#include "./libretro.h"
+*/
 import "C"
 import (
 	"bytes"
@@ -11,7 +13,6 @@ import (
 	"unsafe"
 
 	"github.com/akatsuki105/dawngb/core/gb"
-	"github.com/akatsuki105/dawngb/core/gb/cartridge"
 )
 
 const (
@@ -47,19 +48,30 @@ var (
 	}
 )
 
-var console *gb.GB
-var screen = make([]uint16, 160*144)
-var sampleBuffer = bytes.NewBuffer(make([]uint8, 0))
-var samples = [4096]uint8{}
-var systemDir = "./"
-var saveDir = "./"
-var romData = []uint8{}
+type AppState struct {
+	GB           *gb.GB
+	Screen       [160 * 144]uint16
+	ROM          []uint8
+	SampleBuffer *bytes.Buffer
+	Samples      [4096]uint8
+	SystemDir    string
+	SaveDir      string
+	BIOS         struct {
+		exists bool
+		data   []uint8
+		isCGB  bool
+	}
+	SaveStateBuffer []uint8
+	SaveStateSize   int
+}
 
-var bios = struct {
-	exists bool
-	data   []uint8
-	isCGB  bool
-}{}
+var app AppState = AppState{
+	SampleBuffer:    bytes.NewBuffer(make([]uint8, 0)),
+	SystemDir:       "./",
+	SaveDir:         "./",
+	SaveStateBuffer: make([]uint8, 0),
+	SaveStateSize:   0,
+}
 
 // Environment callback. Gives implementations a way of performing uncommon tasks. Extensible.
 //
@@ -90,7 +102,7 @@ func retro_init() {
 		cStr := C.CString("")
 		ok := bool(C.call_environ_cb(C.RETRO_ENVIRONMENT_GET_SYSTEM_DIRECTORY, unsafe.Pointer(&cStr)))
 		if ok {
-			systemDir = C.GoString(cStr)
+			app.SystemDir = C.GoString(cStr)
 		}
 	}
 
@@ -99,21 +111,21 @@ func retro_init() {
 		cStr := C.CString("")
 		ok := bool(C.call_environ_cb(C.RETRO_ENVIRONMENT_GET_SAVE_DIRECTORY, unsafe.Pointer(&cStr)))
 		if ok {
-			saveDir = C.GoString(cStr)
+			app.SaveDir = C.GoString(cStr)
 		}
 	}
 
 	// check BIOS
-	bios.exists = false
-	if systemDir != "./" {
-		if data, err := os.ReadFile(filepath.Join(systemDir, CGB_BIOS)); err == nil {
-			bios.exists = true
-			bios.data = data
-			bios.isCGB = true
-		} else if data, err := os.ReadFile(filepath.Join(systemDir, DMG_BIOS)); err == nil {
-			bios.exists = true
-			bios.data = data
-			bios.isCGB = false
+	app.BIOS.exists = false
+	if app.SystemDir != "./" {
+		if data, err := os.ReadFile(filepath.Join(app.SystemDir, CGB_BIOS)); err == nil {
+			app.BIOS.exists = true
+			app.BIOS.data = data
+			app.BIOS.isCGB = true
+		} else if data, err := os.ReadFile(filepath.Join(app.SystemDir, DMG_BIOS)); err == nil {
+			app.BIOS.exists = true
+			app.BIOS.data = data
+			app.BIOS.isCGB = false
 		}
 	}
 }
@@ -121,14 +133,12 @@ func retro_init() {
 //export retro_deinit
 func retro_deinit() {
 	retro_unload_game()
-	bios.exists = false
-	bios.data = nil
+	app.BIOS.exists = false
+	app.BIOS.data = nil
 }
 
 //export retro_api_version
-func retro_api_version() C.uint {
-	return retroApiVersion
-}
+func retro_api_version() C.uint { return retroApiVersion }
 
 //export retro_get_system_info
 func retro_get_system_info(info *C.struct_retro_system_info) {
@@ -140,11 +150,11 @@ func retro_get_system_info(info *C.struct_retro_system_info) {
 
 //export retro_get_system_av_info
 func retro_get_system_av_info(info *C.struct_retro_system_av_info) {
-	if console == nil {
+	if app.GB == nil {
 		return
 	}
-	width, height := console.Resolution()
-	info.timing.fps = C.double(59.7275)
+	width, height := app.GB.Resolution()
+	info.timing.fps = C.double(60)
 	info.timing.sample_rate = C.double(32768.0)
 
 	info.geometry.base_width = C.uint(width)
@@ -161,7 +171,8 @@ func retro_set_controller_port_device(port, device C.uint) {
 
 //export retro_reset
 func retro_reset() {
-	console.Reset(false)
+	app.GB.Reset()
+	app.GB.DirectBoot()
 }
 
 //export retro_run
@@ -172,12 +183,12 @@ func retro_run() {
 		joypadMask := uint(C.call_input_state_cb(0, C.RETRO_DEVICE_JOYPAD, 0, C.RETRO_DEVICE_ID_JOYPAD_MASK))
 		for i := 0; i < len(keymap); i++ {
 			pressed := (joypadMask>>keymap[i])&1 == 1
-			console.SetKeyInput(keymapNames[keymap[i]], pressed)
+			app.GB.SetKeyInput(keymapNames[keymap[i]], pressed)
 		}
 	} else {
 		for i := 0; i < len(keymap); i++ {
 			pressed := C.call_input_state_cb(0, C.RETRO_DEVICE_JOYPAD, 0, C.uint(keymap[i])) != 0
-			console.SetKeyInput(keymapNames[keymap[i]], pressed)
+			app.GB.SetKeyInput(keymapNames[keymap[i]], pressed)
 		}
 	}
 
@@ -186,43 +197,76 @@ func retro_run() {
 }
 
 func update() {
-	if console != nil {
-		console.RunFrame()
+	if app.GB != nil {
+		app.GB.RunFrame()
 
-		for i := 0; i < len(samples); i++ {
-			samples[i] = 0
+		for i := 0; i < len(app.Samples); i++ {
+			app.Samples[i] = 0
 		}
-		if console != nil {
-			n, err := sampleBuffer.Read(samples[:])
+		if app.GB != nil {
+			n, err := app.SampleBuffer.Read(app.Samples[:])
 			if err == nil && n >= 4 {
-				C.call_audio_batch_cb((*C.int16_t)(unsafe.Pointer(&samples[0])), C.ulong(n/4))
+				C.call_audio_batch_cb((*C.int16_t)(unsafe.Pointer(&app.Samples[0])), C.ulong(n/4))
 			}
 		}
 	}
 }
 
 func render() {
-	buffer := console.Screen()
+	buffer := app.GB.Screen()
 	for i := 0; i < len(buffer); i++ {
-		screen[i] = newRGB565(buffer[i])
+		app.Screen[i] = newRGB565(buffer[i])
 	}
 
-	width, height := console.Resolution()
-	C.call_video_cb(unsafe.Pointer(&screen[0]), C.uint(width), C.uint(height), C.ulong(width*2))
+	width, height := app.GB.Resolution()
+	C.call_video_cb(unsafe.Pointer(&app.Screen[0]), C.uint(width), C.uint(height), C.ulong(width*2))
 }
 
 //export retro_serialize_size
 func retro_serialize_size() C.size_t {
+	if app.GB != nil {
+		return C.size_t(app.SaveStateSize + len(app.Samples))
+	}
 	return 0
 }
 
 //export retro_serialize
 func retro_serialize(data unsafe.Pointer, size C.size_t) C.bool {
+	if app.GB != nil {
+		// save samples
+		for i, b := range app.Samples {
+			ptr := (*uint8)(unsafe.Add(data, i))
+			*ptr = b
+		}
+
+		buf := bytes.NewBuffer(app.SaveStateBuffer)
+		if ok := app.GB.Serialize(buf); ok {
+			for i, b := range buf.Bytes() {
+				ptr := (*uint8)(unsafe.Add(data, len(app.Samples)+i))
+				*ptr = b
+			}
+			return true
+		}
+	}
 	return false
 }
 
 //export retro_unserialize
 func retro_unserialize(data unsafe.Pointer, size C.size_t) C.bool {
+	if app.GB != nil {
+		// load samples
+		for i := 0; i < len(app.Samples); i++ {
+			ptr := (*uint8)(unsafe.Add(data, i))
+			app.Samples[i] = *ptr
+		}
+
+		buf := bytes.NewBuffer(app.SaveStateBuffer)
+		for i := 0; i < int(size)-len(app.Samples); i++ {
+			ptr := (*uint8)(unsafe.Add(data, len(app.Samples)+i))
+			buf.WriteByte(*ptr)
+		}
+		return C.bool(app.GB.Deserialize(buf))
+	}
 	return false
 }
 
@@ -235,50 +279,60 @@ func retro_load_game(info *C.struct_retro_game_info) C.bool {
 	romPath := C.GoString(info.path)
 	data, err := os.ReadFile(romPath)
 	if err != nil {
-		romData = nil
+		app.ROM = nil
 		return false
 	}
-	romData = data
+	app.ROM = data
 
 	intro := false
-	if bios.exists {
-		if bios.isCGB {
-			console = gb.New(gb.MODEL_CGB, sampleBuffer)
-			console.Load(gb.LOAD_BIOS, bios.data)
+	if app.BIOS.exists {
+		if app.BIOS.isCGB {
+			app.GB = gb.New(gb.MODEL_CGB, app.SampleBuffer)
+			app.GB.Load(gb.LOAD_BIOS, app.BIOS.data)
 			intro = true
 		} else {
 			ext := filepath.Ext(romPath)
 			if ext == ".gbc" {
-				console = gb.New(gb.MODEL_CGB, sampleBuffer) // DMGのBIOSしかない場合は、CGBでダイレクトに起動
+				app.GB = gb.New(gb.MODEL_CGB, app.SampleBuffer) // DMGのBIOSしかない場合は、CGBでダイレクトに起動
 			} else {
-				console = gb.New(gb.MODEL_DMG, sampleBuffer)
-				console.Load(gb.LOAD_BIOS, bios.data)
+				app.GB = gb.New(gb.MODEL_DMG, app.SampleBuffer)
+				app.GB.Load(gb.LOAD_BIOS, app.BIOS.data)
 				intro = true
 			}
 		}
 	} else {
-		console = gb.New(gb.MODEL_CGB, sampleBuffer)
+		app.GB = gb.New(gb.MODEL_CGB, app.SampleBuffer)
 	}
 
-	if err := console.Load(gb.LOAD_ROM, romData); err != nil {
+	if err := app.GB.Load(gb.LOAD_ROM, app.ROM); err != nil {
 		return false
 	}
-	console.Reset(intro)
-	clear(screen)
+	app.GB.Reset()
+	if !intro {
+		app.GB.DirectBoot()
+	}
+	clear(app.Screen[:])
 	loadSaveData(romPath, intro)
+
+	var buf bytes.Buffer
+	app.GB.Serialize(&buf)
+	app.SaveStateSize = buf.Len()
 
 	return true
 }
 
 func loadSaveData(romPath string, intro bool) {
-	if saveDir != "" {
+	if app.SaveDir != "" {
 		filename := filepath.Base(romPath)                    // "AA/BB/GAME.gbc" -> "GAME.gbc"
 		ext := filepath.Ext(filename)                         // "GAME.gbc" -> ".gbc"
 		savename := strings.ReplaceAll(filename, ext, ".srm") // "GAME.gbc" -> "GAME.srm"
-		data, err := os.ReadFile(filepath.Join(saveDir, savename))
+		data, err := os.ReadFile(filepath.Join(app.SaveDir, savename))
 		if err == nil {
-			console.Load(gb.LOAD_SAVE, data)
-			console.Reset(intro)
+			app.GB.Load(gb.LOAD_SAVE, data)
+			app.GB.Reset()
+			if !intro {
+				app.GB.DirectBoot()
+			}
 		}
 	}
 }
@@ -290,8 +344,12 @@ func retro_load_game_special(gameType C.uint, info unsafe.Pointer, numInfo C.siz
 
 //export retro_unload_game
 func retro_unload_game() {
-	console = nil
-	clear(screen)
+	app.GB = nil
+	app.ROM = []uint8{}
+	app.SaveStateBuffer = make([]uint8, 0)
+	app.SaveStateSize = 0
+	clear(app.Screen[:])
+	clear(app.Samples[:])
 }
 
 //export retro_get_region
@@ -299,10 +357,10 @@ func retro_get_region() C.uint { return C.RETRO_REGION_NTSC }
 
 //export retro_get_memory_data
 func retro_get_memory_data(id C.uint) unsafe.Pointer {
-	if console != nil {
+	if app.GB != nil {
 		switch id {
 		case C.RETRO_MEMORY_SAVE_RAM:
-			data, err := console.Dump(gb.DUMP_SAVE)
+			data, err := app.GB.Dump(gb.DUMP_SAVE)
 			if err == nil {
 				return unsafe.Pointer(C.CBytes(data))
 			}
@@ -313,14 +371,11 @@ func retro_get_memory_data(id C.uint) unsafe.Pointer {
 
 //export retro_get_memory_size
 func retro_get_memory_size(id C.uint) C.uint {
-	if console != nil {
+	if app.GB != nil {
 		switch id {
 		case C.RETRO_MEMORY_SAVE_RAM:
-			if len(romData) >= 0x150 {
-				ramSize, ok := cartridge.RAM_SIZES[romData[0x149]]
-				if ok {
-					return C.uint(ramSize)
-				}
+			if len(app.ROM) >= 0x150 {
+				return C.uint(app.GB.Cart.RAMSize())
 			}
 		}
 	}
