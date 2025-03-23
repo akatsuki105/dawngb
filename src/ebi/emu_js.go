@@ -18,7 +18,8 @@ func init() {
 
 func reset(this js.Value, args []js.Value) any {
 	if emu != nil {
-		emu.c.Reset(false)
+		emu.c.Reset()
+		emu.c.DirectBoot()
 	}
 	return nil
 }
@@ -53,7 +54,8 @@ func loadROM(this js.Value, args []js.Value) any {
 		rom := make([]uint8, raw.Get("length").Int())
 		js.CopyBytesToGo(rom, raw)
 		emu.LoadROM(rom)
-		emu.c.Reset(false)
+		emu.c.Reset()
+		emu.c.DirectBoot()
 	}
 	return nil
 }
@@ -66,7 +68,8 @@ func loadSave(this js.Value, args []js.Value) any {
 			newSram := make([]uint8, size)
 			js.CopyBytesToGo(newSram, args[0])
 			emu.c.Load(gb.LOAD_SAVE, newSram)
-			emu.c.Reset(false)
+			emu.c.Reset()
+			emu.c.DirectBoot()
 		}
 	}
 	return nil
