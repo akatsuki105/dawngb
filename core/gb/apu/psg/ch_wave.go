@@ -6,7 +6,7 @@ const waveBank = 2
 var volumeShift = [4]uint8{4, 0, 1, 2} // 波形は最大15なので4左シフトすれば0%
 
 // 波形メモリ音源
-type wave struct {
+type Wave struct {
 	model   uint8
 	enabled bool // NR52.2
 
@@ -30,13 +30,13 @@ type wave struct {
 	curBank uint8 // 現在演奏中のバンク、modeが1の場合は、 .bank の値と必ずしも一致しないので
 }
 
-func newWaveChannel(model uint8) *wave {
-	return &wave{
+func newWaveChannel(model uint8) *Wave {
+	return &Wave{
 		model: model,
 	}
 }
 
-func (ch *wave) Reset() {
+func (ch *Wave) Reset() {
 	ch.TurnOff()
 	ch.period, ch.freqCounter = 0, 0
 	ch.sample, ch.window = 0, 0
@@ -45,13 +45,13 @@ func (ch *wave) Reset() {
 	ch.mode, ch.Bank, ch.curBank = 0, 0, 0
 }
 
-func (ch *wave) TurnOff() {
+func (ch *Wave) TurnOff() {
 	ch.dacEnable = false
 	ch.length, ch.volume, ch.stop, ch.period = 0, 0, false, 0
 	ch.enabled = false
 }
 
-func (ch *wave) reload() {
+func (ch *Wave) reload() {
 	ch.enabled = ch.dacEnable
 	ch.freqCounter = ch.windowStepCycle() + 2
 	ch.window = 0
@@ -61,7 +61,7 @@ func (ch *wave) reload() {
 	}
 }
 
-func (ch *wave) clock256Hz() {
+func (ch *Wave) clock256Hz() {
 	if ch.stop && ch.length > 0 {
 		ch.length--
 		if ch.length == 0 {
@@ -70,7 +70,7 @@ func (ch *wave) clock256Hz() {
 	}
 }
 
-func (ch *wave) clockTimer() {
+func (ch *Wave) clockTimer() {
 	if ch.freqCounter > 0 {
 		ch.freqCounter--
 		if ch.freqCounter == 0 {
@@ -81,7 +81,7 @@ func (ch *wave) clockTimer() {
 }
 
 // GetOutput gets 4bit sample (0..15)
-func (ch *wave) GetOutput() uint8 {
+func (ch *Wave) GetOutput() uint8 {
 	if ch.enabled {
 		shift := volumeShift[ch.volume]
 		return ch.output >> shift
@@ -89,7 +89,7 @@ func (ch *wave) GetOutput() uint8 {
 	return 0
 }
 
-func (ch *wave) update() {
+func (ch *Wave) update() {
 	ch.window = (ch.window + 1) & 0x1F // 読み出す前にインクリメント(CH3のreload後に最初に読み出すのはsamples[0]の下位ニブル)
 
 	upper := (ch.window & 0x1) == 0
@@ -104,7 +104,7 @@ func (ch *wave) update() {
 	}
 }
 
-func (ch *wave) read(addr uint16) uint8 {
+func (ch *Wave) read(addr uint16) uint8 {
 	if !ch.enabled {
 		bank := uint16(0)
 		if ch.model == MODEL_GBA {
@@ -117,7 +117,7 @@ func (ch *wave) read(addr uint16) uint8 {
 	return 0xFF // AGB
 }
 
-func (ch *wave) write(addr uint16, val uint8) {
+func (ch *Wave) write(addr uint16, val uint8) {
 	if !ch.enabled {
 		bank := uint16(0)
 		if ch.model == MODEL_GBA {
@@ -129,7 +129,7 @@ func (ch *wave) write(addr uint16, val uint8) {
 	}
 }
 
-func (ch *wave) Peek(addr uint16) uint8 {
+func (ch *Wave) Peek(addr uint16) uint8 {
 	bank := uint16(0)
 	if ch.model == MODEL_GBA {
 		bank = uint16(ch.curBank) * 16
@@ -137,7 +137,7 @@ func (ch *wave) Peek(addr uint16) uint8 {
 	return ch.RAM[bank|(addr&0xF)]
 }
 
-func (ch *wave) windowStepCycle() uint16 {
+func (ch *Wave) windowStepCycle() uint16 {
 	return 2 * (2048 - ch.period)
 }
 
@@ -156,7 +156,7 @@ type WaveSnapshot struct {
 	Reserved            [16]uint8
 }
 
-func (ch *wave) CreateSnapshot() WaveSnapshot {
+func (ch *Wave) CreateSnapshot() WaveSnapshot {
 	snap := WaveSnapshot{
 		Enabled:     ch.enabled,
 		DAC:         ch.dacEnable,
@@ -176,7 +176,7 @@ func (ch *wave) CreateSnapshot() WaveSnapshot {
 	return snap
 }
 
-func (ch *wave) RestoreSnapshot(snap WaveSnapshot) bool {
+func (ch *Wave) RestoreSnapshot(snap WaveSnapshot) bool {
 	ch.enabled = snap.Enabled
 	ch.dacEnable = snap.DAC
 	ch.length, ch.volume, ch.stop, ch.period = snap.Length, snap.Volume, snap.Stop, snap.Period

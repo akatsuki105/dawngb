@@ -13,7 +13,7 @@ type PSG struct {
 	Enabled bool // NR52.7
 
 	CH1, CH2 *Square
-	CH3      *wave
+	CH3      *Wave
 	CH4      *Noise
 
 	sequencerCounter int16 // (フレームシーケンサの)512Hzを生み出すためのカウンタ (ref: https://gbdev.io/pandocs/Audio_details.html#div-apu)
