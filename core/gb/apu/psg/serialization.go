@@ -18,7 +18,7 @@ type Snapshot struct {
 func (p *PSG) CreateSnapshot() Snapshot {
 	s := Snapshot{
 		Model:            p.model,
-		Enabled:          p.enabled,
+		Enabled:          p.Enabled,
 		CH1:              p.CH1.CreateSnapshot(),
 		CH2:              p.CH2.CreateSnapshot(),
 		CH3:              p.CH3.CreateSnapshot(),
@@ -36,7 +36,7 @@ func (p *PSG) CreateSnapshot() Snapshot {
 
 func (p *PSG) RestoreSnapshot(snap Snapshot) bool {
 	p.model = snap.Model
-	p.enabled = snap.Enabled
+	p.Enabled = snap.Enabled
 	p.CH1.RestoreSnapshot(snap.CH1)
 	p.CH2.RestoreSnapshot(snap.CH2)
 	p.CH3.RestoreSnapshot(snap.CH3)

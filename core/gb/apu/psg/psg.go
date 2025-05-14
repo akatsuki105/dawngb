@@ -10,7 +10,7 @@ const (
 type PSG struct {
 	model uint8
 
-	enabled bool // NR52.7
+	Enabled bool // NR52.7
 
 	CH1, CH2 *Square
 	CH3      *wave
@@ -35,7 +35,7 @@ func New(model uint8) *PSG {
 }
 
 func (a *PSG) Reset() {
-	a.enabled = false
+	a.Enabled = false
 	a.CH1.Reset()
 	a.CH2.Reset()
 	a.CH3.Reset()
@@ -72,7 +72,7 @@ func (a *PSG) SkipBIOS() {
 
 // 4MHz で1サイクル進める
 func (a *PSG) Step() {
-	if a.enabled {
+	if a.Enabled {
 		if a.sequencerCounter > 0 {
 			a.sequencerCounter--
 		} else {
@@ -109,7 +109,7 @@ func (a *PSG) Step() {
 func (a *PSG) Sample(mask uint8) (lsample, rsample uint8) {
 	left, right := uint8(0), uint8(0)
 
-	if a.enabled {
+	if a.Enabled {
 		ch1, ch2, ch3, ch4 := a.CH1.GetOutput(), a.CH2.GetOutput(), a.CH3.GetOutput(), a.CH4.GetOutput()
 		mask1, mask2, mask3, mask4 := (mask&(1<<0)) != 0, (mask&(1<<1)) != 0, (mask&(1<<2)) != 0, (mask&(1<<3)) != 0
 		if mask1 && a.leftEnables[0] {

@@ -41,7 +41,7 @@ func (a *PSG) Read(addr uint16, peek bool) uint8 {
 	switch addr {
 	case NR52:
 		val := uint8(0)
-		val = setBit(val, 7, a.enabled)
+		val = setBit(val, 7, a.Enabled)
 		val = setBit(val, 0, a.CH1.enabled)
 		val = setBit(val, 1, a.CH2.enabled)
 		val = setBit(val, 2, a.CH3.enabled)
@@ -60,9 +60,9 @@ func (a *PSG) Read(addr uint16, peek bool) uint8 {
 
 func (a *PSG) Write(addr uint16, val uint8) {
 	if addr == NR52 {
-		prev := a.enabled
-		a.enabled = getBit(val, 7)
-		if prev && !a.enabled { // APUがオンからオフになったとき
+		prev := a.Enabled
+		a.Enabled = getBit(val, 7)
+		if prev && !a.Enabled { // APUがオンからオフになったとき
 			a.rightVolume, a.leftVolume = 0, 0
 			a.rightEnables[0], a.rightEnables[1], a.rightEnables[2], a.rightEnables[3] = false, false, false, false
 			a.leftEnables[0], a.leftEnables[1], a.leftEnables[2], a.leftEnables[3] = false, false, false, false
@@ -74,7 +74,7 @@ func (a *PSG) Write(addr uint16, val uint8) {
 		return
 	}
 
-	if !a.enabled {
+	if !a.Enabled {
 		return
 	}
 
