@@ -1,14 +1,16 @@
 package psg
 
+type Model uint8
+
 // .model
 const (
-	MODEL_GB = iota
+	MODEL_GB Model = iota
 	MODEL_GBA
 )
 
-// GB/GBA の PSG (Programmable Sound Generator) ユニット, 4.19MHz で動作する (GB/GBA両方)
+// GB/GBA の PSG (Programmable Sound Generator) ユニット
 type PSG struct {
-	model uint8
+	model Model
 
 	Enabled bool // NR52.7
 
@@ -24,7 +26,7 @@ type PSG struct {
 	leftEnables, rightEnables [4]bool     // NR51, ch1, ch2, ch3, ch4 の左右出力を有効にするかどうか
 }
 
-func New(model uint8) *PSG {
+func New(model Model) *PSG {
 	return &PSG{
 		model: model,
 		CH1:   newSquareChannel(true),
@@ -70,32 +72,14 @@ func (a *PSG) SkipBIOS() {
 	a.Write(NR52, 0xF1)
 }
 
-// 4MHz で1サイクル進める
+// 2MHz
 func (a *PSG) Step() {
 	if a.Enabled {
 		if a.sequencerCounter > 0 {
 			a.sequencerCounter--
 		} else {
-			is64Hz := a.sequencerStep == 7                                                                          // Envelope sweep
-			is128Hz := a.sequencerStep == 2 || a.sequencerStep == 6                                                 // CH1 freq sweep
-			is256Hz := a.sequencerStep == 0 || a.sequencerStep == 2 || a.sequencerStep == 4 || a.sequencerStep == 6 // Sound length
-
-			if is256Hz {
-				a.CH1.clock256Hz()
-				a.CH2.clock256Hz()
-				a.CH3.clock256Hz()
-				a.CH4.clock256Hz()
-			}
-			if is128Hz {
-				a.CH1.clock128Hz()
-			}
-			if is64Hz {
-				a.CH1.clock64Hz()
-				a.CH2.clock64Hz()
-				a.CH4.clock64Hz()
-			}
-			a.sequencerStep = (a.sequencerStep + 1) & 7
-			a.sequencerCounter = 8192 // 512Hz = 4194304/8192
+			a.Sequence()
+			a.sequencerCounter = 4096 // 512Hz = 2097152/8192
 		}
 
 		a.CH1.clockTimer()
@@ -103,6 +87,29 @@ func (a *PSG) Step() {
 		a.CH3.clockTimer()
 		a.CH4.clockTimer()
 	}
+}
+
+// 512Hz
+func (a *PSG) Sequence() {
+	is64Hz := a.sequencerStep == 7                                                                          // Envelope sweep
+	is128Hz := a.sequencerStep == 2 || a.sequencerStep == 6                                                 // CH1 freq sweep
+	is256Hz := a.sequencerStep == 0 || a.sequencerStep == 2 || a.sequencerStep == 4 || a.sequencerStep == 6 // Sound length
+
+	if is256Hz {
+		a.CH1.clock256Hz()
+		a.CH2.clock256Hz()
+		a.CH3.clock256Hz()
+		a.CH4.clock256Hz()
+	}
+	if is128Hz {
+		a.CH1.clock128Hz()
+	}
+	if is64Hz {
+		a.CH1.clock64Hz()
+		a.CH2.clock64Hz()
+		a.CH4.clock64Hz()
+	}
+	a.sequencerStep = (a.sequencerStep + 1) & 7
 }
 
 // 0..63 の値を返す

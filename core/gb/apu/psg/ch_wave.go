@@ -7,7 +7,7 @@ var volumeShift = [4]uint8{4, 0, 1, 2} // 波形は最大15なので4左シフ�
 
 // 波形メモリ音源
 type Wave struct {
-	model   uint8
+	model   Model
 	enabled bool // NR52.2
 
 	dacEnable bool   // NR30.7
@@ -30,7 +30,7 @@ type Wave struct {
 	curBank uint8 // 現在演奏中のバンク、modeが1の場合は、 .bank の値と必ずしも一致しないので
 }
 
-func newWaveChannel(model uint8) *Wave {
+func newWaveChannel(model Model) *Wave {
 	return &Wave{
 		model: model,
 	}
@@ -138,7 +138,7 @@ func (ch *Wave) Peek(addr uint16) uint8 {
 }
 
 func (ch *Wave) windowStepCycle() uint16 {
-	return 2 * (2048 - ch.period)
+	return 1 * (2048 - ch.period)
 }
 
 type WaveSnapshot struct {

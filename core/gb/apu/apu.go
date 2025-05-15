@@ -40,7 +40,7 @@ func (a *APU) Reset() {
 func (a *APU) Run(cycles8MHz int64) {
 	for i := int64(0); i < cycles8MHz; i++ {
 		a.cycles++
-		if a.cycles%2 == 0 {
+		if a.cycles&0b11 == 0 { // 2MHz
 			a.PSG.Step()
 		}
 		if a.cycles%256 == 0 { // 32768Hzにダウンサンプリングしたい = 32768Hzごとにサンプルを生成したい = 256マスターサイクルごとにサンプルを生成する (8MHz / 32768Hz = 256)

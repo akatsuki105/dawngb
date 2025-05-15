@@ -100,6 +100,7 @@ func (ch *Noise) update() {
 
 var noisePeriodTable = []uint8{4, 8, 16, 24, 32, 40, 48, 56}
 
+// 1ステップの長さを(2MHzの)サイクル数で返す
 func (ch *Noise) calcFreqency() uint32 {
 	return uint32(noisePeriodTable[ch.divisor]) << ch.octave
 }

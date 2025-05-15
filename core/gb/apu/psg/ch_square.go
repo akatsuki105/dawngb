@@ -113,11 +113,9 @@ func (ch *Square) GetOutput() uint8 {
 	return 0
 }
 
-// デューティ比の1ステップの長さをAPUサイクル数で返す
+// デューティ比の1ステップの長さを(2MHzの)サイクル数で返す
 func (ch *Square) dutyStepCycle() uint16 {
-	// hz := (1048576 / (2048 - ch.period)) // freqency
-	// return 4194304 / hz
-	return 4 * (2048 - ch.period)
+	return 2 * (2048 - ch.period)
 }
 
 func (ch *Square) dacEnable() bool {
