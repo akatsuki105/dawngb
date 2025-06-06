@@ -26,21 +26,20 @@ type CPU struct {
 	DMA              *DMA
 	joypad           *joypad
 	serial           *serial
-	bios             BIOS
+	BIOS             BIOS
 	HRAM             [0x7F]uint8
-	halted           bool
+	Halted           bool
 	IE, IF           uint8
-	key0             uint8 // FF4C
-	key1             uint8 // FF4D
-	ff72, ff73, ff74 uint8
+	Key0, Key1       uint8 // FF4C, FF4D
+	FF72, FF73, FF74 uint8
 	Usage            uint32 // フレーム中のCPU使用率(haltしてないときのみカウントしたサイクル数)
 	Debugger         debugger.Debugger
 }
 
 // a.k.a. Boot ROM
 type BIOS struct {
-	ff50 bool
-	data []uint8
+	FF50 bool
+	Data []uint8
 }
 
 func New(isCGB bool, bus sm83.Bus) *CPU {
@@ -65,15 +64,15 @@ func (c *CPU) Reset() {
 	c.joypad.reset()
 	c.serial.reset()
 	clear(c.HRAM[:])
-	c.halted = false
+	c.Halted = false
 	c.IE, c.IF = 0, 0
-	c.bios.ff50 = true
-	c.key0, c.key1 = 0, 0
-	c.ff72, c.ff73, c.ff74 = 0, 0, 0
+	c.BIOS.FF50 = true
+	c.Key0, c.Key1 = 0, 0
+	c.FF72, c.FF73, c.FF74 = 0, 0, 0
 }
 
 func (c *CPU) SkipBIOS() {
-	c.bios.ff50 = false
+	c.BIOS.FF50 = false
 	c.timer.tac = 0xF8
 	c.joypad.write(0x30)
 	c.joypad.write(0xCF)
@@ -101,35 +100,35 @@ func (c *CPU) wait(n int64) {
 }
 
 func (c *CPU) LoadBIOS(bios []uint8) error {
-	c.bios.ff50 = false
+	c.BIOS.FF50 = false
 
 	switch len(bios) {
 	case 256: // DMG, MGB, SGB
-		c.bios.data = make([]uint8, 256)
-		copy(c.bios.data[:], bios)
+		c.BIOS.Data = make([]uint8, 256)
+		copy(c.BIOS.Data[:], bios)
 	case 2048: // CGB, AGB
-		c.bios.data = make([]uint8, 2048)
-		copy(c.bios.data[:], bios)
+		c.BIOS.Data = make([]uint8, 2048)
+		copy(c.BIOS.Data[:], bios)
 	case 2048 + 256: // CGB, AGB (0x100..200 is padded)
-		c.bios.data = make([]uint8, 2048)
-		copy(c.bios.data[:256], bios[:256]) // 0x000..100
-		copy(c.bios.data[256:], bios[512:]) // 0x200..900
+		c.BIOS.Data = make([]uint8, 2048)
+		copy(c.BIOS.Data[:256], bios[:256]) // 0x000..100
+		copy(c.BIOS.Data[256:], bios[512:]) // 0x200..900
 	default:
 		return errors.New("invalid BIOS size")
 	}
 
-	c.bios.ff50 = true
+	c.BIOS.FF50 = true
 	return nil
 }
 
 func (c *CPU) stop() {
-	if c.key1&(1<<0) != 0 {
+	if c.Key1&(1<<0) != 0 {
 		if c.Clock == 4 {
 			c.Clock = 8
 		} else {
 			c.Clock = 4
 		}
-		c.key1 &^= 1 << 0
+		c.Key1 &^= 1 << 0
 	}
 }
 
@@ -157,14 +156,14 @@ func (c *CPU) step() int64 {
 
 	irqID := c.checkInterrupt()
 	if irqID >= 0 {
-		c.halted = false
+		c.Halted = false
 		if c.IME {
 			c.IF &^= uint8(1 << irqID)
 			c.Interrupt(irqID)
 		} else {
 			c.instruction()
 		}
-	} else if c.halted {
+	} else if c.Halted {
 		c.Cycles++
 	} else {
 		c.instruction()
@@ -199,14 +198,14 @@ func (c *CPU) checkInterrupt() int {
 
 func (c *CPU) halt() {
 	if c.IME {
-		c.halted = true
+		c.Halted = true
 	} else {
 		if c.checkInterrupt() < 0 {
-			c.halted = true
+			c.Halted = true
 		}
 	}
 }
 
 func (c *CPU) IsCGBMode() bool {
-	return c.isCGB && c.key0 != 4
+	return c.isCGB && c.Key0 != 4
 }

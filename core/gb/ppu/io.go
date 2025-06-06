@@ -29,10 +29,10 @@ func (p *PPU) Read(addr uint16) uint8 {
 		return 0xFE | (p.RAM.Bank & 1)
 	case 0xFF69:
 		// ゲームによってはパレットの値を読み取ることがある(ロックマンX1など)
-		return uint8(p.Palette[(p.bgpi>>1)] >> ((p.bgpi & 1) * 8))
+		return uint8(p.Palette[(p.BGPI>>1)] >> ((p.BGPI & 1) * 8))
 	case 0xFF6B:
 		// ゲームによってはパレットの値を読み取ることがある(ロックマンX1など)
-		return uint8(p.Palette[32+(p.obpi>>1)] >> ((p.obpi & 1) * 8))
+		return uint8(p.Palette[32+(p.OBPI>>1)] >> ((p.OBPI & 1) * 8))
 	default:
 		if addr >= 0xFF40 && addr < 0xFF70 {
 			return p.ioreg[addr-0xFF40]
@@ -98,11 +98,11 @@ func (p *PPU) Write(addr uint16, val uint8) {
 			p.RAM.Bank = 0
 		}
 	case 0xFF68:
-		p.bgpi = val
+		p.BGPI = val
 	case 0xFF69:
 		p.setBGPD(val)
 	case 0xFF6A:
-		p.obpi = val
+		p.OBPI = val
 	case 0xFF6B:
 		p.setOBPD(val)
 	}
@@ -125,11 +125,11 @@ func (p *PPU) canAccessVRAM() bool {
 }
 
 func (p *PPU) setBGPD(val uint8) {
-	palID := int((p.bgpi & 0x3F) / 8)
-	colorID := int(p.bgpi&7) >> 1
+	palID := int((p.BGPI & 0x3F) / 8)
+	colorID := int(p.BGPI&7) >> 1
 	idx := ((palID * 4) + colorID) & 0x1F
 	rgb555 := p.Palette[idx]
-	isHi := (p.bgpi & 1) == 1
+	isHi := (p.BGPI & 1) == 1
 	if isHi {
 		rgb555 = (rgb555 & 0x00FF) | (uint16(val) << 8)
 	} else {
@@ -137,19 +137,19 @@ func (p *PPU) setBGPD(val uint8) {
 	}
 	p.Palette[idx] = rgb555
 
-	if (p.bgpi & (1 << 7)) != 0 {
-		bgpi := (p.bgpi + 1) & 0x3F
-		p.bgpi &= 0xC0
-		p.bgpi |= bgpi
+	if (p.BGPI & (1 << 7)) != 0 {
+		bgpi := (p.BGPI + 1) & 0x3F
+		p.BGPI &= 0xC0
+		p.BGPI |= bgpi
 	}
 }
 
 func (p *PPU) setOBPD(val uint8) {
-	palID := int((p.obpi & 0x3F) / 8)
-	colorID := int(p.obpi&7) >> 1
+	palID := int((p.OBPI & 0x3F) / 8)
+	colorID := int(p.OBPI&7) >> 1
 	idx := 32 | ((palID*4 + colorID) & 0x1F)
 	rgb555 := p.Palette[idx]
-	isHi := (p.obpi & 1) == 1
+	isHi := (p.OBPI & 1) == 1
 	if isHi {
 		rgb555 = (rgb555 & 0x00FF) | (uint16(val) << 8)
 	} else {
@@ -157,9 +157,9 @@ func (p *PPU) setOBPD(val uint8) {
 	}
 	p.Palette[idx] = rgb555
 
-	if (p.obpi & (1 << 7)) != 0 {
-		obpi := (p.obpi + 1) & 0x3F
-		p.obpi &= 0xC0
-		p.obpi |= obpi
+	if (p.OBPI & (1 << 7)) != 0 {
+		obpi := (p.OBPI + 1) & 0x3F
+		p.OBPI &= 0xC0
+		p.OBPI |= obpi
 	}
 }

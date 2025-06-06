@@ -34,16 +34,16 @@ func (c *CPU) CreateSnapshot() Snapshot {
 		JoyP:   c.joypad.joyp,
 		Inputs: c.joypad.inputs,
 		Serial: c.serial.CreateSnapshot(),
-		FF50:   c.bios.ff50,
+		FF50:   c.BIOS.FF50,
 		HRAM:   c.HRAM,
-		Halted: c.halted,
+		Halted: c.Halted,
 		IE:     c.IE,
 		IF:     c.IF,
-		Key0:   c.key0,
-		Key1:   c.key1,
-		FF72:   c.ff72,
-		FF73:   c.ff73,
-		FF74:   c.ff74,
+		Key0:   c.Key0,
+		Key1:   c.Key1,
+		FF72:   c.FF72,
+		FF73:   c.FF73,
+		FF74:   c.FF74,
 	}
 	return s
 }
@@ -57,10 +57,10 @@ func (c *CPU) RestoreSnapshot(snap Snapshot) bool {
 	c.DMA.RestoreSnapshot(snap.DMA)
 	c.joypad.p14, c.joypad.p15, c.joypad.joyp, c.joypad.inputs = snap.P14, snap.P15, snap.JoyP, snap.Inputs
 	c.serial.RestoreSnapshot(snap.Serial)
-	c.bios.ff50 = snap.FF50
+	c.BIOS.FF50 = snap.FF50
 	copy(c.HRAM[:], snap.HRAM[:])
-	c.halted = snap.Halted
-	c.IE, c.IF, c.key0, c.key1 = snap.IE, snap.IF, snap.Key0, snap.Key1
-	c.ff72, c.ff73, c.ff74 = snap.FF72, snap.FF73, snap.FF74
+	c.Halted = snap.Halted
+	c.IE, c.IF, c.Key0, c.Key1 = snap.IE, snap.IF, snap.Key0, snap.Key1
+	c.FF72, c.FF73, c.FF74 = snap.FF72, snap.FF73, snap.FF74
 	return true
 }

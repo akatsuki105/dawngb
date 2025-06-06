@@ -20,7 +20,7 @@ type Snapshot struct {
 func (p *PPU) CreateSnapshot() Snapshot {
 	s := Snapshot{
 		Cycles:      p.cycles,
-		Frames:      p.frameCounter,
+		Frames:      p.Frame,
 		Lx:          int16(p.lx),
 		Ly:          int16(p.ly),
 		VRAM:        p.RAM,
@@ -33,15 +33,15 @@ func (p *PPU) CreateSnapshot() Snapshot {
 		IOReg:       p.ioreg,
 		EnableLatch: p.enableLatch,
 		ObjCount:    p.objCount,
-		BGPI:        p.bgpi,
-		OBPI:        p.obpi,
+		BGPI:        p.BGPI,
+		OBPI:        p.OBPI,
 	}
 	return s
 }
 
 func (p *PPU) RestoreSnapshot(snap Snapshot) bool {
 	p.cycles = snap.Cycles
-	p.frameCounter = snap.Frames
+	p.Frame = snap.Frames
 	p.lx, p.ly = int(snap.Lx), int(snap.Ly)
 	copy(p.RAM.Data[:], snap.VRAM.Data[:])
 	p.RAM.Bank = snap.VRAM.Bank
@@ -60,6 +60,6 @@ func (p *PPU) RestoreSnapshot(snap Snapshot) bool {
 	p.r.SetOBP(1, p.ioreg[0x9])
 	p.enableLatch = snap.EnableLatch
 	p.objCount = snap.ObjCount
-	p.bgpi, p.obpi = snap.BGPI, snap.OBPI
+	p.BGPI, p.OBPI = snap.BGPI, snap.OBPI
 	return true
 }

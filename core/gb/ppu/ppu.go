@@ -47,7 +47,7 @@ type PPU struct {
 	cpu             CPU
 	cycles          int64 // 遅れているサイクル数(8.38MHzのマスターサイクル単位)
 	screen          [160 * 144]color.NRGBA
-	frameCounter    uint64
+	Frame           uint64
 	lx, ly          int
 	r               renderer.Renderer
 	RAM             VRAM
@@ -58,7 +58,7 @@ type PPU struct {
 	ioreg           [0x30]uint8
 	enableLatch     bool // LCDC.7をセットしてPPUを有効にすると、次のフレームから表示が開始される そうじゃないとゴミが表示される
 	objCount        uint8
-	bgpi, obpi      uint8
+	BGPI, OBPI      uint8
 
 	// For debugging
 	StatIRQ LCDStatIRQInfo
@@ -73,13 +73,13 @@ func New(cpu CPU) *PPU {
 
 func (p *PPU) Reset() {
 	p.r = software.New(p.RAM.Data[:], p.Palette[:], p.OAM[:], p.cpu.IsCGBMode)
-	p.frameCounter = 0
+	p.Frame = 0
 	p.lx, p.ly = 0, 0
 	p.stat = 0x80
 	p.RAM.Bank = 0
 	p.objCount = 0
 	p.DMA.Active, p.DMA.Src, p.DMA.Until = false, 0, 0
-	p.bgpi, p.obpi = 0, 0
+	p.BGPI, p.OBPI = 0, 0
 	clear(p.Palette[:])
 }
 
@@ -88,10 +88,6 @@ func (p *PPU) SkipBIOS() {
 	p.Write(0xFF47, 0xFC) // BGP
 	copy(p.Palette[:4], dmgPalette[:])
 	copy(p.Palette[32:36], dmgPalette[:])
-}
-
-func (p *PPU) Frame() uint64 {
-	return p.frameCounter
 }
 
 func (p *PPU) Screen() []color.NRGBA {
@@ -143,7 +139,7 @@ func (p *PPU) incrementLY() {
 	case 154:
 		p.ly = 0
 		p.enableLatch = false
-		p.frameCounter++
+		p.Frame++
 	}
 	p.compareLYC()
 }

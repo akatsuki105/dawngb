@@ -187,8 +187,8 @@ func (g *GB) RunFrame() {
 		const FRAME = 70224 * ppu.CYCLE
 		start := g.CPU.Cycles
 
-		frame := g.PPU.Frame()
-		for frame == g.PPU.Frame() && ((g.CPU.Cycles - start) < FRAME) {
+		frame := g.PPU.Frame
+		for frame == g.PPU.Frame && ((g.CPU.Cycles - start) < FRAME) {
 			g.step()
 		}
 		g.APU.FlushSamples()
