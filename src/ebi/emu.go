@@ -59,7 +59,7 @@ func createEmu(model uint8) *Emu {
 	<-readyChan
 	e.music = context.NewPlayer(e.sampleBuffer)
 	e.music.SetVolume(e.volume)
-	e.music.SetBufferSize(8192)
+	e.music.SetBufferSize(e.sampleBuffer.Cap())
 
 	emu = e
 	return e
