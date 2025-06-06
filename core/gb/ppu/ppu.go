@@ -3,9 +3,9 @@ package ppu
 import (
 	"image/color"
 
+	"github.com/akatsuki105/dawngb/core/gb/internal"
 	"github.com/akatsuki105/dawngb/core/gb/ppu/renderer"
 	"github.com/akatsuki105/dawngb/core/gb/ppu/renderer/software"
-	"github.com/akatsuki105/dawngb/util"
 )
 
 const KB = 1024
@@ -150,7 +150,7 @@ func (p *PPU) incrementLY() {
 
 func (p *PPU) compareLYC() {
 	oldStat := p.stat
-	p.stat = util.SetBit(p.stat, 2, p.ly == int(p.lyc))
+	p.stat = internal.SetBit(p.stat, 2, p.ly == int(p.lyc))
 	if !statIRQAsserted(oldStat) && statIRQAsserted(p.stat) {
 		p.cpu.IRQ(1)
 	}

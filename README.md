@@ -42,8 +42,7 @@ Key mapping is as follows:
 ```sh
 .
 ├── core  # Emulator core
-├── src   # Frontend
-└── util  # Utility (should be renamed to "internal" in the future)
+└── src   # Frontend
 ```
 
 ## Accuracy

@@ -1,7 +1,7 @@
 package cartridge
 
 import (
-	"github.com/akatsuki105/dawngb/util"
+	"github.com/akatsuki105/dawngb/core/gb/internal"
 )
 
 type time struct {
@@ -65,9 +65,9 @@ func (m *MBC3) read(addr uint16) uint8 {
 				return uint8(m.rtc.latch.day & 0xFF)
 			case 0xC:
 				val := uint8(0x0)
-				val = util.SetBit(val, 0, m.rtc.latch.day >= 0x100)
-				val = util.SetBit(val, 6, !m.rtc.enabled)
-				val = util.SetBit(val, 7, m.rtc.latch.dayCarry)
+				val = internal.SetBit(val, 0, m.rtc.latch.day >= 0x100)
+				val = internal.SetBit(val, 6, !m.rtc.enabled)
+				val = internal.SetBit(val, 7, m.rtc.latch.dayCarry)
 				return val
 			}
 		}
@@ -104,8 +104,8 @@ func (m *MBC3) write(addr uint16, val uint8) {
 				case 0xC:
 					m.rtc.time.day &= 0xFF
 					m.rtc.time.day |= uint16(val&0x1) << 8
-					m.rtc.enabled = !util.Bit(val, 6)
-					m.rtc.time.dayCarry = util.Bit(val, 7)
+					m.rtc.enabled = !internal.Bit(val, 6)
+					m.rtc.time.dayCarry = internal.Bit(val, 7)
 				}
 			}
 		}

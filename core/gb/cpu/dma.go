@@ -2,7 +2,7 @@ package cpu
 
 import (
 	"github.com/akatsuki105/dawngb/core/gb/cpu/sm83"
-	"github.com/akatsuki105/dawngb/util"
+	"github.com/akatsuki105/dawngb/core/gb/internal"
 )
 
 const (
@@ -45,7 +45,7 @@ func (d *DMA) skipBIOS() {
 func (d *DMA) Read(addr uint16) uint8 {
 	val := uint8(0xFF)
 	if addr == 0xFF55 {
-		val = util.SetBit(val, 7, d.completed)
+		val = internal.SetBit(val, 7, d.completed)
 		length := uint8(((d.length / 16) - 1) & 0x7F)
 		val |= length
 	}
