@@ -25,9 +25,9 @@ func (p *PPU) CreateSnapshot() Snapshot {
 		Ly:          int16(p.ly),
 		VRAM:        p.RAM,
 		DMA:         p.DMA,
-		LCDC:        p.lcdc,
-		STAT:        p.stat,
-		LYC:         p.lyc,
+		LCDC:        p.LCDC,
+		STAT:        p.STAT,
+		LYC:         p.LYC,
 		OAM:         p.OAM,
 		Palette:     p.Palette,
 		IOReg:       p.ioreg,
@@ -46,8 +46,8 @@ func (p *PPU) RestoreSnapshot(snap Snapshot) bool {
 	copy(p.RAM.Data[:], snap.VRAM.Data[:])
 	p.RAM.Bank = snap.VRAM.Bank
 	p.DMA.Active, p.DMA.Src, p.DMA.Until = snap.DMA.Active, snap.DMA.Src, snap.DMA.Until
-	p.lcdc, p.stat, p.lyc = snap.LCDC, snap.STAT, snap.LYC
-	p.r.SetLCDC(p.lcdc)
+	p.LCDC, p.STAT, p.LYC = snap.LCDC, snap.STAT, snap.LYC
+	p.r.SetLCDC(p.LCDC)
 	copy(p.OAM[:], snap.OAM[:])
 	copy(p.Palette[:], snap.Palette[:])
 	copy(p.ioreg[:], snap.IOReg[:])

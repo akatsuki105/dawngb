@@ -27,13 +27,13 @@ func (c *CPU) CreateSnapshot() Snapshot {
 		Cycles: c.Cycles,
 		SM83:   c.SM83.CreateSnapshot(),
 		Clock:  c.Clock,
-		Timer:  c.timer.CreateSnapshot(),
+		Timer:  c.Timer.CreateSnapshot(),
 		DMA:    c.DMA.CreateSnapshot(),
-		P14:    c.joypad.p14,
-		P15:    c.joypad.p15,
-		JoyP:   c.joypad.joyp,
-		Inputs: c.joypad.inputs,
-		Serial: c.serial.CreateSnapshot(),
+		P14:    c.Joypad.P14,
+		P15:    c.Joypad.P15,
+		JoyP:   c.Joypad.JOYP,
+		Inputs: c.Joypad.inputs,
+		Serial: c.Serial.CreateSnapshot(),
 		FF50:   c.BIOS.FF50,
 		HRAM:   c.HRAM,
 		Halted: c.Halted,
@@ -53,10 +53,10 @@ func (c *CPU) RestoreSnapshot(snap Snapshot) bool {
 	c.Cycles = snap.Cycles
 	c.SM83.RestoreSnapshot(snap.SM83)
 	c.Clock = snap.Clock
-	c.timer.RestoreSnapshot(snap.Timer)
+	c.Timer.RestoreSnapshot(snap.Timer)
 	c.DMA.RestoreSnapshot(snap.DMA)
-	c.joypad.p14, c.joypad.p15, c.joypad.joyp, c.joypad.inputs = snap.P14, snap.P15, snap.JoyP, snap.Inputs
-	c.serial.RestoreSnapshot(snap.Serial)
+	c.Joypad.P14, c.Joypad.P15, c.Joypad.JOYP, c.Joypad.inputs = snap.P14, snap.P15, snap.JoyP, snap.Inputs
+	c.Serial.RestoreSnapshot(snap.Serial)
 	c.BIOS.FF50 = snap.FF50
 	copy(c.HRAM[:], snap.HRAM[:])
 	c.Halted = snap.Halted

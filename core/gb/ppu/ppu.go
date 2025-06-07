@@ -52,7 +52,7 @@ type PPU struct {
 	r               renderer.Renderer
 	RAM             VRAM
 	DMA             DMA
-	lcdc, stat, lyc uint8
+	LCDC, STAT, LYC uint8
 	OAM             [160]uint8
 	Palette         [(4 * 8) * 2]uint16 // 4bppの8パレットが BG と OBJ　の1つずつ
 	ioreg           [0x30]uint8
@@ -75,7 +75,7 @@ func (p *PPU) Reset() {
 	p.r = software.New(p.RAM.Data[:], p.Palette[:], p.OAM[:], p.cpu.IsCGBMode)
 	p.Frame = 0
 	p.lx, p.ly = 0, 0
-	p.stat = 0x80
+	p.STAT = 0x80
 	p.RAM.Bank = 0
 	p.objCount = 0
 	p.DMA.Active, p.DMA.Src, p.DMA.Until = false, 0, 0
@@ -107,7 +107,7 @@ func (p *PPU) Run(cycles8MHz int64) {
 }
 
 func (p *PPU) step() {
-	if (p.lcdc & (1 << 7)) != 0 {
+	if (p.LCDC & (1 << 7)) != 0 {
 		if p.ly < 144 {
 			switch p.lx {
 			case 0:
@@ -145,9 +145,9 @@ func (p *PPU) incrementLY() {
 }
 
 func (p *PPU) compareLYC() {
-	oldStat := p.stat
-	p.stat = internal.SetBit(p.stat, 2, p.ly == int(p.lyc))
-	if !statIRQAsserted(oldStat) && statIRQAsserted(p.stat) {
+	oldStat := p.STAT
+	p.STAT = internal.SetBit(p.STAT, 2, p.ly == int(p.LYC))
+	if !statIRQAsserted(oldStat) && statIRQAsserted(p.STAT) {
 		p.cpu.IRQ(1)
 	}
 }

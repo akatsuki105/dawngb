@@ -2,7 +2,7 @@ package cpu
 
 var timaClock = [4]int64{64, 1, 4, 16}
 
-type timer struct {
+type Timer struct {
 	irq            func(n int)
 	clock          *int64
 	cycles         int64 // CPUから見て遅れているマスターサイクル数
@@ -10,19 +10,19 @@ type timer struct {
 	counter        int64 // 524288Hz(一番細かいのが524288Hzなのであとはそれの倍数で数えれば良い)
 }
 
-func newTimer(irq func(n int), clock *int64) *timer {
-	return &timer{
+func newTimer(irq func(n int), clock *int64) *Timer {
+	return &Timer{
 		irq:   irq,
 		clock: clock,
 	}
 }
 
-func (t *timer) reset() {
+func (t *Timer) reset() {
 	t.cycles = 0
 	t.counter, t.tima, t.tma, t.tac = 0, 0, 0, 0
 }
 
-func (t *timer) run(cycles8MHz int64) {
+func (t *Timer) run(cycles8MHz int64) {
 	t.cycles += cycles8MHz
 	for t.cycles >= 16 {
 		t.update()
@@ -31,7 +31,7 @@ func (t *timer) run(cycles8MHz int64) {
 }
 
 // 524288Hz
-func (t *timer) update() {
+func (t *Timer) update() {
 	x := (*t.clock) / 4
 
 	t.counter++
@@ -46,7 +46,7 @@ func (t *timer) update() {
 	}
 }
 
-func (t *timer) Read(addr uint16) uint8 {
+func (t *Timer) Read(addr uint16) uint8 {
 	x := (*t.clock) / 4
 	switch addr {
 	case 0xFF04:
@@ -62,7 +62,7 @@ func (t *timer) Read(addr uint16) uint8 {
 	return 0
 }
 
-func (t *timer) Write(addr uint16, val uint8) {
+func (t *Timer) Write(addr uint16, val uint8) {
 	switch addr {
 	case 0xFF04:
 		t.counter = 0
@@ -83,7 +83,7 @@ type TimerSnapshot struct {
 	Reserved       [7]uint8
 }
 
-func (t *timer) CreateSnapshot() TimerSnapshot {
+func (t *Timer) CreateSnapshot() TimerSnapshot {
 	return TimerSnapshot{
 		Cycles:  t.cycles,
 		Tima:    t.tima,
@@ -93,7 +93,7 @@ func (t *timer) CreateSnapshot() TimerSnapshot {
 	}
 }
 
-func (t *timer) RestoreSnapshot(snap TimerSnapshot) bool {
+func (t *Timer) RestoreSnapshot(snap TimerSnapshot) bool {
 	t.cycles = snap.Cycles
 	t.tima, t.tma, t.tac = snap.Tima, snap.Tma, snap.Tac
 	t.counter = snap.Counter

@@ -22,10 +22,10 @@ type CPU struct {
 	*sm83.SM83
 	bus              sm83.Bus
 	Clock            int64 // 8(1x) or 4(2x)
-	timer            *timer
+	Timer            *Timer
 	DMA              *DMA
-	joypad           *joypad
-	serial           *serial
+	Joypad           *Joypad
+	Serial           *Serial
 	BIOS             BIOS
 	HRAM             [0x7F]uint8
 	Halted           bool
@@ -48,10 +48,10 @@ func New(isCGB bool, bus sm83.Bus) *CPU {
 		bus:   bus,
 	}
 	c.SM83 = sm83.New(c, c.halt, c.stop, c.wait)
-	c.timer = newTimer(c.IRQ, &c.Clock)
-	c.joypad = newJoypad(c.IRQ)
+	c.Timer = newTimer(c.IRQ, &c.Clock)
+	c.Joypad = newJoypad(c.IRQ)
 	c.DMA = newDMA(c)
-	c.serial = newSerial(c.IRQ)
+	c.Serial = newSerial(c.IRQ)
 	return c
 }
 
@@ -59,10 +59,10 @@ func (c *CPU) Reset() {
 	c.Cycles = 0
 	c.SM83.Reset()
 	c.Clock = 8
-	c.timer.reset()
+	c.Timer.reset()
 	c.DMA.reset()
-	c.joypad.reset()
-	c.serial.reset()
+	c.Joypad.reset()
+	c.Serial.reset()
 	clear(c.HRAM[:])
 	c.Halted = false
 	c.IE, c.IF = 0, 0
@@ -73,9 +73,9 @@ func (c *CPU) Reset() {
 
 func (c *CPU) SkipBIOS() {
 	c.BIOS.FF50 = false
-	c.timer.tac = 0xF8
-	c.joypad.write(0x30)
-	c.joypad.write(0xCF)
+	c.Timer.tac = 0xF8
+	c.Joypad.write(0x30)
+	c.Joypad.write(0xCF)
 	c.DMA.skipBIOS()
 
 	if c.isCGB {
@@ -140,8 +140,8 @@ func (c *CPU) HBlank() {
 
 func (c *CPU) Step() int64 {
 	cycles := c.step()
-	c.timer.run(cycles)
-	c.serial.run(cycles)
+	c.Timer.run(cycles)
+	c.Serial.run(cycles)
 	return cycles
 }
 
@@ -183,7 +183,7 @@ func (c *CPU) instruction() {
 func (c *CPU) IRQ(id int) { c.IF |= (1 << id) }
 
 func (c *CPU) SendInputs(inputs uint8) {
-	c.joypad.inputs = inputs
+	c.Joypad.inputs = inputs
 }
 
 func (c *CPU) checkInterrupt() int {

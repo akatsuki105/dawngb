@@ -1,5 +1,7 @@
 package ppu
 
+import "github.com/akatsuki105/dawngb/core/gb/internal"
+
 func (p *PPU) Read(addr uint16) uint8 {
 	if addr >= 0xFE00 && addr <= 0xFE9F {
 		return p.OAM[addr&0xFF]
@@ -15,16 +17,16 @@ func (p *PPU) Read(addr uint16) uint8 {
 
 	switch addr {
 	case 0xFF40:
-		return p.lcdc
+		return p.LCDC
 	case 0xFF41:
-		if (p.lcdc & (1 << 7)) == 0 {
+		if (p.LCDC & (1 << 7)) == 0 {
 			return 0x80
 		}
-		return p.stat | 0x80
+		return p.STAT | 0x80
 	case 0xFF44:
 		return uint8(p.ly)
 	case 0xFF45:
-		return p.lyc
+		return p.LYC
 	case 0xFF4F:
 		return 0xFE | (p.RAM.Bank & 1)
 	case 0xFF69:
@@ -55,21 +57,21 @@ func (p *PPU) Write(addr uint16, val uint8) {
 
 	switch addr {
 	case 0xFF40: // LCDC
-		wasEnabled := (p.lcdc & (1 << 7)) != 0
-		p.lcdc = val
+		wasEnabled := (p.LCDC & (1 << 7)) != 0
+		p.LCDC = val
 		p.r.SetLCDC(val)
 		enabled := (val & (1 << 7)) != 0
 		if wasEnabled != enabled { // Toggle
-			p.stat = (p.stat & 0xFC)
+			p.STAT = (p.STAT & 0xFC)
 			p.lx, p.ly = 0, 0
 			if enabled { // Turn on
 				p.enableLatch = true
 			}
 		}
 	case 0xFF41:
-		oldStat := p.stat
-		p.stat = (p.stat & 0x7) | (val & 0x78)
-		if !statIRQAsserted(oldStat) && statIRQAsserted(p.stat) {
+		oldStat := p.STAT
+		p.STAT = (p.STAT & 0x7) | (val & 0x78)
+		if !statIRQAsserted(oldStat) && statIRQAsserted(p.STAT) {
 			p.cpu.IRQ(1)
 		}
 	case 0xFF42:
@@ -80,7 +82,7 @@ func (p *PPU) Write(addr uint16, val uint8) {
 		p.ly = 0
 		p.compareLYC()
 	case 0xFF45:
-		p.lyc = val
+		p.LYC = val
 		p.compareLYC()
 	case 0xFF47:
 		p.r.SetBGP(val)
@@ -112,8 +114,8 @@ func (p *PPU) Write(addr uint16, val uint8) {
 }
 
 func (p *PPU) canAccessVRAM() bool {
-	if (p.lcdc & (1 << 7)) != 0 {
-		mode := p.stat & 0b11
+	if (p.LCDC & (1 << 7)) != 0 {
+		mode := p.STAT & 0b11
 		switch mode {
 		case 2:
 			return ((p.lx >> 2) != 20)
@@ -128,14 +130,7 @@ func (p *PPU) setBGPD(val uint8) {
 	palID := int((p.BGPI & 0x3F) / 8)
 	colorID := int(p.BGPI&7) >> 1
 	idx := ((palID * 4) + colorID) & 0x1F
-	rgb555 := p.Palette[idx]
-	isHi := (p.BGPI & 1) == 1
-	if isHi {
-		rgb555 = (rgb555 & 0x00FF) | (uint16(val) << 8)
-	} else {
-		rgb555 = (rgb555 & 0xFF00) | (uint16(val) << 0)
-	}
-	p.Palette[idx] = rgb555
+	p.Palette[idx] = internal.SetByte(p.Palette[idx], p.BGPI&1, val)
 
 	if (p.BGPI & (1 << 7)) != 0 {
 		bgpi := (p.BGPI + 1) & 0x3F
@@ -148,14 +143,7 @@ func (p *PPU) setOBPD(val uint8) {
 	palID := int((p.OBPI & 0x3F) / 8)
 	colorID := int(p.OBPI&7) >> 1
 	idx := 32 | ((palID*4 + colorID) & 0x1F)
-	rgb555 := p.Palette[idx]
-	isHi := (p.OBPI & 1) == 1
-	if isHi {
-		rgb555 = (rgb555 & 0x00FF) | (uint16(val) << 8)
-	} else {
-		rgb555 = (rgb555 & 0xFF00) | uint16(val)
-	}
-	p.Palette[idx] = rgb555
+	p.Palette[idx] = internal.SetByte(p.Palette[idx], p.OBPI&1, val)
 
 	if (p.OBPI & (1 << 7)) != 0 {
 		obpi := (p.OBPI + 1) & 0x3F

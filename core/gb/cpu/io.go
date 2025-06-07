@@ -3,13 +3,13 @@ package cpu
 func (c *CPU) ReadIO(addr uint16) uint8 {
 	switch addr {
 	case 0xFF00:
-		return c.joypad.read()
+		return c.Joypad.read()
 	case 0xFF01:
-		return c.serial.sb
+		return c.Serial.SB
 	case 0xFF02:
-		return c.serial.sc
+		return c.Serial.SC
 	case 0xFF04, 0xFF05, 0xFF06, 0xFF07:
-		return c.timer.Read(addr)
+		return c.Timer.Read(addr)
 	case 0xFF0F:
 		return c.IF & 0x1F
 	case 0xFF4C:
@@ -41,13 +41,13 @@ func (c *CPU) ReadIO(addr uint16) uint8 {
 func (c *CPU) WriteIO(addr uint16, val uint8) {
 	switch addr {
 	case 0xFF00:
-		c.joypad.write(val)
+		c.Joypad.write(val)
 	case 0xFF01:
-		c.serial.sb = val
+		c.Serial.SB = val
 	case 0xFF02:
-		c.serial.setSC(val)
+		c.Serial.setSC(val)
 	case 0xFF04, 0xFF05, 0xFF06, 0xFF07:
-		c.timer.Write(addr, val)
+		c.Timer.Write(addr, val)
 	case 0xFF0F:
 		c.IF = val & 0x1F
 	case 0xFF4C:
