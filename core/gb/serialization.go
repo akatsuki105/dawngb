@@ -2,6 +2,7 @@ package gb
 
 import (
 	"encoding/binary"
+	"errors"
 	"io"
 
 	"github.com/akatsuki105/dawngb/core/gb/apu"
@@ -28,25 +29,40 @@ type Snapshot struct {
 	Reserved [2 * KB]uint8 // 拡張用
 }
 
-func (g *GB) CreateSnapshot() Snapshot {
-	return Snapshot{
+func NewSnapshot(version uint64) *Snapshot {
+	return &Snapshot{
 		Header: Header{
 			Magic:   [4]uint8{'D', 'A', 'W', 'N'},
-			Version: 0,
+			Version: version,
 		},
-		Model:    uint8(g.Model),
-		CPU:      g.CPU.CreateSnapshot(),
-		PPU:      g.PPU.CreateSnapshot(),
-		APU:      g.APU.CreateSnapshot(),
-		Cart:     g.Cart.CreateSnapshot(),
-		WRAM:     g.wram,
-		WRAMBank: g.wramBank,
 	}
 }
 
-func (g *GB) RestoreSnapshot(snap Snapshot) bool {
+var errSnapshotNil = errors.New("GB snapshot is nil")
+
+func (g *GB) UpdateSnapshot(snap *Snapshot) error {
+	if snap == nil {
+		return errSnapshotNil
+	}
 	if snap.Magic != [4]uint8{'D', 'A', 'W', 'N'} {
-		return false
+		return errors.New("invalid snapshot ID")
+	}
+	snap.Model = uint8(g.Model)
+	snap.CPU = g.CPU.CreateSnapshot()
+	snap.PPU = g.PPU.CreateSnapshot()
+	snap.APU = g.APU.CreateSnapshot()
+	snap.Cart = g.Cart.CreateSnapshot()
+	copy(snap.WRAM[:], g.wram[:])
+	snap.WRAMBank = g.wramBank
+	return nil
+}
+
+func (g *GB) RestoreSnapshot(snap *Snapshot) error {
+	if snap == nil {
+		return errSnapshotNil
+	}
+	if snap.Magic != [4]uint8{'D', 'A', 'W', 'N'} {
+		return errors.New("invalid snapshot ID")
 	}
 
 	g.Model = Model(snap.Model)
@@ -56,22 +72,29 @@ func (g *GB) RestoreSnapshot(snap Snapshot) bool {
 	g.Cart.RestoreSnapshot(snap.Cart)
 	copy(g.wram[:], snap.WRAM[:])
 	g.wramBank = snap.WRAMBank
-	return true
+	return nil
 }
 
-func (g *GB) Serialize(state io.Writer) bool {
-	snap := g.CreateSnapshot()
-	binary.Write(state, binary.LittleEndian, snap)
-	return true
-}
-
-func (g *GB) Deserialize(state io.Reader) bool {
-	var snap Snapshot
-	binary.Read(state, binary.LittleEndian, &snap)
-	ok := g.RestoreSnapshot(snap)
-	if ok {
-		g.inputs = 0
+func (g *GB) Serialize(w io.Writer) bool {
+	if w != nil {
+		err := g.UpdateSnapshot(&g.Snap)
+		if err != nil {
+			return false
+		}
+		binary.Write(w, binary.LittleEndian, g.Snap)
+		return true
 	}
+	return false
+}
 
-	return ok
+func (g *GB) Deserialize(r io.Reader) bool {
+	if r != nil {
+		binary.Read(r, binary.LittleEndian, &g.Snap)
+		err := g.RestoreSnapshot(&g.Snap)
+		if err != nil {
+			return false
+		}
+		return true
+	}
+	return false
 }

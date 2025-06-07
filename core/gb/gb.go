@@ -49,6 +49,7 @@ type GB struct {
 	inputs   uint8 // 押されている時にビットを立てる; bit0: A, bit1: B, bit2: SELECT, bit3: START, bit4: RIGHT, bit5: LEFT, bit6: UP, bit7: DOWN
 	wram     [(4 * KB) * 8]uint8
 	wramBank uint8 // SVBK(0xFF70, 0..7, CGB only)
+	Snap     Snapshot
 	debugger.Debugger
 }
 
@@ -56,6 +57,7 @@ func New(model Model, audioBuffer io.Writer) *GB {
 	g := &GB{
 		Model:    model,
 		wramBank: 1,
+		Snap:     *NewSnapshot(0),
 	}
 	g.CPU = cpu.New(g.IsColor(), g)
 	g.PPU = ppu.New(g.CPU)
