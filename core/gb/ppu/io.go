@@ -30,11 +30,9 @@ func (p *PPU) Read(addr uint16) uint8 {
 	case 0xFF4F:
 		return 0xFE | (p.RAM.Bank & 1)
 	case 0xFF69:
-		// ゲームによってはパレットの値を読み取ることがある(ロックマンX1など)
-		return uint8(p.Palette[(p.BGPI>>1)] >> ((p.BGPI & 1) * 8))
+		return internal.Byte(p.Palette[(p.BGPI>>1)], p.BGPI&1) // ゲームによってはパレットの値を読み取ることがある(ロックマンX1など)
 	case 0xFF6B:
-		// ゲームによってはパレットの値を読み取ることがある(ロックマンX1など)
-		return uint8(p.Palette[32+(p.OBPI>>1)] >> ((p.OBPI & 1) * 8))
+		return internal.Byte(p.Palette[32+(p.OBPI>>1)], p.OBPI&1) // ゲームによってはパレットの値を読み取ることがある(ロックマンX1など)
 	default:
 		if addr >= 0xFF40 && addr < 0xFF70 {
 			return p.ioreg[addr-0xFF40]

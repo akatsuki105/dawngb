@@ -73,7 +73,7 @@ func (c *CPU) Reset() {
 
 func (c *CPU) SkipBIOS() {
 	c.BIOS.FF50 = false
-	c.Timer.tac = 0xF8
+	c.Timer.TAC = 0xF8
 	c.Joypad.write(0x30)
 	c.Joypad.write(0xCF)
 	c.DMA.skipBIOS()
