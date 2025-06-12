@@ -21,18 +21,12 @@ type Snapshot struct {
 	Reserved        [64]uint8
 }
 
-func (p *PPU) CreateSnapshot() Snapshot {
-	s := Snapshot{}
-	p.UpdateSnapshot(&s)
-	return s
-}
-
 func (p *PPU) UpdateSnapshot(snap *Snapshot) error {
 	if snap == nil {
 		return errSnapshotNil
 	}
 	snap.Cycles, snap.Frames = p.cycles, p.Frame
-	snap.Lx, snap.Ly = int16(p.lx), int16(p.ly)
+	snap.Lx, snap.Ly = int16(p.Lx), int16(p.Ly)
 
 	copy(snap.VRAM.Data[:], p.RAM.Data[:])
 	snap.VRAM.Bank = p.RAM.Bank
@@ -55,7 +49,7 @@ func (p *PPU) RestoreSnapshot(snap *Snapshot) error {
 
 	p.cycles = snap.Cycles
 	p.Frame = snap.Frames
-	p.lx, p.ly = int(snap.Lx), int(snap.Ly)
+	p.Lx, p.Ly = int(snap.Lx), int(snap.Ly)
 	copy(p.RAM.Data[:], snap.VRAM.Data[:])
 	p.RAM.Bank = snap.VRAM.Bank
 	p.DMA.Active, p.DMA.Src, p.DMA.Until = snap.DMA.Active, snap.DMA.Src, snap.DMA.Until

@@ -24,7 +24,7 @@ func (p *PPU) Read(addr uint16) uint8 {
 		}
 		return p.STAT | 0x80
 	case 0xFF44:
-		return uint8(p.ly)
+		return uint8(p.Ly)
 	case 0xFF45:
 		return p.LYC
 	case 0xFF4F:
@@ -61,7 +61,7 @@ func (p *PPU) Write(addr uint16, val uint8) {
 		enabled := (val & (1 << 7)) != 0
 		if wasEnabled != enabled { // Toggle
 			p.STAT = (p.STAT & 0xFC)
-			p.lx, p.ly = 0, 0
+			p.Lx, p.Ly = 0, 0
 			if enabled { // Turn on
 				p.enableLatch = true
 			}
@@ -77,7 +77,7 @@ func (p *PPU) Write(addr uint16, val uint8) {
 	case 0xFF43:
 		p.r.SetSCX(val)
 	case 0xFF44:
-		p.ly = 0
+		p.Ly = 0
 		p.compareLYC()
 	case 0xFF45:
 		p.LYC = val
@@ -116,7 +116,7 @@ func (p *PPU) canAccessVRAM() bool {
 		mode := p.STAT & 0b11
 		switch mode {
 		case 2:
-			return ((p.lx >> 2) != 20)
+			return ((p.Lx >> 2) != 20)
 		case 3:
 			return false
 		}

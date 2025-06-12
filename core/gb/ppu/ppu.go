@@ -48,7 +48,7 @@ type PPU struct {
 	cycles          int64 // 遅れているサイクル数(8.38MHzのマスターサイクル単位)
 	screen          [160 * 144]color.NRGBA
 	Frame           uint64
-	lx, ly          int
+	Lx, Ly          int
 	r               renderer.Renderer
 	RAM             VRAM
 	DMA             DMA
@@ -74,7 +74,7 @@ func New(cpu CPU) *PPU {
 func (p *PPU) Reset() {
 	p.r = software.New(p.RAM.Data[:], p.Palette[:], p.OAM[:], p.cpu.IsCGBMode)
 	p.Frame = 0
-	p.lx, p.ly = 0, 0
+	p.Lx, p.Ly = 0, 0
 	p.STAT = 0x80
 	p.RAM.Bank = 0
 	p.objCount = 0
@@ -108,10 +108,10 @@ func (p *PPU) Run(cycles8MHz int64) {
 
 func (p *PPU) step() {
 	if (p.LCDC & (1 << 7)) != 0 {
-		if p.ly < 144 {
-			switch p.lx {
+		if p.Ly < 144 {
+			switch p.Lx {
 			case 0:
-				if p.ly == 0 {
+				if p.Ly == 0 {
 					p.StatIRQ.Triggered = false
 					p.StatIRQ.Mode, p.StatIRQ.Lx, p.StatIRQ.Ly = 0, 0, 0
 				}
@@ -122,9 +122,9 @@ func (p *PPU) step() {
 				p.hblank()
 			}
 		}
-		p.lx++
-		if p.lx == 456 {
-			p.lx = 0
+		p.Lx++
+		if p.Lx == 456 {
+			p.Lx = 0
 			p.incrementLY()
 		}
 	}
@@ -132,12 +132,12 @@ func (p *PPU) step() {
 
 func (p *PPU) incrementLY() {
 	p.objCount = 0
-	p.ly++
-	switch p.ly {
+	p.Ly++
+	switch p.Ly {
 	case 144:
 		p.vblank()
 	case 154:
-		p.ly = 0
+		p.Ly = 0
 		p.enableLatch = false
 		p.Frame++
 	}
@@ -146,7 +146,7 @@ func (p *PPU) incrementLY() {
 
 func (p *PPU) compareLYC() {
 	oldStat := p.STAT
-	p.STAT = internal.SetBit(p.STAT, 2, p.ly == int(p.LYC))
+	p.STAT = internal.SetBit(p.STAT, 2, p.Ly == int(p.LYC))
 	if !statIRQAsserted(oldStat) && statIRQAsserted(p.STAT) {
 		p.cpu.IRQ(1)
 	}

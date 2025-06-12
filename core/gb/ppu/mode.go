@@ -5,12 +5,12 @@ func (p *PPU) hblank() {
 	oldStat := p.STAT
 	p.STAT = (p.STAT & 0xFC)
 	if ((p.LCDC & (1 << 7)) != 0) && !p.enableLatch {
-		p.r.DrawScanline(p.ly, p.screen[p.ly*160:(p.ly+1)*160])
+		p.r.DrawScanline(p.Ly, p.screen[p.Ly*160:(p.Ly+1)*160])
 	}
 	if !statIRQAsserted(oldStat) && statIRQAsserted(p.STAT) {
 		p.cpu.IRQ(1)
 		p.StatIRQ.Triggered = true
-		p.StatIRQ.Mode, p.StatIRQ.Lx, p.StatIRQ.Ly = 0, uint8(p.lx), uint8(p.ly)
+		p.StatIRQ.Mode, p.StatIRQ.Lx, p.StatIRQ.Ly = 0, uint8(p.Lx), uint8(p.Ly)
 	}
 	p.cpu.HBlank()
 }
@@ -24,7 +24,7 @@ func (p *PPU) vblank() {
 	if !statIRQAsserted(oldStat) && statIRQAsserted(p.STAT) {
 		p.cpu.IRQ(1)
 		p.StatIRQ.Triggered = true
-		p.StatIRQ.Mode, p.StatIRQ.Lx, p.StatIRQ.Ly = 1, uint8(p.lx), uint8(p.ly)
+		p.StatIRQ.Mode, p.StatIRQ.Lx, p.StatIRQ.Ly = 1, uint8(p.Lx), uint8(p.Ly)
 	}
 }
 
@@ -35,7 +35,7 @@ func (p *PPU) scanOAM() {
 	if !statIRQAsserted(oldStat) && statIRQAsserted(p.STAT) {
 		p.cpu.IRQ(1)
 		p.StatIRQ.Triggered = true
-		p.StatIRQ.Mode, p.StatIRQ.Lx, p.StatIRQ.Ly = 2, uint8(p.lx), uint8(p.ly)
+		p.StatIRQ.Mode, p.StatIRQ.Lx, p.StatIRQ.Ly = 2, uint8(p.Lx), uint8(p.Ly)
 	}
 }
 
@@ -51,7 +51,7 @@ func (p *PPU) drawing() {
 	o := uint8(0)
 	for i := 0; i < 40; i++ {
 		y := int(p.OAM[i*4]) - 16
-		if y <= p.ly && p.ly < y+h {
+		if y <= p.Ly && p.Ly < y+h {
 			o++
 		}
 	}
