@@ -56,8 +56,8 @@ func (g *GB) UpdateSnapshot(snap *Snapshot) error {
 	if err := g.Cart.UpdateSnapshot(&snap.Cart); err != nil {
 		return err
 	}
-	copy(snap.WRAM[:], g.wram[:])
-	snap.WRAMBank = g.wramBank
+	copy(snap.WRAM[:], g.WRAM.Data[:])
+	snap.WRAMBank = g.WRAM.Bank
 	return nil
 }
 
@@ -74,8 +74,8 @@ func (g *GB) RestoreSnapshot(snap *Snapshot) error {
 	g.PPU.RestoreSnapshot(&snap.PPU)
 	g.APU.RestoreSnapshot(snap.APU)
 	g.Cart.RestoreSnapshot(&snap.Cart)
-	copy(g.wram[:], snap.WRAM[:])
-	g.wramBank = snap.WRAMBank
+	copy(g.WRAM.Data[:], snap.WRAM[:])
+	g.WRAM.Bank = snap.WRAMBank
 	return nil
 }
 

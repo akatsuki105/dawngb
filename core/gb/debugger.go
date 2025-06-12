@@ -108,16 +108,16 @@ func (g *GB) PokeMemory(memID int, addr uint32, width int, data uint32) bool {
 	case addr16 < 0xC000: // SRAM
 		return false
 	case addr16 < 0xD000: // WRAM0
-		g.wram[addr16&0xFFF] = uint8(data)
+		g.WRAM.Data[addr16&0xFFF] = uint8(data)
 		return true
 	case addr16 < 0xE000: // WRAMn
-		g.wram[(uint(g.wramBank)<<12)|uint(addr16&0xFFF)] = uint8(data)
+		g.WRAM.Data[(uint(g.WRAM.Bank)<<12)|uint(addr16&0xFFF)] = uint8(data)
 		return true
 	case addr16 < 0xF000: // mirror of WRAM0
-		g.wram[addr16&0xFFF] = uint8(data)
+		g.WRAM.Data[addr16&0xFFF] = uint8(data)
 		return true
 	case addr16 < 0xFE00: // mirror of WRAMn
-		g.wram[(uint(g.wramBank)<<12)|uint(addr16&0xFFF)] = uint8(data)
+		g.WRAM.Data[(uint(g.WRAM.Bank)<<12)|uint(addr16&0xFFF)] = uint8(data)
 		return true
 	case addr16 < 0xFEA0: // OAM
 		return false
@@ -144,7 +144,7 @@ func (g *GB) GetChunk(chunkID uint64) []uint8 {
 	case 2: // VRAM(バンクも含む全部)
 		return g.PPU.RAM.Data[:]
 	case 3: // WRAM(バンクも含む全部)
-		return g.wram[:]
+		return g.WRAM.Data[:]
 	case 4: // Palette
 		target := chunkID & 0xFF
 		if target < 16 {

@@ -41,35 +41,38 @@ const (
 var buttons = [8]string{"A", "B", "SELECT", "START", "RIGHT", "LEFT", "UP", "DOWN"}
 
 type GB struct {
-	Model    Model // ハードウェアの種類
-	CPU      *cpu.CPU
-	PPU      *ppu.PPU
-	APU      *apu.APU
-	Cart     *cartridge.Cartridge
-	inputs   uint8 // 押されている時にビットを立てる; bit0: A, bit1: B, bit2: SELECT, bit3: START, bit4: RIGHT, bit5: LEFT, bit6: UP, bit7: DOWN
-	wram     [(4 * KB) * 8]uint8
-	wramBank uint8 // SVBK(0xFF70, 0..7, CGB only)
-	Snap     Snapshot
+	Model  Model // ハードウェアの種類
+	CPU    *cpu.CPU
+	PPU    *ppu.PPU
+	APU    *apu.APU
+	Cart   *cartridge.Cartridge
+	inputs uint8 // 押されている時にビットを立てる; bit0: A, bit1: B, bit2: SELECT, bit3: START, bit4: RIGHT, bit5: LEFT, bit6: UP, bit7: DOWN
+	WRAM   WRAM
+	Snap   Snapshot
 	debugger.Debugger
+}
+
+type WRAM struct {
+	Data [(4 * KB) * 8]uint8
+	Bank uint8 // SVBK(0xFF70, 0..7, CGB only)
 }
 
 func New(model Model, audioBuffer io.Writer) *GB {
 	g := &GB{
-		Model:    model,
-		wramBank: 1,
-		Snap:     *NewSnapshot(0),
+		Model: model,
+		Snap:  *NewSnapshot(0),
 	}
 	g.CPU = cpu.New(g.IsColor(), g)
 	g.PPU = ppu.New(g.CPU)
 	g.APU = apu.New(audioBuffer)
-	g.wramBank = 1
+	g.WRAM.Bank = 1
 	return g
 }
 
 func (g *GB) Reset() {
 	if g.Cart != nil {
-		clear(g.wram[:])
-		g.wramBank = 1
+		clear(g.WRAM.Data[:])
+		g.WRAM.Bank = 1
 		g.CPU.Reset()
 		g.PPU.Reset()
 		g.APU.Reset()
