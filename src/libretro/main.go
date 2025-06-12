@@ -19,6 +19,8 @@ const (
 	retroApiVersion = 1
 )
 
+const AUDIO_BUFFER_SIZE = 4096
+
 const (
 	DMG_BIOS = "dmg_boot.bin"
 	CGB_BIOS = "cgb_boot.bin"
@@ -53,7 +55,7 @@ type AppState struct {
 	Screen       [160 * 144]uint16
 	ROM          []uint8
 	SampleBuffer *bytes.Buffer
-	Samples      [4096]uint8
+	Samples      [AUDIO_BUFFER_SIZE]uint8
 	SystemDir    string
 	SaveDir      string
 	BIOS         struct {
@@ -66,7 +68,7 @@ type AppState struct {
 }
 
 var app AppState = AppState{
-	SampleBuffer:    bytes.NewBuffer(make([]uint8, 0)),
+	SampleBuffer:    bytes.NewBuffer(make([]uint8, 0, AUDIO_BUFFER_SIZE)),
 	SystemDir:       "./",
 	SaveDir:         "./",
 	SaveStateBuffer: make([]uint8, 0),
@@ -154,7 +156,7 @@ func retro_get_system_av_info(info *C.struct_retro_system_av_info) {
 		return
 	}
 	width, height := app.GB.Resolution()
-	info.timing.fps = C.double(60)
+	info.timing.fps = C.double(float64(4*1024*1024) / 70224)
 	info.timing.sample_rate = C.double(32768.0)
 
 	info.geometry.base_width = C.uint(width)
