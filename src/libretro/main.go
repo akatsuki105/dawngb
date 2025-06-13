@@ -5,6 +5,7 @@ package main
 // https://github.com/libretro/RetroArch/blob/b443d9974a179ee45c0e5e913b9842c397998193/libretro-common/include/libretro.h
 #include "libretro.h"
 #include "cfuncs.h"
+#include "input.h"
 */
 import "C"
 import (
@@ -18,10 +19,6 @@ import (
 	"github.com/akatsuki105/dawngb/core/gb"
 )
 
-const (
-	retroApiVersion = 1
-)
-
 const AUDIO_BUFFER_SIZE = 4096
 
 const (
@@ -30,7 +27,7 @@ const (
 )
 
 var (
-	useBitmasks bool
+	useBitmasks bool // この機能が有効な場合、入力は(libretro側で規定された)ビットマスクとして一括取得ができる(falseなら、ボタン1つずつ取得する必要がある)
 	keymap      = []uint{
 		C.RETRO_DEVICE_ID_JOYPAD_A,
 		C.RETRO_DEVICE_ID_JOYPAD_B,
@@ -120,6 +117,23 @@ func retro_init() {
 		}
 	}
 
+	// Logging
+	{
+		// ok := bool(C.call_environ_cb(C.RETRO_ENVIRONMENT_GET_LOG_INTERFACE, unsafe.Pointer(&C.logging)))
+		// if ok {
+		// 	C.log_cb = C.logging.log
+		// } else {
+		// 	// TODO: Fallback to stderr in Go side
+		// }
+	}
+
+	// Input
+	{
+		useBitmasks = bool(C.call_environ_cb(C.RETRO_ENVIRONMENT_GET_INPUT_BITMASKS, nil))
+		// C.call_environ_cb(C.RETRO_ENVIRONMENT_SET_CONTROLLER_INFO, unsafe.Pointer(&C.ports[0]))
+		// C.call_environ_cb(C.RETRO_ENVIRONMENT_SET_INPUT_DESCRIPTORS, unsafe.Pointer(&C.descriptors_1p[0]))
+	}
+
 	// check BIOS
 	app.BIOS.exists = false
 	if app.SystemDir != "./" {
@@ -140,10 +154,11 @@ func retro_deinit() {
 	retro_unload_game()
 	app.BIOS.exists = false
 	app.BIOS.data = nil
+	useBitmasks = false
 }
 
 //export retro_api_version
-func retro_api_version() C.uint { return retroApiVersion }
+func retro_api_version() C.uint { return C.RETRO_API_VERSION }
 
 //export retro_get_system_info
 func retro_get_system_info(info *C.struct_retro_system_info) {
@@ -191,17 +206,21 @@ func retro_run() {
 
 func pollInput() {
 	C.call_input_poll_cb()
+
+	joypads := uint16(0)
 	if useBitmasks {
-		joypadMask := uint(C.call_input_state_cb(0, C.RETRO_DEVICE_JOYPAD, 0, C.RETRO_DEVICE_ID_JOYPAD_MASK))
-		for i := 0; i < len(keymap); i++ {
-			pressed := (joypadMask>>keymap[i])&1 == 1
-			app.GB.SetKeyInput(keymapNames[keymap[i]], pressed)
-		}
+		joypads = uint16(C.call_input_state_cb(0, C.RETRO_DEVICE_JOYPAD, 0, C.RETRO_DEVICE_ID_JOYPAD_MASK))
 	} else {
-		for i := 0; i < len(keymap); i++ {
-			pressed := C.call_input_state_cb(0, C.RETRO_DEVICE_JOYPAD, 0, C.uint(keymap[i])) != 0
-			app.GB.SetKeyInput(keymapNames[keymap[i]], pressed)
+		for i := 0; i < (C.RETRO_DEVICE_ID_JOYPAD_R3 + 1); i++ {
+			if C.call_input_state_cb(0, C.RETRO_DEVICE_JOYPAD, 0, C.uint(i)) != 0 {
+				joypads |= 1 << i
+			}
 		}
+	}
+
+	for i := 0; i < len(keymap); i++ {
+		pressed := (joypads>>keymap[i])&1 == 1
+		app.GB.SetKeyInput(keymapNames[keymap[i]], pressed)
 	}
 }
 
@@ -275,7 +294,6 @@ func retro_unserialize(data unsafe.Pointer, size C.size_t) C.bool {
 func retro_load_game(info *C.struct_retro_game_info) C.bool {
 	fmt := C.RETRO_PIXEL_FORMAT_RGB565
 	C.call_environ_cb(C.RETRO_ENVIRONMENT_SET_PIXEL_FORMAT, unsafe.Pointer(&fmt))
-	useBitmasks = bool(C.call_environ_cb(C.RETRO_ENVIRONMENT_GET_INPUT_BITMASKS, nil))
 
 	romPath := C.GoString(info.path)
 	data, err := os.ReadFile(romPath)

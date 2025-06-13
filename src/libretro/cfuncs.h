@@ -5,6 +5,9 @@ static retro_environment_t environ_cb;
 static void _retro_set_environment(retro_environment_t cb) { environ_cb = cb; }
 static bool call_environ_cb(unsigned cmd, void *data) { return environ_cb(cmd, data); }
 
+static struct retro_log_callback logging;
+static retro_log_printf_t log_cb;
+
 static retro_video_refresh_t video_cb;
 static void _retro_set_video_refresh(retro_video_refresh_t cb) { video_cb = cb; }
 static void call_video_cb(const void *data, unsigned width, unsigned height, size_t pitch) { video_cb(data, width, height, pitch); }
