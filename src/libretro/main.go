@@ -71,7 +71,7 @@ var app AppState = AppState{
 	SampleBuffer:    bytes.NewBuffer(make([]uint8, 0, AUDIO_BUFFER_SIZE)),
 	SystemDir:       "./",
 	SaveDir:         "./",
-	SaveStateBuffer: make([]uint8, 0),
+	SaveStateBuffer: make([]uint8, 0, 32768),
 	SaveStateSize:   0,
 }
 
@@ -152,18 +152,15 @@ func retro_get_system_info(info *C.struct_retro_system_info) {
 
 //export retro_get_system_av_info
 func retro_get_system_av_info(info *C.struct_retro_system_av_info) {
-	if app.GB == nil {
-		return
-	}
-	width, height := app.GB.Resolution()
-	info.timing.fps = C.double(float64(4*1024*1024) / 70224)
-	info.timing.sample_rate = C.double(32768.0)
+	if app.GB != nil {
+		width, height := app.GB.Resolution()
+		info.timing.fps = C.double(float64(4*1024*1024) / 70224)
+		info.timing.sample_rate = C.double(32768.0)
 
-	info.geometry.base_width = C.uint(width)
-	info.geometry.base_height = C.uint(height)
-	info.geometry.max_width = C.uint(width)
-	info.geometry.max_height = C.uint(height)
-	info.geometry.aspect_ratio = C.float(float64(width) / float64(height))
+		info.geometry.base_width, info.geometry.base_height = C.uint(width), C.uint(height)
+		info.geometry.max_width, info.geometry.max_height = C.uint(width), C.uint(height)
+		info.geometry.aspect_ratio = C.float(float64(width) / float64(height))
+	}
 }
 
 //export retro_set_controller_port_device
@@ -173,14 +170,24 @@ func retro_set_controller_port_device(port, device C.uint) {
 
 //export retro_reset
 func retro_reset() {
+	for i := 0; i < len(app.Samples); i++ {
+		app.Samples[i] = 0
+	}
 	app.GB.Reset()
 	app.GB.DirectBoot()
 }
 
 //export retro_run
 func retro_run() {
-	C.call_input_poll_cb()
+	if app.GB != nil {
+		pollInput()
+		update()
+		render()
+	}
+}
 
+func pollInput() {
+	C.call_input_poll_cb()
 	if useBitmasks {
 		joypadMask := uint(C.call_input_state_cb(0, C.RETRO_DEVICE_JOYPAD, 0, C.RETRO_DEVICE_ID_JOYPAD_MASK))
 		for i := 0; i < len(keymap); i++ {
@@ -193,24 +200,13 @@ func retro_run() {
 			app.GB.SetKeyInput(keymapNames[keymap[i]], pressed)
 		}
 	}
-
-	update()
-	render()
 }
 
 func update() {
-	if app.GB != nil {
-		app.GB.RunFrame()
-
-		for i := 0; i < len(app.Samples); i++ {
-			app.Samples[i] = 0
-		}
-		if app.GB != nil {
-			n, err := app.SampleBuffer.Read(app.Samples[:])
-			if err == nil && n >= 4 {
-				C.call_audio_batch_cb((*C.int16_t)(unsafe.Pointer(&app.Samples[0])), C.ulong(n/4))
-			}
-		}
+	app.GB.RunFrame()
+	n, err := app.SampleBuffer.Read(app.Samples[:])
+	if err == nil && n >= 4 {
+		C.call_audio_batch_cb((*C.int16_t)(unsafe.Pointer(&app.Samples[0])), C.ulong(n/4))
 	}
 }
 
@@ -348,7 +344,7 @@ func retro_load_game_special(gameType C.uint, info unsafe.Pointer, numInfo C.siz
 func retro_unload_game() {
 	app.GB = nil
 	app.ROM = []uint8{}
-	app.SaveStateBuffer = make([]uint8, 0)
+	app.SaveStateBuffer = make([]uint8, 0, 32768)
 	app.SaveStateSize = 0
 	clear(app.Screen[:])
 	clear(app.Samples[:])
