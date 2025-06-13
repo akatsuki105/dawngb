@@ -1,8 +1,10 @@
 package main
 
 /*
-#include "./libretro.h"
-#include "./cfuncs.h"
+// libretro.h で RETRO_API がついてる宣言のコメントアウトが必要
+// https://github.com/libretro/RetroArch/blob/b443d9974a179ee45c0e5e913b9842c397998193/libretro-common/include/libretro.h
+#include "libretro.h"
+#include "cfuncs.h"
 */
 import "C"
 import (
