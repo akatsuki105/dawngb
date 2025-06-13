@@ -2,6 +2,7 @@ package main
 
 /*
 #include "./libretro.h"
+#include "./cfuncs.h"
 */
 import "C"
 import (

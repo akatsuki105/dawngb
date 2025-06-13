@@ -172,8 +172,6 @@ struct retro_game_info {
  * uncommon tasks. Extensible. */
 typedef bool(RETRO_CALLCONV *retro_environment_t)(unsigned cmd, void *data);
 static retro_environment_t environ_cb;
-static void _retro_set_environment(retro_environment_t cb) { environ_cb = cb; }
-static bool call_environ_cb(unsigned cmd, void *data) { return environ_cb(cmd, data); }
 
 /* Render a frame. Pixel format is 15-bit 0RGB1555 native endian
  * unless changed (see RETRO_ENVIRONMENT_SET_PIXEL_FORMAT).
@@ -188,8 +186,6 @@ static bool call_environ_cb(unsigned cmd, void *data) { return environ_cb(cmd, d
  */
 typedef void(RETRO_CALLCONV *retro_video_refresh_t)(const void *data, unsigned width, unsigned height, size_t pitch);
 static retro_video_refresh_t video_cb;
-static void _retro_set_video_refresh(retro_video_refresh_t cb) { video_cb = cb; }
-static void call_video_cb(const void *data, unsigned width, unsigned height, size_t pitch) { video_cb(data, width, height, pitch); }
 
 /* Renders a single audio frame. Should only be used if implementation
  * generates a single sample at a time.
@@ -197,8 +193,6 @@ static void call_video_cb(const void *data, unsigned width, unsigned height, siz
  */
 typedef void(RETRO_CALLCONV *retro_audio_sample_t)(int16_t left, int16_t right);
 static retro_audio_sample_t audio_cb;
-static void _retro_set_audio_sample(retro_audio_sample_t cb) { audio_cb = cb; }
-static void call_audio_cb(int16_t left, int16_t right) { audio_cb(left, right); }
 
 /* Renders multiple audio frames in one go.
  *
@@ -208,14 +202,10 @@ static void call_audio_cb(int16_t left, int16_t right) { audio_cb(left, right); 
  */
 typedef size_t(RETRO_CALLCONV *retro_audio_sample_batch_t)(const int16_t *data, size_t frames);
 static retro_audio_sample_batch_t audio_batch_cb;
-static void _retro_set_audio_sample_batch(retro_audio_sample_batch_t cb) { audio_batch_cb = cb; }
-static void call_audio_batch_cb(const int16_t *data, size_t frames) { audio_batch_cb(data, frames); }
 
 /* Polls input. */
 typedef void(RETRO_CALLCONV *retro_input_poll_t)(void);
 static retro_input_poll_t input_poll_cb;
-static void _retro_set_input_poll(retro_input_poll_t cb) { input_poll_cb = cb; }
-static void call_input_poll_cb(void) { input_poll_cb(); }
 
 /* Queries for input for player 'port'. device will be masked with
  * RETRO_DEVICE_MASK.
@@ -226,7 +216,5 @@ static void call_input_poll_cb(void) { input_poll_cb(); }
  */
 typedef int16_t(RETRO_CALLCONV *retro_input_state_t)(unsigned port, unsigned device, unsigned index, unsigned id);
 static retro_input_state_t input_state_cb;
-static void _retro_set_input_state(retro_input_state_t cb) { input_state_cb = cb; }
-static int16_t call_input_state_cb(unsigned port, unsigned device, unsigned index, unsigned id) { return input_state_cb(port, device, index, id); }
 
 #endif
