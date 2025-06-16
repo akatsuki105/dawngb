@@ -22,6 +22,11 @@ import (
 const AUDIO_BUFFER_SIZE = 4096
 
 const (
+	WIDTH  = 160
+	HEIGHT = 144
+)
+
+const (
 	DMG_BIOS = "dmg_boot.bin"
 	CGB_BIOS = "cgb_boot.bin"
 )
@@ -52,7 +57,7 @@ var (
 
 type AppState struct {
 	GB           *gb.GB
-	Screen       [160 * 144]uint16
+	Screen       []uint16
 	ROM          []uint8
 	SampleBuffer *bytes.Buffer
 	Samples      [AUDIO_BUFFER_SIZE]uint8
@@ -147,6 +152,8 @@ func retro_init() {
 			app.BIOS.isCGB = false
 		}
 	}
+
+	app.Screen = make([]uint16, WIDTH*HEIGHT)
 }
 
 //export retro_deinit
