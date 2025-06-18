@@ -42,6 +42,11 @@ func (c *Cartridge) UpdateSnapshot(snap *Snapshot) error {
 		binary.Write(tmp, binary.LittleEndian, mbc3)
 		copy(snap.Buffer[:], tmp.Bytes())
 		tmp.Reset()
+	case *MBC5:
+		mbc5 := mapper.CreateSnapshot()
+		binary.Write(tmp, binary.LittleEndian, mbc5)
+		copy(snap.Buffer[:], tmp.Bytes())
+		tmp.Reset()
 	}
 	return nil
 }
@@ -66,6 +71,12 @@ func (c *Cartridge) RestoreSnapshot(snap *Snapshot) error {
 	case *MBC3:
 		tmp.Write(snap.Buffer[:])
 		var s MBC3Snapshot
+		binary.Read(tmp, binary.LittleEndian, &s)
+		mapper.RestoreSnapshot(&s)
+		tmp.Reset()
+	case *MBC5:
+		tmp.Write(snap.Buffer[:])
+		var s MBC5Snapshot
 		binary.Read(tmp, binary.LittleEndian, &s)
 		mapper.RestoreSnapshot(&s)
 		tmp.Reset()
