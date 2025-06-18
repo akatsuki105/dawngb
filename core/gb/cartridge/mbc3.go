@@ -6,8 +6,8 @@ import (
 
 type Time struct {
 	Sec, Min, Hour uint8
-	Day            uint16
 	DayCarry       bool
+	Day            uint16
 }
 
 type RTC struct {
@@ -17,10 +17,10 @@ type RTC struct {
 
 type MBC3 struct {
 	c                *Cartridge
-	RamEnabled       bool
+	RAMEnabled       bool
 	ROMBank, RAMBank uint8
-	RTC              RTC
 	RAMBankMax       uint8 // 4(Normal) or 8(MBC30)
+	RTC              RTC
 }
 
 func newMBC3(c *Cartridge) *MBC3 {
@@ -48,7 +48,7 @@ func (m *MBC3) read(addr uint16) uint8 {
 	case 0x4, 0x5, 0x6, 0x7:
 		return m.c.ROM[(uint(m.ROMBank)<<14)|uint(addr&0x3FFF)]
 	case 0xA, 0xB:
-		if m.RamEnabled {
+		if m.RAMEnabled {
 			if m.RAMBank < m.RAMBankMax {
 				return m.c.RAM[(uint(m.RAMBank)<<13)|uint(addr&0x1FFF)]
 			}
@@ -78,7 +78,7 @@ func (m *MBC3) read(addr uint16) uint8 {
 func (m *MBC3) write(addr uint16, val uint8) {
 	switch addr >> 12 {
 	case 0x0, 0x1:
-		m.RamEnabled = (val&0x0F == 0x0A)
+		m.RAMEnabled = (val&0x0F == 0x0A)
 	case 0x2, 0x3:
 		m.ROMBank = (val & 0b111_1111)
 		if m.isMBC30() {
@@ -94,7 +94,7 @@ func (m *MBC3) write(addr uint16, val uint8) {
 	case 0x6, 0x7:
 		m.RTC.Latch = m.RTC.Time // NOTE: 任天堂のドキュメントはここに0と1を書き込むことでラッチすると書いてあるが、実際には何を書き込んでもすぐにラッチされる
 	case 0xA, 0xB:
-		if m.RamEnabled {
+		if m.RAMEnabled {
 			if m.RAMBank < m.RAMBankMax {
 				m.c.RAM[(uint(m.RAMBank)<<13)|uint(addr&0x1FFF)] = val
 			} else {
@@ -108,4 +108,33 @@ func (m *MBC3) write(addr uint16, val uint8) {
 			}
 		}
 	}
+}
+
+type MBC3Snapshot struct {
+	Header           uint64
+	RAMEnabled       bool
+	ROMBank, RAMBank uint8
+	RAMBankMax       uint8 // 4(Normal) or 8(MBC30)
+	RTC              RTC
+}
+
+func (m *MBC3) CreateSnapshot() MBC3Snapshot {
+	return MBC3Snapshot{
+		RAMEnabled: m.RAMEnabled,
+		ROMBank:    m.ROMBank,
+		RAMBank:    m.RAMBank,
+		RAMBankMax: m.RAMBankMax,
+		RTC:        m.RTC,
+	}
+}
+
+func (m *MBC3) RestoreSnapshot(snap *MBC3Snapshot) error {
+	if snap == nil {
+		return errSnapshotNil
+	}
+	m.RAMEnabled = snap.RAMEnabled
+	m.ROMBank, m.RAMBank = snap.ROMBank, snap.RAMBank
+	m.RAMBankMax = snap.RAMBankMax
+	m.RTC = snap.RTC
+	return nil
 }
