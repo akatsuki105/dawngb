@@ -70,7 +70,9 @@ func (g *GB) RestoreSnapshot(snap *Snapshot) error {
 	}
 
 	g.Model = Model(snap.Model)
-	g.CPU.RestoreSnapshot(snap.CPU)
+	if err := g.CPU.RestoreSnapshot(&snap.CPU); err != nil {
+		return err
+	}
 	g.PPU.RestoreSnapshot(&snap.PPU)
 	g.APU.RestoreSnapshot(snap.APU)
 	g.Cart.RestoreSnapshot(&snap.Cart)

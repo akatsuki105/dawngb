@@ -1,6 +1,10 @@
 package cpu
 
-import "github.com/akatsuki105/dawngb/core/gb/cpu/sm83"
+import (
+	"errors"
+
+	"github.com/akatsuki105/dawngb/core/gb/cpu/sm83"
+)
 
 type Snapshot struct {
 	Header           uint64 // バージョン番号とかなんか持たせたいとき用に確保
@@ -21,11 +25,12 @@ type Snapshot struct {
 	FF72, FF73, FF74 uint8
 }
 
+var errSnapshotNil = errors.New("CPU snapshot is nil")
+
 func (c *CPU) CreateSnapshot() Snapshot {
 	s := Snapshot{
 		IsCGB:  c.isCGB,
 		Cycles: c.Cycles,
-		SM83:   c.SM83.CreateSnapshot(),
 		Clock:  c.Clock,
 		Timer:  c.Timer.CreateSnapshot(),
 		DMA:    c.DMA.CreateSnapshot(),
@@ -45,13 +50,19 @@ func (c *CPU) CreateSnapshot() Snapshot {
 		FF73:   c.FF73,
 		FF74:   c.FF74,
 	}
+	c.SM83.UpdateSnapshot(&s.SM83)
 	return s
 }
 
-func (c *CPU) RestoreSnapshot(snap Snapshot) bool {
+func (c *CPU) RestoreSnapshot(snap *Snapshot) error {
+	if snap == nil {
+		return errSnapshotNil
+	}
 	c.isCGB = snap.IsCGB
 	c.Cycles = snap.Cycles
-	c.SM83.RestoreSnapshot(snap.SM83)
+	if err := c.SM83.RestoreSnapshot(&snap.SM83); err != nil {
+		return err
+	}
 	c.Clock = snap.Clock
 	c.Timer.RestoreSnapshot(snap.Timer)
 	c.DMA.RestoreSnapshot(snap.DMA)
@@ -62,5 +73,5 @@ func (c *CPU) RestoreSnapshot(snap Snapshot) bool {
 	c.Halted = snap.Halted
 	c.IE, c.IF, c.Key0, c.Key1 = snap.IE, snap.IF, snap.Key0, snap.Key1
 	c.FF72, c.FF73, c.FF74 = snap.FF72, snap.FF73, snap.FF74
-	return true
+	return nil
 }
