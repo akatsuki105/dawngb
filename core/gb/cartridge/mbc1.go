@@ -3,14 +3,14 @@ package cartridge
 type MBC1 struct {
 	c                *Cartridge
 	ramEnabled       bool
-	romBank, ramBank uint8
+	ROMBank, ramBank uint8
 	Mode             uint8
 }
 
 func newMBC1(c *Cartridge) *MBC1 {
 	return &MBC1{
 		c:       c,
-		romBank: 1,
+		ROMBank: 1,
 	}
 }
 
@@ -19,7 +19,7 @@ func (m *MBC1) read(addr uint16) uint8 {
 	case 0x0, 0x1, 0x2, 0x3:
 		return m.c.ROM[addr&0x3FFF]
 	case 0x4, 0x5, 0x6, 0x7:
-		romBank := uint(m.romBank)
+		romBank := uint(m.ROMBank)
 		if m.Mode == 0 {
 			if len(m.c.ROM) >= int(1*MB) {
 				romBank |= (uint(m.ramBank) << 5)
@@ -45,9 +45,9 @@ func (m *MBC1) write(addr uint16, val uint8) {
 	case 0x0, 0x1:
 		m.ramEnabled = (val&0x0F == 0x0A)
 	case 0x2, 0x3:
-		m.romBank = val & 0b11111
-		if m.romBank == 0 {
-			m.romBank = 1
+		m.ROMBank = val & 0b11111
+		if m.ROMBank == 0 {
+			m.ROMBank = 1
 		}
 	case 0x4, 0x5:
 		m.ramBank = val & 0b11
@@ -79,7 +79,7 @@ type MBC1Snapshot struct {
 func (m *MBC1) CreateSnapshot() MBC1Snapshot {
 	return MBC1Snapshot{
 		RamEnabled: m.ramEnabled,
-		ROMBank:    m.romBank,
+		ROMBank:    m.ROMBank,
 		RAMBank:    m.ramBank,
 		Mode:       m.Mode,
 	}
@@ -87,7 +87,7 @@ func (m *MBC1) CreateSnapshot() MBC1Snapshot {
 
 func (m *MBC1) RestoreSnapshot(snap MBC1Snapshot) bool {
 	m.ramEnabled = snap.RamEnabled
-	m.romBank, m.ramBank = snap.ROMBank, snap.RAMBank
+	m.ROMBank, m.ramBank = snap.ROMBank, snap.RAMBank
 	m.Mode = snap.Mode
 	return true
 }

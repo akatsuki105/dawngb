@@ -4,7 +4,7 @@ type MBC5 struct {
 	c          *Cartridge
 	hasRam     bool
 	ramEnabled bool
-	romBank    uint16 // 0..511
+	ROMBank    uint16 // 0..511
 	ramBank    uint8  // 0..15
 }
 
@@ -13,7 +13,7 @@ func newMBC5(c *Cartridge) *MBC5 {
 	return &MBC5{
 		c:       c,
 		hasRam:  hasRam,
-		romBank: 1,
+		ROMBank: 1,
 	}
 }
 
@@ -22,7 +22,7 @@ func (m *MBC5) read(addr uint16) uint8 {
 	case 0x0, 0x1, 0x2, 0x3:
 		return m.c.ROM[addr]
 	case 0x4, 0x5, 0x6, 0x7:
-		return m.c.ROM[(uint32(m.romBank)<<14)|(uint32(addr&0x3FFF))]
+		return m.c.ROM[(uint32(m.ROMBank)<<14)|(uint32(addr&0x3FFF))]
 	case 0xA, 0xB:
 		if m.hasRam && m.ramEnabled {
 			n := int((uint(m.ramBank) << 13) | uint(addr&0x1FFF))
@@ -40,11 +40,11 @@ func (m *MBC5) write(addr uint16, val uint8) {
 	case 0x0, 0x1:
 		m.ramEnabled = (val&0x0F == 0x0A)
 	case 0x2:
-		m.romBank &= 0x100
-		m.romBank |= uint16(val)
+		m.ROMBank &= 0x100
+		m.ROMBank |= uint16(val)
 	case 0x3:
-		m.romBank &= 0xFF
-		m.romBank |= uint16(val&0b1) << 8
+		m.ROMBank &= 0xFF
+		m.ROMBank |= uint16(val&0b1) << 8
 	case 0x4, 0x5:
 		m.ramBank = (val & 0b1111)
 	case 0xA, 0xB:

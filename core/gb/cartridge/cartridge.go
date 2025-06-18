@@ -88,13 +88,13 @@ func (c *Cartridge) RAMSize() uint {
 func (c *Cartridge) ROMBankNumber() uint16 {
 	switch mbc := c.MBC.(type) {
 	case *MBC1:
-		return uint16(mbc.romBank)
+		return uint16(mbc.ROMBank)
 	case *MBC2:
-		return uint16(mbc.romBank)
+		return uint16(mbc.ROMBank)
 	case *MBC3:
-		return uint16(mbc.romBank)
+		return uint16(mbc.ROMBank)
 	case *MBC5:
-		return mbc.romBank
+		return mbc.ROMBank
 	}
 	return 1
 }
