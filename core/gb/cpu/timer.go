@@ -2,27 +2,27 @@ package cpu
 
 var timaClock = [4]int64{64, 1, 4, 16}
 
-type timer struct {
+type Timer struct {
 	irq            func(n int)
 	clock          *int64
 	cycles         int64 // CPUから見て遅れているマスターサイクル数
-	tima, tma, tac uint8
+	TIMA, TMA, TAC uint8
 	counter        int64 // 524288Hz(一番細かいのが524288Hzなのであとはそれの倍数で数えれば良い)
 }
 
-func newTimer(irq func(n int), clock *int64) *timer {
-	return &timer{
+func newTimer(irq func(n int), clock *int64) *Timer {
+	return &Timer{
 		irq:   irq,
 		clock: clock,
 	}
 }
 
-func (t *timer) reset() {
+func (t *Timer) reset() {
 	t.cycles = 0
-	t.counter, t.tima, t.tma, t.tac = 0, 0, 0, 0
+	t.counter, t.TIMA, t.TMA, t.TAC = 0, 0, 0, 0
 }
 
-func (t *timer) run(cycles8MHz int64) {
+func (t *Timer) run(cycles8MHz int64) {
 	t.cycles += cycles8MHz
 	for t.cycles >= 16 {
 		t.update()
@@ -31,47 +31,47 @@ func (t *timer) run(cycles8MHz int64) {
 }
 
 // 524288Hz
-func (t *timer) update() {
+func (t *Timer) update() {
 	x := (*t.clock) / 4
 
 	t.counter++
-	if (t.tac & (1 << 2)) != 0 {
-		if (t.counter % (timaClock[t.tac&0b11] * x)) == 0 {
-			t.tima++
-			if t.tima == 0 {
-				t.tima = t.tma
+	if (t.TAC & (1 << 2)) != 0 {
+		if (t.counter % (timaClock[t.TAC&0b11] * x)) == 0 {
+			t.TIMA++
+			if t.TIMA == 0 {
+				t.TIMA = t.TMA
 				t.irq(IRQ_TIMER)
 			}
 		}
 	}
 }
 
-func (t *timer) Read(addr uint16) uint8 {
+func (t *Timer) Read(addr uint16) uint8 {
 	x := (*t.clock) / 4
 	switch addr {
 	case 0xFF04:
 		div := t.counter / (16 * x)
 		return uint8(div)
 	case 0xFF05:
-		return t.tima
+		return t.TIMA
 	case 0xFF06:
-		return t.tma
+		return t.TMA
 	case 0xFF07:
-		return t.tac
+		return t.TAC
 	}
 	return 0
 }
 
-func (t *timer) Write(addr uint16, val uint8) {
+func (t *Timer) Write(addr uint16, val uint8) {
 	switch addr {
 	case 0xFF04:
 		t.counter = 0
 	case 0xFF05:
-		t.tima = val
+		t.TIMA = val
 	case 0xFF06:
-		t.tma = val
+		t.TMA = val
 	case 0xFF07:
-		t.tac = val & 0b111
+		t.TAC = val & 0b111
 	}
 }
 
@@ -83,19 +83,19 @@ type TimerSnapshot struct {
 	Reserved       [7]uint8
 }
 
-func (t *timer) CreateSnapshot() TimerSnapshot {
+func (t *Timer) CreateSnapshot() TimerSnapshot {
 	return TimerSnapshot{
 		Cycles:  t.cycles,
-		Tima:    t.tima,
-		Tma:     t.tma,
-		Tac:     t.tac,
+		Tima:    t.TIMA,
+		Tma:     t.TMA,
+		Tac:     t.TAC,
 		Counter: t.counter,
 	}
 }
 
-func (t *timer) RestoreSnapshot(snap TimerSnapshot) bool {
+func (t *Timer) RestoreSnapshot(snap TimerSnapshot) bool {
 	t.cycles = snap.Cycles
-	t.tima, t.tma, t.tac = snap.Tima, snap.Tma, snap.Tac
+	t.TIMA, t.TMA, t.TAC = snap.Tima, snap.Tma, snap.Tac
 	t.counter = snap.Counter
 	return true
 }

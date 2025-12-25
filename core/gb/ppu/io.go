@@ -1,5 +1,7 @@
 package ppu
 
+import "github.com/akatsuki105/dawngb/core/gb/internal"
+
 func (p *PPU) Read(addr uint16) uint8 {
 	if addr >= 0xFE00 && addr <= 0xFE9F {
 		return p.OAM[addr&0xFF]
@@ -15,24 +17,22 @@ func (p *PPU) Read(addr uint16) uint8 {
 
 	switch addr {
 	case 0xFF40:
-		return p.lcdc
+		return p.LCDC
 	case 0xFF41:
-		if (p.lcdc & (1 << 7)) == 0 {
+		if (p.LCDC & (1 << 7)) == 0 {
 			return 0x80
 		}
-		return p.stat | 0x80
+		return p.STAT | 0x80
 	case 0xFF44:
-		return uint8(p.ly)
+		return uint8(p.Ly)
 	case 0xFF45:
-		return p.lyc
+		return p.LYC
 	case 0xFF4F:
 		return 0xFE | (p.RAM.Bank & 1)
 	case 0xFF69:
-		// ゲームによってはパレットの値を読み取ることがある(ロックマンX1など)
-		return uint8(p.Palette[(p.bgpi>>1)] >> ((p.bgpi & 1) * 8))
+		return internal.Byte(p.Palette[((p.BGPI&0x3F)>>1)], p.BGPI&1) // ゲームによってはパレットの値を読み取ることがある(ロックマンX1など)
 	case 0xFF6B:
-		// ゲームによってはパレットの値を読み取ることがある(ロックマンX1など)
-		return uint8(p.Palette[32+(p.obpi>>1)] >> ((p.obpi & 1) * 8))
+		return internal.Byte(p.Palette[32+((p.OBPI&0x3F)>>1)], p.OBPI&1) // ゲームによってはパレットの値を読み取ることがある(ロックマンX1など)
 	default:
 		if addr >= 0xFF40 && addr < 0xFF70 {
 			return p.ioreg[addr-0xFF40]
@@ -55,21 +55,21 @@ func (p *PPU) Write(addr uint16, val uint8) {
 
 	switch addr {
 	case 0xFF40: // LCDC
-		wasEnabled := (p.lcdc & (1 << 7)) != 0
-		p.lcdc = val
+		wasEnabled := (p.LCDC & (1 << 7)) != 0
+		p.LCDC = val
 		p.r.SetLCDC(val)
 		enabled := (val & (1 << 7)) != 0
 		if wasEnabled != enabled { // Toggle
-			p.stat = (p.stat & 0xFC)
-			p.lx, p.ly = 0, 0
+			p.STAT = (p.STAT & 0xFC)
+			p.Lx, p.Ly = 0, 0
 			if enabled { // Turn on
 				p.enableLatch = true
 			}
 		}
 	case 0xFF41:
-		oldStat := p.stat
-		p.stat = (p.stat & 0x7) | (val & 0x78)
-		if !statIRQAsserted(oldStat) && statIRQAsserted(p.stat) {
+		oldStat := p.STAT
+		p.STAT = (p.STAT & 0x7) | (val & 0x78)
+		if !statIRQAsserted(oldStat) && statIRQAsserted(p.STAT) {
 			p.cpu.IRQ(1)
 		}
 	case 0xFF42:
@@ -77,10 +77,10 @@ func (p *PPU) Write(addr uint16, val uint8) {
 	case 0xFF43:
 		p.r.SetSCX(val)
 	case 0xFF44:
-		p.ly = 0
+		p.Ly = 0
 		p.compareLYC()
 	case 0xFF45:
-		p.lyc = val
+		p.LYC = val
 		p.compareLYC()
 	case 0xFF47:
 		p.r.SetBGP(val)
@@ -98,11 +98,11 @@ func (p *PPU) Write(addr uint16, val uint8) {
 			p.RAM.Bank = 0
 		}
 	case 0xFF68:
-		p.bgpi = val
+		p.BGPI = val
 	case 0xFF69:
 		p.setBGPD(val)
 	case 0xFF6A:
-		p.obpi = val
+		p.OBPI = val
 	case 0xFF6B:
 		p.setOBPD(val)
 	}
@@ -112,11 +112,11 @@ func (p *PPU) Write(addr uint16, val uint8) {
 }
 
 func (p *PPU) canAccessVRAM() bool {
-	if (p.lcdc & (1 << 7)) != 0 {
-		mode := p.stat & 0b11
+	if (p.LCDC & (1 << 7)) != 0 {
+		mode := p.STAT & 0b11
 		switch mode {
 		case 2:
-			return ((p.lx >> 2) != 20)
+			return ((p.Lx >> 2) != 20)
 		case 3:
 			return false
 		}
@@ -125,41 +125,27 @@ func (p *PPU) canAccessVRAM() bool {
 }
 
 func (p *PPU) setBGPD(val uint8) {
-	palID := int((p.bgpi & 0x3F) / 8)
-	colorID := int(p.bgpi&7) >> 1
+	palID := int((p.BGPI & 0x3F) / 8)
+	colorID := int(p.BGPI&7) >> 1
 	idx := ((palID * 4) + colorID) & 0x1F
-	rgb555 := p.Palette[idx]
-	isHi := (p.bgpi & 1) == 1
-	if isHi {
-		rgb555 = (rgb555 & 0x00FF) | (uint16(val) << 8)
-	} else {
-		rgb555 = (rgb555 & 0xFF00) | (uint16(val) << 0)
-	}
-	p.Palette[idx] = rgb555
+	p.Palette[idx] = internal.SetByte(p.Palette[idx], p.BGPI&1, val)
 
-	if (p.bgpi & (1 << 7)) != 0 {
-		bgpi := (p.bgpi + 1) & 0x3F
-		p.bgpi &= 0xC0
-		p.bgpi |= bgpi
+	if (p.BGPI & (1 << 7)) != 0 {
+		bgpi := (p.BGPI + 1) & 0x3F
+		p.BGPI &= 0xC0
+		p.BGPI |= bgpi
 	}
 }
 
 func (p *PPU) setOBPD(val uint8) {
-	palID := int((p.obpi & 0x3F) / 8)
-	colorID := int(p.obpi&7) >> 1
+	palID := int((p.OBPI & 0x3F) / 8)
+	colorID := int(p.OBPI&7) >> 1
 	idx := 32 | ((palID*4 + colorID) & 0x1F)
-	rgb555 := p.Palette[idx]
-	isHi := (p.obpi & 1) == 1
-	if isHi {
-		rgb555 = (rgb555 & 0x00FF) | (uint16(val) << 8)
-	} else {
-		rgb555 = (rgb555 & 0xFF00) | uint16(val)
-	}
-	p.Palette[idx] = rgb555
+	p.Palette[idx] = internal.SetByte(p.Palette[idx], p.OBPI&1, val)
 
-	if (p.obpi & (1 << 7)) != 0 {
-		obpi := (p.obpi + 1) & 0x3F
-		p.obpi &= 0xC0
-		p.obpi |= obpi
+	if (p.OBPI & (1 << 7)) != 0 {
+		obpi := (p.OBPI + 1) & 0x3F
+		p.OBPI &= 0xC0
+		p.OBPI |= obpi
 	}
 }

@@ -88,13 +88,13 @@ func (c *Cartridge) RAMSize() uint {
 func (c *Cartridge) ROMBankNumber() uint16 {
 	switch mbc := c.MBC.(type) {
 	case *MBC1:
-		return uint16(mbc.romBank)
+		return uint16(mbc.ROMBank)
 	case *MBC2:
-		return uint16(mbc.romBank)
+		return uint16(mbc.ROMBank)
 	case *MBC3:
-		return uint16(mbc.romBank)
+		return uint16(mbc.ROMBank)
 	case *MBC5:
-		return mbc.romBank
+		return mbc.ROMBank
 	}
 	return 1
 }
@@ -113,6 +113,8 @@ func calcROMSize(n uint8) int {
 
 func calcSRAMSize(n uint8) int {
 	switch n {
+	case 1:
+		return 2 * KB // 実際に商用ゲームで使われたことがなくHomebrewによる慣用的なもの
 	case 2:
 		return 8 * KB
 	case 3:

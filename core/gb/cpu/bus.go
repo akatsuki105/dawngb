@@ -5,12 +5,12 @@ func (c *CPU) Read(addr uint16) uint8 {
 		c.Debugger.ReadMemoryHook(0, uint64(addr), 1)
 	}
 
-	if c.bios.ff50 {
+	if c.BIOS.FF50 {
 		if addr < 0x100 {
-			return c.bios.data[addr]
+			return c.BIOS.Data[addr]
 		}
-		if len(c.bios.data) == 2048 && (addr >= 0x200 && addr < 0x900) {
-			return c.bios.data[addr-0x100]
+		if len(c.BIOS.Data) == 2048 && (addr >= 0x200 && addr < 0x900) {
+			return c.BIOS.Data[addr-0x100]
 		}
 	}
 	if addr >= 0xFF80 && addr <= 0xFFFE { // HRAM

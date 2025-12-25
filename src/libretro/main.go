@@ -1,7 +1,11 @@
 package main
 
 /*
-#include "./libretro.h"
+// libretro.h で RETRO_API がついてる宣言のコメントアウトが必要
+// https://github.com/libretro/RetroArch/blob/b443d9974a179ee45c0e5e913b9842c397998193/libretro-common/include/libretro.h
+#include "libretro.h"
+#include "cfuncs.h"
+#include "input.h"
 */
 import "C"
 import (
@@ -15,8 +19,11 @@ import (
 	"github.com/akatsuki105/dawngb/core/gb"
 )
 
+const AUDIO_BUFFER_SIZE = 4096
+
 const (
-	retroApiVersion = 1
+	WIDTH  = 160
+	HEIGHT = 144
 )
 
 const (
@@ -25,7 +32,7 @@ const (
 )
 
 var (
-	useBitmasks bool
+	useBitmasks bool // この機能が有効な場合、入力は(libretro側で規定された)ビットマスクとして一括取得ができる(falseなら、ボタン1つずつ取得する必要がある)
 	keymap      = []uint{
 		C.RETRO_DEVICE_ID_JOYPAD_A,
 		C.RETRO_DEVICE_ID_JOYPAD_B,
@@ -50,10 +57,10 @@ var (
 
 type AppState struct {
 	GB           *gb.GB
-	Screen       [160 * 144]uint16
+	Screen       []uint16
 	ROM          []uint8
 	SampleBuffer *bytes.Buffer
-	Samples      [4096]uint8
+	Samples      [AUDIO_BUFFER_SIZE]uint8
 	SystemDir    string
 	SaveDir      string
 	BIOS         struct {
@@ -66,10 +73,10 @@ type AppState struct {
 }
 
 var app AppState = AppState{
-	SampleBuffer:    bytes.NewBuffer(make([]uint8, 0)),
+	SampleBuffer:    bytes.NewBuffer(make([]uint8, 0, AUDIO_BUFFER_SIZE)),
 	SystemDir:       "./",
 	SaveDir:         "./",
-	SaveStateBuffer: make([]uint8, 0),
+	SaveStateBuffer: make([]uint8, 0, 32768),
 	SaveStateSize:   0,
 }
 
@@ -115,6 +122,23 @@ func retro_init() {
 		}
 	}
 
+	// Logging
+	{
+		// ok := bool(C.call_environ_cb(C.RETRO_ENVIRONMENT_GET_LOG_INTERFACE, unsafe.Pointer(&C.logging)))
+		// if ok {
+		// 	C.log_cb = C.logging.log
+		// } else {
+		// 	// TODO: Fallback to stderr in Go side
+		// }
+	}
+
+	// Input
+	{
+		useBitmasks = bool(C.call_environ_cb(C.RETRO_ENVIRONMENT_GET_INPUT_BITMASKS, nil))
+		// C.call_environ_cb(C.RETRO_ENVIRONMENT_SET_CONTROLLER_INFO, unsafe.Pointer(&C.ports[0]))
+		// C.call_environ_cb(C.RETRO_ENVIRONMENT_SET_INPUT_DESCRIPTORS, unsafe.Pointer(&C.descriptors_1p[0]))
+	}
+
 	// check BIOS
 	app.BIOS.exists = false
 	if app.SystemDir != "./" {
@@ -128,6 +152,8 @@ func retro_init() {
 			app.BIOS.isCGB = false
 		}
 	}
+
+	app.Screen = make([]uint16, WIDTH*HEIGHT)
 }
 
 //export retro_deinit
@@ -135,10 +161,11 @@ func retro_deinit() {
 	retro_unload_game()
 	app.BIOS.exists = false
 	app.BIOS.data = nil
+	useBitmasks = false
 }
 
 //export retro_api_version
-func retro_api_version() C.uint { return retroApiVersion }
+func retro_api_version() C.uint { return C.RETRO_API_VERSION }
 
 //export retro_get_system_info
 func retro_get_system_info(info *C.struct_retro_system_info) {
@@ -150,18 +177,15 @@ func retro_get_system_info(info *C.struct_retro_system_info) {
 
 //export retro_get_system_av_info
 func retro_get_system_av_info(info *C.struct_retro_system_av_info) {
-	if app.GB == nil {
-		return
-	}
-	width, height := app.GB.Resolution()
-	info.timing.fps = C.double(60)
-	info.timing.sample_rate = C.double(32768.0)
+	if app.GB != nil {
+		width, height := app.GB.Resolution()
+		info.timing.fps = C.double(float64(4*1024*1024) / 70224)
+		info.timing.sample_rate = C.double(32768.0)
 
-	info.geometry.base_width = C.uint(width)
-	info.geometry.base_height = C.uint(height)
-	info.geometry.max_width = C.uint(width)
-	info.geometry.max_height = C.uint(height)
-	info.geometry.aspect_ratio = C.float(float64(width) / float64(height))
+		info.geometry.base_width, info.geometry.base_height = C.uint(width), C.uint(height)
+		info.geometry.max_width, info.geometry.max_height = C.uint(width), C.uint(height)
+		info.geometry.aspect_ratio = C.float(float64(width) / float64(height))
+	}
 }
 
 //export retro_set_controller_port_device
@@ -171,44 +195,47 @@ func retro_set_controller_port_device(port, device C.uint) {
 
 //export retro_reset
 func retro_reset() {
+	for i := 0; i < len(app.Samples); i++ {
+		app.Samples[i] = 0
+	}
 	app.GB.Reset()
 	app.GB.DirectBoot()
 }
 
 //export retro_run
 func retro_run() {
+	if app.GB != nil {
+		pollInput()
+		update()
+		render()
+	}
+}
+
+func pollInput() {
 	C.call_input_poll_cb()
 
+	joypads := uint16(0)
 	if useBitmasks {
-		joypadMask := uint(C.call_input_state_cb(0, C.RETRO_DEVICE_JOYPAD, 0, C.RETRO_DEVICE_ID_JOYPAD_MASK))
-		for i := 0; i < len(keymap); i++ {
-			pressed := (joypadMask>>keymap[i])&1 == 1
-			app.GB.SetKeyInput(keymapNames[keymap[i]], pressed)
-		}
+		joypads = uint16(C.call_input_state_cb(0, C.RETRO_DEVICE_JOYPAD, 0, C.RETRO_DEVICE_ID_JOYPAD_MASK))
 	} else {
-		for i := 0; i < len(keymap); i++ {
-			pressed := C.call_input_state_cb(0, C.RETRO_DEVICE_JOYPAD, 0, C.uint(keymap[i])) != 0
-			app.GB.SetKeyInput(keymapNames[keymap[i]], pressed)
+		for i := 0; i < (C.RETRO_DEVICE_ID_JOYPAD_R3 + 1); i++ {
+			if C.call_input_state_cb(0, C.RETRO_DEVICE_JOYPAD, 0, C.uint(i)) != 0 {
+				joypads |= 1 << i
+			}
 		}
 	}
 
-	update()
-	render()
+	for i := 0; i < len(keymap); i++ {
+		pressed := (joypads>>keymap[i])&1 == 1
+		app.GB.SetKeyInput(keymapNames[keymap[i]], pressed)
+	}
 }
 
 func update() {
-	if app.GB != nil {
-		app.GB.RunFrame()
-
-		for i := 0; i < len(app.Samples); i++ {
-			app.Samples[i] = 0
-		}
-		if app.GB != nil {
-			n, err := app.SampleBuffer.Read(app.Samples[:])
-			if err == nil && n >= 4 {
-				C.call_audio_batch_cb((*C.int16_t)(unsafe.Pointer(&app.Samples[0])), C.ulong(n/4))
-			}
-		}
+	app.GB.RunFrame()
+	n, err := app.SampleBuffer.Read(app.Samples[:])
+	if err == nil && n >= 4 {
+		C.call_audio_batch_cb((*C.int16_t)(unsafe.Pointer(&app.Samples[0])), C.ulong(n/4))
 	}
 }
 
@@ -274,7 +301,6 @@ func retro_unserialize(data unsafe.Pointer, size C.size_t) C.bool {
 func retro_load_game(info *C.struct_retro_game_info) C.bool {
 	fmt := C.RETRO_PIXEL_FORMAT_RGB565
 	C.call_environ_cb(C.RETRO_ENVIRONMENT_SET_PIXEL_FORMAT, unsafe.Pointer(&fmt))
-	useBitmasks = bool(C.call_environ_cb(C.RETRO_ENVIRONMENT_GET_INPUT_BITMASKS, nil))
 
 	romPath := C.GoString(info.path)
 	data, err := os.ReadFile(romPath)
@@ -346,7 +372,7 @@ func retro_load_game_special(gameType C.uint, info unsafe.Pointer, numInfo C.siz
 func retro_unload_game() {
 	app.GB = nil
 	app.ROM = []uint8{}
-	app.SaveStateBuffer = make([]uint8, 0)
+	app.SaveStateBuffer = make([]uint8, 0, 32768)
 	app.SaveStateSize = 0
 	clear(app.Screen[:])
 	clear(app.Samples[:])

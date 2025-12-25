@@ -1,6 +1,6 @@
 package psg
 
-type sweep struct {
+type Sweep struct {
 	enabled bool
 	square  *Square
 
@@ -14,23 +14,23 @@ type sweep struct {
 	step uint8 // スイープ間隔(.interval)をカウントするためのカウンタ
 }
 
-func newSweep(ch *Square) *sweep {
-	return &sweep{
+func newSweep(ch *Square) *Sweep {
+	return &Sweep{
 		square: ch,
 	}
 }
 
-func (s *sweep) reset() {
+func (s *Sweep) reset() {
 	s.enabled = false
 	s.periodLatch, s.interval, s.negate, s.shift = 0, 0, false, 0
 	s.step = 0
 }
 
-func (s *sweep) TurnOff() {
+func (s *Sweep) TurnOff() {
 	s.shift, s.negate, s.interval = 0, false, 0
 }
 
-func (s *sweep) reload() {
+func (s *Sweep) reload() {
 	s.periodLatch = s.square.period
 	s.step = s.interval
 	if s.interval == 0 {
@@ -42,7 +42,7 @@ func (s *sweep) reload() {
 	}
 }
 
-func (s *sweep) update() {
+func (s *Sweep) update() {
 	s.step--
 	if s.step == 0 {
 		s.step = s.interval
@@ -56,7 +56,7 @@ func (s *sweep) update() {
 	}
 }
 
-func (s *sweep) updateFrequency() {
+func (s *Sweep) updateFrequency() {
 	if s.enabled {
 		delta := s.periodLatch >> s.shift
 		freq := s.periodLatch
@@ -76,7 +76,7 @@ func (s *sweep) updateFrequency() {
 	}
 }
 
-func (s *sweep) checkOverflow() {
+func (s *Sweep) checkOverflow() {
 	if s.enabled {
 		delta := s.periodLatch >> s.shift
 		freq := s.periodLatch
@@ -102,7 +102,7 @@ type SweepSnapshot struct {
 	Reserved       [7]uint8
 }
 
-func (s *sweep) CreateSnapshot() SweepSnapshot {
+func (s *Sweep) CreateSnapshot() SweepSnapshot {
 	return SweepSnapshot{
 		Enabled:     s.enabled,
 		PeriodLatch: s.periodLatch,
@@ -113,7 +113,7 @@ func (s *sweep) CreateSnapshot() SweepSnapshot {
 	}
 }
 
-func (s *sweep) RestoreSnapshot(snap SweepSnapshot) bool {
+func (s *Sweep) RestoreSnapshot(snap SweepSnapshot) bool {
 	s.enabled = snap.Enabled
 	s.periodLatch = snap.PeriodLatch
 	s.shift = snap.Shift

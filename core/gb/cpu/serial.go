@@ -4,22 +4,22 @@ import (
 	"math"
 )
 
-type serial struct {
+type Serial struct {
 	irq    func(int)
 	until  int64
-	sb, sc uint8
+	SB, SC uint8
 }
 
-func newSerial(irq func(int)) *serial {
-	return &serial{irq: irq}
+func newSerial(irq func(int)) *Serial {
+	return &Serial{irq: irq}
 }
 
-func (s *serial) reset() {
+func (s *Serial) reset() {
 	s.until = math.MaxInt64
-	s.sb, s.sc = 0, 0
+	s.SB, s.SC = 0, 0
 }
 
-func (s *serial) run(cycles8MHz int64) {
+func (s *Serial) run(cycles8MHz int64) {
 	for i := int64(0); i < cycles8MHz; i++ {
 		s.until--
 		if s.until <= 0 {
@@ -29,21 +29,21 @@ func (s *serial) run(cycles8MHz int64) {
 	}
 }
 
-func (s *serial) setSC(val uint8) {
-	s.sc = val
+func (s *Serial) setSC(val uint8) {
+	s.SC = val
 	// 一部のソフト(ポケモンクリスタル など)は起動時にシリアル通信を実装してないと動かないのでダミーで実装
 	if (val & (1 << 7)) != 0 {
 		s.until = math.MaxInt64
-		if (s.sc & (1 << 0)) != 0 {
+		if (s.SC & (1 << 0)) != 0 {
 			s.until = 512 * 8
 		}
 	}
 }
 
 // ポケモンクリスタルの起動にシリアル通信機能が必要なので暫定措置
-func (s *serial) dummyTransfer() {
-	s.sc &= 0x7F
-	s.sb = 0xFF
+func (s *Serial) dummyTransfer() {
+	s.SC &= 0x7F
+	s.SB = 0xFF
 	s.irq(IRQ_SERIAL)
 }
 
@@ -54,16 +54,16 @@ type SerialSnapshot struct {
 	Reserved [14]uint8
 }
 
-func (s *serial) CreateSnapshot() SerialSnapshot {
+func (s *Serial) CreateSnapshot() SerialSnapshot {
 	return SerialSnapshot{
 		Until: s.until,
-		SB:    s.sb,
-		SC:    s.sc,
+		SB:    s.SB,
+		SC:    s.SC,
 	}
 }
 
-func (s *serial) RestoreSnapshot(snap SerialSnapshot) bool {
+func (s *Serial) RestoreSnapshot(snap SerialSnapshot) bool {
 	s.until = snap.Until
-	s.sb, s.sc = snap.SB, snap.SC
+	s.SB, s.SC = snap.SB, snap.SC
 	return true
 }

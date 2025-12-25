@@ -14,7 +14,7 @@ type Square struct {
 	stop   bool  // NR14.6; .length が 0 になったときに音を止めるかどうか
 
 	envelope *Envelope
-	sweep    *sweep
+	sweep    *Sweep
 
 	duty        uint8 // NR11.6-7, (squareDutyTable の index)
 	dutyCounter uint8 // 0 ~ 7

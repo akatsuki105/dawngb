@@ -1,17 +1,12 @@
 {
   "[go]": {
-    "editor.tabSize": 2,
     "editor.formatOnSave": true,
     "editor.codeActionsOnSave": {
       "source.organizeImports": "explicit"
     }
   },
-  "[cpp]": {
+  "[c][cpp]": {
     "editor.formatOnSave": true,
-    "editor.tabSize": 2,
-    "editor.foldingStrategy": "indentation",
-  },
-  "[c]": {
     "editor.foldingStrategy": "indentation",
   }
 }

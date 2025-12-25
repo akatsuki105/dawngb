@@ -1,5 +1,9 @@
 package ppu
 
+import "errors"
+
+var errSnapshotNil = errors.New("PPU snapshot is nil")
+
 type Snapshot struct {
 	Header          uint64
 	Cycles          int64
@@ -17,37 +21,40 @@ type Snapshot struct {
 	Reserved        [64]uint8
 }
 
-func (p *PPU) CreateSnapshot() Snapshot {
-	s := Snapshot{
-		Cycles:      p.cycles,
-		Frames:      p.frameCounter,
-		Lx:          int16(p.lx),
-		Ly:          int16(p.ly),
-		VRAM:        p.RAM,
-		DMA:         p.DMA,
-		LCDC:        p.lcdc,
-		STAT:        p.stat,
-		LYC:         p.lyc,
-		OAM:         p.OAM,
-		Palette:     p.Palette,
-		IOReg:       p.ioreg,
-		EnableLatch: p.enableLatch,
-		ObjCount:    p.objCount,
-		BGPI:        p.bgpi,
-		OBPI:        p.obpi,
+func (p *PPU) UpdateSnapshot(snap *Snapshot) error {
+	if snap == nil {
+		return errSnapshotNil
 	}
-	return s
+	snap.Cycles, snap.Frames = p.cycles, p.Frame
+	snap.Lx, snap.Ly = int16(p.Lx), int16(p.Ly)
+
+	copy(snap.VRAM.Data[:], p.RAM.Data[:])
+	snap.VRAM.Bank = p.RAM.Bank
+
+	snap.DMA.Active, snap.DMA.Src, snap.DMA.Until = p.DMA.Active, p.DMA.Src, p.DMA.Until
+	snap.LCDC, snap.STAT, snap.LYC = p.LCDC, p.STAT, p.LYC
+	copy(snap.OAM[:], p.OAM[:])
+	copy(snap.Palette[:], p.Palette[:])
+	copy(snap.IOReg[:], p.ioreg[:])
+	snap.EnableLatch = p.enableLatch
+	snap.ObjCount = p.objCount
+	snap.BGPI, snap.OBPI = p.BGPI, p.OBPI
+	return nil
 }
 
-func (p *PPU) RestoreSnapshot(snap Snapshot) bool {
+func (p *PPU) RestoreSnapshot(snap *Snapshot) error {
+	if snap == nil {
+		return errSnapshotNil
+	}
+
 	p.cycles = snap.Cycles
-	p.frameCounter = snap.Frames
-	p.lx, p.ly = int(snap.Lx), int(snap.Ly)
+	p.Frame = snap.Frames
+	p.Lx, p.Ly = int(snap.Lx), int(snap.Ly)
 	copy(p.RAM.Data[:], snap.VRAM.Data[:])
 	p.RAM.Bank = snap.VRAM.Bank
 	p.DMA.Active, p.DMA.Src, p.DMA.Until = snap.DMA.Active, snap.DMA.Src, snap.DMA.Until
-	p.lcdc, p.stat, p.lyc = snap.LCDC, snap.STAT, snap.LYC
-	p.r.SetLCDC(p.lcdc)
+	p.LCDC, p.STAT, p.LYC = snap.LCDC, snap.STAT, snap.LYC
+	p.r.SetLCDC(p.LCDC)
 	copy(p.OAM[:], snap.OAM[:])
 	copy(p.Palette[:], snap.Palette[:])
 	copy(p.ioreg[:], snap.IOReg[:])
@@ -60,6 +67,6 @@ func (p *PPU) RestoreSnapshot(snap Snapshot) bool {
 	p.r.SetOBP(1, p.ioreg[0x9])
 	p.enableLatch = snap.EnableLatch
 	p.objCount = snap.ObjCount
-	p.bgpi, p.obpi = snap.BGPI, snap.OBPI
-	return true
+	p.BGPI, p.OBPI = snap.BGPI, snap.OBPI
+	return nil
 }

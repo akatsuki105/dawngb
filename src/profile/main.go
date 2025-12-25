@@ -10,11 +10,11 @@ import (
 )
 
 // ExitCode represents program's status code
-type exitCode int
+type ExitCode int
 
 // exit code
 const (
-	ExitCodeOK exitCode = iota
+	ExitCodeOK ExitCode = iota
 	ExitCodeError
 )
 
@@ -26,7 +26,7 @@ func main() {
 	os.Exit(int(run()))
 }
 
-func run() exitCode {
+func run() ExitCode {
 	flag.Parse()
 	if flag.NArg() > 0 {
 		defer profile.Start(profile.ProfilePath("./build/profile")).Stop()

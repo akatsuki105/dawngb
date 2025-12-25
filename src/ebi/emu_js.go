@@ -17,31 +17,23 @@ func init() {
 }
 
 func reset(this js.Value, args []js.Value) any {
-	if emu != nil {
-		emu.c.Reset()
-		emu.c.DirectBoot()
-	}
+	App.Emu.Reset = true
 	return nil
 }
 
 func setPaused(this js.Value, args []js.Value) any {
-	if emu != nil {
-		emu.setPaused(args[0].Bool())
-	}
+	App.Emu.Paused = args[0].Bool()
 	return nil
 }
 
 func enableSound(this js.Value, args []js.Value) any {
-	if emu != nil {
-		emu.enableSound(args[0].Bool())
-	}
 	return nil
 }
 
 func press(this js.Value, args []js.Value) any {
-	for key := range inputMapWeb {
+	for key := range Inputs {
 		if key == args[0].String() {
-			inputMapWeb[key] = args[1].Bool()
+			Inputs[key] = args[1].Bool()
 			break
 		}
 	}
@@ -49,40 +41,30 @@ func press(this js.Value, args []js.Value) any {
 }
 
 func loadROM(this js.Value, args []js.Value) any {
-	if emu != nil {
-		raw := args[0]
-		rom := make([]uint8, raw.Get("length").Int())
-		js.CopyBytesToGo(rom, raw)
-		emu.LoadROM(rom)
-		emu.c.Reset()
-		emu.c.DirectBoot()
-	}
+	raw := args[0]
+	rom := make([]uint8, raw.Get("length").Int())
+	js.CopyBytesToGo(rom, raw)
+	App.Emu.LoadROM(rom)
 	return nil
 }
 
 func loadSave(this js.Value, args []js.Value) any {
-	if emu != nil {
-		sram, err := emu.c.Dump(gb.DUMP_SAVE)
-		if err == nil {
-			size := len(sram)
-			newSram := make([]uint8, size)
-			js.CopyBytesToGo(newSram, args[0])
-			emu.c.Load(gb.LOAD_SAVE, newSram)
-			emu.c.Reset()
-			emu.c.DirectBoot()
-		}
+	sram, err := App.Emu.Core.Dump(gb.DUMP_SAVE)
+	if err == nil {
+		size := len(sram)
+		newSram := make([]uint8, size)
+		js.CopyBytesToGo(newSram, args[0])
+		App.Emu.LoadSave(newSram)
 	}
 	return nil
 }
 
 func dumpSave(this js.Value, args []js.Value) any {
-	if emu != nil {
-		sram, err := emu.c.Dump(gb.DUMP_SAVE)
-		if err == nil {
-			dst := js.Global().Get("Uint8Array").New(len(sram))
-			js.CopyBytesToJS(dst, sram)
-			return dst
-		}
+	sram, err := App.Emu.Core.Dump(gb.DUMP_SAVE)
+	if err != nil {
+		return nil
 	}
-	return nil
+	dst := js.Global().Get("Uint8Array").New(len(sram))
+	js.CopyBytesToJS(dst, sram)
+	return dst
 }

@@ -1,7 +1,7 @@
 package software
 
 import (
-	"github.com/akatsuki105/dawngb/util"
+	"github.com/akatsuki105/dawngb/core/gb/internal"
 )
 
 type bgLayer struct {
@@ -59,12 +59,12 @@ func (l *bgLayer) drawScanline(y int) {
 				}
 				palID := attr & 0b111
 				tileBank := uint((attr >> 3) & 0b1)
-				hflip := util.Bit(attr, 5)
+				hflip := internal.Bit(attr, 5)
 
 				tiledata := l.r.vram[(8*KB)*tileBank:]
 				tile := tiledata[tileID*16 : (tileID+1)*16] // 2bpp = 16byte
 
-				yy := flip(8, util.Bit(attr, 6), (y & 0b111))
+				yy := flip(8, internal.Bit(attr, 6), (y & 0b111))
 				planes := [2]uint8{tile[yy*2], tile[yy*2+1]}
 
 				for j := 0; j < end; j++ {

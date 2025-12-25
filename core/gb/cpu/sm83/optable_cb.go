@@ -1,6 +1,6 @@
 package sm83
 
-import "github.com/akatsuki105/dawngb/util"
+import "github.com/akatsuki105/dawngb/core/gb/internal"
 
 var cbTable = [256]opcode{
 	/* 0x00 */ cb00, cb01, cb02, cb03, cb04, cb05, cb06, cb07, cb08, cb09, cb0A, cb0B, cb0C, cb0D, cb0E, cb0F,
@@ -58,7 +58,7 @@ func cb06(c *SM83) {
 	val := c.bus.Read(hl)
 	val = (val << 1) | (val >> 7)
 	c.bus.Write(hl, val)
-	c.R.F.z, c.R.F.n, c.R.F.h, c.R.F.c = (val == 0), false, false, util.Bit(val, 0)
+	c.R.F.z, c.R.F.n, c.R.F.h, c.R.F.c = (val == 0), false, false, internal.Bit(val, 0)
 }
 
 func cb07(c *SM83) { c.rlc(&c.R.A) }
@@ -81,7 +81,7 @@ func cb0E(c *SM83) {
 	val := c.bus.Read(hl)
 	val = (val << 7) | (val >> 1)
 	c.bus.Write(hl, val)
-	c.R.F.z, c.R.F.n, c.R.F.h, c.R.F.c = (val == 0), false, false, util.Bit(val, 7)
+	c.R.F.z, c.R.F.n, c.R.F.h, c.R.F.c = (val == 0), false, false, internal.Bit(val, 7)
 }
 
 func cb0F(c *SM83) { c.rrc(&c.R.A) }
@@ -102,7 +102,7 @@ func cb15(c *SM83) { c.rl(&c.R.HL.Lo) }
 func cb16(c *SM83) {
 	hl := c.R.HL.Pack()
 	val := c.bus.Read(hl)
-	carry := util.Bit(val, 7)
+	carry := internal.Bit(val, 7)
 	val = (val << 1) | btou8(c.R.F.c)
 	c.bus.Write(hl, val)
 	c.R.F.z, c.R.F.n, c.R.F.h, c.R.F.c = (val == 0), false, false, carry
@@ -127,7 +127,7 @@ func cb1E(c *SM83) {
 	hl := c.R.HL.Pack()
 	val := c.bus.Read(hl)
 	carry := btou8(c.R.F.c)
-	c.R.F.c = util.Bit(val, 0)
+	c.R.F.c = internal.Bit(val, 0)
 	val = (val >> 1) | (carry << 7)
 	c.bus.Write(hl, val)
 	c.R.F.z, c.R.F.n, c.R.F.h = (val == 0), false, false
@@ -151,7 +151,7 @@ func cb25(c *SM83) { c.sla(&c.R.HL.Lo) }
 func cb26(c *SM83) {
 	hl := c.R.HL.Pack()
 	val := c.bus.Read(hl)
-	c.R.F.c = util.Bit(val, 7)
+	c.R.F.c = internal.Bit(val, 7)
 	val <<= 1
 	c.bus.Write(hl, val)
 	c.R.F.z, c.R.F.n, c.R.F.h = (val == 0), false, false
@@ -175,7 +175,7 @@ func cb2D(c *SM83) { c.sra(&c.R.HL.Lo) }
 func cb2E(c *SM83) {
 	hl := c.R.HL.Pack()
 	val := c.bus.Read(hl)
-	c.R.F.c = util.Bit(val, 0)
+	c.R.F.c = internal.Bit(val, 0)
 	val = uint8(int8(val) >> 1)
 	c.bus.Write(hl, val)
 	c.R.F.z, c.R.F.n, c.R.F.h = (val == 0), false, false
@@ -222,7 +222,7 @@ func cb3D(c *SM83) { c.srl(&c.R.HL.Lo) }
 func cb3E(c *SM83) {
 	hl := c.R.HL.Pack()
 	val := c.bus.Read(hl)
-	c.R.F.c = util.Bit(val, 0)
+	c.R.F.c = internal.Bit(val, 0)
 	val >>= 1
 	c.bus.Write(hl, val)
 	c.R.F.z, c.R.F.n, c.R.F.h = (val == 0), false, false
@@ -358,258 +358,258 @@ func cb7E(c *SM83) { c.bit(c.bus.Read(c.R.HL.Pack()), 7) }
 
 func cb7F(c *SM83) { c.bit(c.R.A, 7) }
 
-func cb80(c *SM83) { c.R.BC.Hi = util.SetBit(c.R.BC.Hi, 0, false) }
+func cb80(c *SM83) { c.R.BC.Hi = internal.SetBit(c.R.BC.Hi, 0, false) }
 
-func cb81(c *SM83) { c.R.BC.Lo = util.SetBit(c.R.BC.Lo, 0, false) }
+func cb81(c *SM83) { c.R.BC.Lo = internal.SetBit(c.R.BC.Lo, 0, false) }
 
-func cb82(c *SM83) { c.R.DE.Hi = util.SetBit(c.R.DE.Hi, 0, false) }
+func cb82(c *SM83) { c.R.DE.Hi = internal.SetBit(c.R.DE.Hi, 0, false) }
 
-func cb83(c *SM83) { c.R.DE.Lo = util.SetBit(c.R.DE.Lo, 0, false) }
+func cb83(c *SM83) { c.R.DE.Lo = internal.SetBit(c.R.DE.Lo, 0, false) }
 
-func cb84(c *SM83) { c.R.HL.Hi = util.SetBit(c.R.HL.Hi, 0, false) }
+func cb84(c *SM83) { c.R.HL.Hi = internal.SetBit(c.R.HL.Hi, 0, false) }
 
-func cb85(c *SM83) { c.R.HL.Lo = util.SetBit(c.R.HL.Lo, 0, false) }
+func cb85(c *SM83) { c.R.HL.Lo = internal.SetBit(c.R.HL.Lo, 0, false) }
 
 func cb86(c *SM83) { c.set_hl(0, false) }
 
-func cb87(c *SM83) { c.R.A = util.SetBit(c.R.A, 0, false) }
+func cb87(c *SM83) { c.R.A = internal.SetBit(c.R.A, 0, false) }
 
-func cb88(c *SM83) { c.R.BC.Hi = util.SetBit(c.R.BC.Hi, 1, false) }
+func cb88(c *SM83) { c.R.BC.Hi = internal.SetBit(c.R.BC.Hi, 1, false) }
 
-func cb89(c *SM83) { c.R.BC.Lo = util.SetBit(c.R.BC.Lo, 1, false) }
+func cb89(c *SM83) { c.R.BC.Lo = internal.SetBit(c.R.BC.Lo, 1, false) }
 
-func cb8A(c *SM83) { c.R.DE.Hi = util.SetBit(c.R.DE.Hi, 1, false) }
+func cb8A(c *SM83) { c.R.DE.Hi = internal.SetBit(c.R.DE.Hi, 1, false) }
 
-func cb8B(c *SM83) { c.R.DE.Lo = util.SetBit(c.R.DE.Lo, 1, false) }
+func cb8B(c *SM83) { c.R.DE.Lo = internal.SetBit(c.R.DE.Lo, 1, false) }
 
-func cb8C(c *SM83) { c.R.HL.Hi = util.SetBit(c.R.HL.Hi, 1, false) }
+func cb8C(c *SM83) { c.R.HL.Hi = internal.SetBit(c.R.HL.Hi, 1, false) }
 
-func cb8D(c *SM83) { c.R.HL.Lo = util.SetBit(c.R.HL.Lo, 1, false) }
+func cb8D(c *SM83) { c.R.HL.Lo = internal.SetBit(c.R.HL.Lo, 1, false) }
 
 func cb8E(c *SM83) { c.set_hl(1, false) }
 
-func cb8F(c *SM83) { c.R.A = util.SetBit(c.R.A, 1, false) }
+func cb8F(c *SM83) { c.R.A = internal.SetBit(c.R.A, 1, false) }
 
-func cb90(c *SM83) { c.R.BC.Hi = util.SetBit(c.R.BC.Hi, 2, false) }
+func cb90(c *SM83) { c.R.BC.Hi = internal.SetBit(c.R.BC.Hi, 2, false) }
 
-func cb91(c *SM83) { c.R.BC.Lo = util.SetBit(c.R.BC.Lo, 2, false) }
+func cb91(c *SM83) { c.R.BC.Lo = internal.SetBit(c.R.BC.Lo, 2, false) }
 
-func cb92(c *SM83) { c.R.DE.Hi = util.SetBit(c.R.DE.Hi, 2, false) }
+func cb92(c *SM83) { c.R.DE.Hi = internal.SetBit(c.R.DE.Hi, 2, false) }
 
-func cb93(c *SM83) { c.R.DE.Lo = util.SetBit(c.R.DE.Lo, 2, false) }
+func cb93(c *SM83) { c.R.DE.Lo = internal.SetBit(c.R.DE.Lo, 2, false) }
 
-func cb94(c *SM83) { c.R.HL.Hi = util.SetBit(c.R.HL.Hi, 2, false) }
+func cb94(c *SM83) { c.R.HL.Hi = internal.SetBit(c.R.HL.Hi, 2, false) }
 
-func cb95(c *SM83) { c.R.HL.Lo = util.SetBit(c.R.HL.Lo, 2, false) }
+func cb95(c *SM83) { c.R.HL.Lo = internal.SetBit(c.R.HL.Lo, 2, false) }
 
 func cb96(c *SM83) { c.set_hl(2, false) }
 
-func cb97(c *SM83) { c.R.A = util.SetBit(c.R.A, 2, false) }
+func cb97(c *SM83) { c.R.A = internal.SetBit(c.R.A, 2, false) }
 
-func cb98(c *SM83) { c.R.BC.Hi = util.SetBit(c.R.BC.Hi, 3, false) }
+func cb98(c *SM83) { c.R.BC.Hi = internal.SetBit(c.R.BC.Hi, 3, false) }
 
-func cb99(c *SM83) { c.R.BC.Lo = util.SetBit(c.R.BC.Lo, 3, false) }
+func cb99(c *SM83) { c.R.BC.Lo = internal.SetBit(c.R.BC.Lo, 3, false) }
 
-func cb9A(c *SM83) { c.R.DE.Hi = util.SetBit(c.R.DE.Hi, 3, false) }
+func cb9A(c *SM83) { c.R.DE.Hi = internal.SetBit(c.R.DE.Hi, 3, false) }
 
-func cb9B(c *SM83) { c.R.DE.Lo = util.SetBit(c.R.DE.Lo, 3, false) }
+func cb9B(c *SM83) { c.R.DE.Lo = internal.SetBit(c.R.DE.Lo, 3, false) }
 
-func cb9C(c *SM83) { c.R.HL.Hi = util.SetBit(c.R.HL.Hi, 3, false) }
+func cb9C(c *SM83) { c.R.HL.Hi = internal.SetBit(c.R.HL.Hi, 3, false) }
 
-func cb9D(c *SM83) { c.R.HL.Lo = util.SetBit(c.R.HL.Lo, 3, false) }
+func cb9D(c *SM83) { c.R.HL.Lo = internal.SetBit(c.R.HL.Lo, 3, false) }
 
 func cb9E(c *SM83) { c.set_hl(3, false) }
 
-func cb9F(c *SM83) { c.R.A = util.SetBit(c.R.A, 3, false) }
+func cb9F(c *SM83) { c.R.A = internal.SetBit(c.R.A, 3, false) }
 
-func cbA0(c *SM83) { c.R.BC.Hi = util.SetBit(c.R.BC.Hi, 4, false) }
+func cbA0(c *SM83) { c.R.BC.Hi = internal.SetBit(c.R.BC.Hi, 4, false) }
 
-func cbA1(c *SM83) { c.R.BC.Lo = util.SetBit(c.R.BC.Lo, 4, false) }
+func cbA1(c *SM83) { c.R.BC.Lo = internal.SetBit(c.R.BC.Lo, 4, false) }
 
-func cbA2(c *SM83) { c.R.DE.Hi = util.SetBit(c.R.DE.Hi, 4, false) }
+func cbA2(c *SM83) { c.R.DE.Hi = internal.SetBit(c.R.DE.Hi, 4, false) }
 
-func cbA3(c *SM83) { c.R.DE.Lo = util.SetBit(c.R.DE.Lo, 4, false) }
+func cbA3(c *SM83) { c.R.DE.Lo = internal.SetBit(c.R.DE.Lo, 4, false) }
 
-func cbA4(c *SM83) { c.R.HL.Hi = util.SetBit(c.R.HL.Hi, 4, false) }
+func cbA4(c *SM83) { c.R.HL.Hi = internal.SetBit(c.R.HL.Hi, 4, false) }
 
-func cbA5(c *SM83) { c.R.HL.Lo = util.SetBit(c.R.HL.Lo, 4, false) }
+func cbA5(c *SM83) { c.R.HL.Lo = internal.SetBit(c.R.HL.Lo, 4, false) }
 
 func cbA6(c *SM83) { c.set_hl(4, false) }
 
-func cbA7(c *SM83) { c.R.A = util.SetBit(c.R.A, 4, false) }
+func cbA7(c *SM83) { c.R.A = internal.SetBit(c.R.A, 4, false) }
 
-func cbA8(c *SM83) { c.R.BC.Hi = util.SetBit(c.R.BC.Hi, 5, false) }
+func cbA8(c *SM83) { c.R.BC.Hi = internal.SetBit(c.R.BC.Hi, 5, false) }
 
-func cbA9(c *SM83) { c.R.BC.Lo = util.SetBit(c.R.BC.Lo, 5, false) }
+func cbA9(c *SM83) { c.R.BC.Lo = internal.SetBit(c.R.BC.Lo, 5, false) }
 
-func cbAA(c *SM83) { c.R.DE.Hi = util.SetBit(c.R.DE.Hi, 5, false) }
+func cbAA(c *SM83) { c.R.DE.Hi = internal.SetBit(c.R.DE.Hi, 5, false) }
 
-func cbAB(c *SM83) { c.R.DE.Lo = util.SetBit(c.R.DE.Lo, 5, false) }
+func cbAB(c *SM83) { c.R.DE.Lo = internal.SetBit(c.R.DE.Lo, 5, false) }
 
-func cbAC(c *SM83) { c.R.HL.Hi = util.SetBit(c.R.HL.Hi, 5, false) }
+func cbAC(c *SM83) { c.R.HL.Hi = internal.SetBit(c.R.HL.Hi, 5, false) }
 
-func cbAD(c *SM83) { c.R.HL.Lo = util.SetBit(c.R.HL.Lo, 5, false) }
+func cbAD(c *SM83) { c.R.HL.Lo = internal.SetBit(c.R.HL.Lo, 5, false) }
 
 func cbAE(c *SM83) { c.set_hl(5, false) }
 
-func cbAF(c *SM83) { c.R.A = util.SetBit(c.R.A, 5, false) }
+func cbAF(c *SM83) { c.R.A = internal.SetBit(c.R.A, 5, false) }
 
-func cbB0(c *SM83) { c.R.BC.Hi = util.SetBit(c.R.BC.Hi, 6, false) }
+func cbB0(c *SM83) { c.R.BC.Hi = internal.SetBit(c.R.BC.Hi, 6, false) }
 
-func cbB1(c *SM83) { c.R.BC.Lo = util.SetBit(c.R.BC.Lo, 6, false) }
+func cbB1(c *SM83) { c.R.BC.Lo = internal.SetBit(c.R.BC.Lo, 6, false) }
 
-func cbB2(c *SM83) { c.R.DE.Hi = util.SetBit(c.R.DE.Hi, 6, false) }
+func cbB2(c *SM83) { c.R.DE.Hi = internal.SetBit(c.R.DE.Hi, 6, false) }
 
-func cbB3(c *SM83) { c.R.DE.Lo = util.SetBit(c.R.DE.Lo, 6, false) }
+func cbB3(c *SM83) { c.R.DE.Lo = internal.SetBit(c.R.DE.Lo, 6, false) }
 
-func cbB4(c *SM83) { c.R.HL.Hi = util.SetBit(c.R.HL.Hi, 6, false) }
+func cbB4(c *SM83) { c.R.HL.Hi = internal.SetBit(c.R.HL.Hi, 6, false) }
 
-func cbB5(c *SM83) { c.R.HL.Lo = util.SetBit(c.R.HL.Lo, 6, false) }
+func cbB5(c *SM83) { c.R.HL.Lo = internal.SetBit(c.R.HL.Lo, 6, false) }
 
 func cbB6(c *SM83) { c.set_hl(6, false) }
 
-func cbB7(c *SM83) { c.R.A = util.SetBit(c.R.A, 6, false) }
+func cbB7(c *SM83) { c.R.A = internal.SetBit(c.R.A, 6, false) }
 
-func cbB8(c *SM83) { c.R.BC.Hi = util.SetBit(c.R.BC.Hi, 7, false) }
+func cbB8(c *SM83) { c.R.BC.Hi = internal.SetBit(c.R.BC.Hi, 7, false) }
 
-func cbB9(c *SM83) { c.R.BC.Lo = util.SetBit(c.R.BC.Lo, 7, false) }
+func cbB9(c *SM83) { c.R.BC.Lo = internal.SetBit(c.R.BC.Lo, 7, false) }
 
-func cbBA(c *SM83) { c.R.DE.Hi = util.SetBit(c.R.DE.Hi, 7, false) }
+func cbBA(c *SM83) { c.R.DE.Hi = internal.SetBit(c.R.DE.Hi, 7, false) }
 
-func cbBB(c *SM83) { c.R.DE.Lo = util.SetBit(c.R.DE.Lo, 7, false) }
+func cbBB(c *SM83) { c.R.DE.Lo = internal.SetBit(c.R.DE.Lo, 7, false) }
 
-func cbBC(c *SM83) { c.R.HL.Hi = util.SetBit(c.R.HL.Hi, 7, false) }
+func cbBC(c *SM83) { c.R.HL.Hi = internal.SetBit(c.R.HL.Hi, 7, false) }
 
-func cbBD(c *SM83) { c.R.HL.Lo = util.SetBit(c.R.HL.Lo, 7, false) }
+func cbBD(c *SM83) { c.R.HL.Lo = internal.SetBit(c.R.HL.Lo, 7, false) }
 
 func cbBE(c *SM83) { c.set_hl(7, false) }
 
-func cbBF(c *SM83) { c.R.A = util.SetBit(c.R.A, 7, false) }
+func cbBF(c *SM83) { c.R.A = internal.SetBit(c.R.A, 7, false) }
 
-func cbC0(c *SM83) { c.R.BC.Hi = util.SetBit(c.R.BC.Hi, 0, true) }
+func cbC0(c *SM83) { c.R.BC.Hi = internal.SetBit(c.R.BC.Hi, 0, true) }
 
-func cbC1(c *SM83) { c.R.BC.Lo = util.SetBit(c.R.BC.Lo, 0, true) }
+func cbC1(c *SM83) { c.R.BC.Lo = internal.SetBit(c.R.BC.Lo, 0, true) }
 
-func cbC2(c *SM83) { c.R.DE.Hi = util.SetBit(c.R.DE.Hi, 0, true) }
+func cbC2(c *SM83) { c.R.DE.Hi = internal.SetBit(c.R.DE.Hi, 0, true) }
 
-func cbC3(c *SM83) { c.R.DE.Lo = util.SetBit(c.R.DE.Lo, 0, true) }
+func cbC3(c *SM83) { c.R.DE.Lo = internal.SetBit(c.R.DE.Lo, 0, true) }
 
-func cbC4(c *SM83) { c.R.HL.Hi = util.SetBit(c.R.HL.Hi, 0, true) }
+func cbC4(c *SM83) { c.R.HL.Hi = internal.SetBit(c.R.HL.Hi, 0, true) }
 
-func cbC5(c *SM83) { c.R.HL.Lo = util.SetBit(c.R.HL.Lo, 0, true) }
+func cbC5(c *SM83) { c.R.HL.Lo = internal.SetBit(c.R.HL.Lo, 0, true) }
 
 func cbC6(c *SM83) { c.set_hl(0, true) }
 
-func cbC7(c *SM83) { c.R.A = util.SetBit(c.R.A, 0, true) }
+func cbC7(c *SM83) { c.R.A = internal.SetBit(c.R.A, 0, true) }
 
-func cbC8(c *SM83) { c.R.BC.Hi = util.SetBit(c.R.BC.Hi, 1, true) }
+func cbC8(c *SM83) { c.R.BC.Hi = internal.SetBit(c.R.BC.Hi, 1, true) }
 
-func cbC9(c *SM83) { c.R.BC.Lo = util.SetBit(c.R.BC.Lo, 1, true) }
+func cbC9(c *SM83) { c.R.BC.Lo = internal.SetBit(c.R.BC.Lo, 1, true) }
 
-func cbCA(c *SM83) { c.R.DE.Hi = util.SetBit(c.R.DE.Hi, 1, true) }
+func cbCA(c *SM83) { c.R.DE.Hi = internal.SetBit(c.R.DE.Hi, 1, true) }
 
-func cbCB(c *SM83) { c.R.DE.Lo = util.SetBit(c.R.DE.Lo, 1, true) }
+func cbCB(c *SM83) { c.R.DE.Lo = internal.SetBit(c.R.DE.Lo, 1, true) }
 
-func cbCC(c *SM83) { c.R.HL.Hi = util.SetBit(c.R.HL.Hi, 1, true) }
+func cbCC(c *SM83) { c.R.HL.Hi = internal.SetBit(c.R.HL.Hi, 1, true) }
 
-func cbCD(c *SM83) { c.R.HL.Lo = util.SetBit(c.R.HL.Lo, 1, true) }
+func cbCD(c *SM83) { c.R.HL.Lo = internal.SetBit(c.R.HL.Lo, 1, true) }
 
 func cbCE(c *SM83) { c.set_hl(1, true) }
 
-func cbCF(c *SM83) { c.R.A = util.SetBit(c.R.A, 1, true) }
+func cbCF(c *SM83) { c.R.A = internal.SetBit(c.R.A, 1, true) }
 
-func cbD0(c *SM83) { c.R.BC.Hi = util.SetBit(c.R.BC.Hi, 2, true) }
+func cbD0(c *SM83) { c.R.BC.Hi = internal.SetBit(c.R.BC.Hi, 2, true) }
 
-func cbD1(c *SM83) { c.R.BC.Lo = util.SetBit(c.R.BC.Lo, 2, true) }
+func cbD1(c *SM83) { c.R.BC.Lo = internal.SetBit(c.R.BC.Lo, 2, true) }
 
-func cbD2(c *SM83) { c.R.DE.Hi = util.SetBit(c.R.DE.Hi, 2, true) }
+func cbD2(c *SM83) { c.R.DE.Hi = internal.SetBit(c.R.DE.Hi, 2, true) }
 
-func cbD3(c *SM83) { c.R.DE.Lo = util.SetBit(c.R.DE.Lo, 2, true) }
+func cbD3(c *SM83) { c.R.DE.Lo = internal.SetBit(c.R.DE.Lo, 2, true) }
 
-func cbD4(c *SM83) { c.R.HL.Hi = util.SetBit(c.R.HL.Hi, 2, true) }
+func cbD4(c *SM83) { c.R.HL.Hi = internal.SetBit(c.R.HL.Hi, 2, true) }
 
-func cbD5(c *SM83) { c.R.HL.Lo = util.SetBit(c.R.HL.Lo, 2, true) }
+func cbD5(c *SM83) { c.R.HL.Lo = internal.SetBit(c.R.HL.Lo, 2, true) }
 
 func cbD6(c *SM83) { c.set_hl(2, true) }
 
-func cbD7(c *SM83) { c.R.A = util.SetBit(c.R.A, 2, true) }
+func cbD7(c *SM83) { c.R.A = internal.SetBit(c.R.A, 2, true) }
 
-func cbD8(c *SM83) { c.R.BC.Hi = util.SetBit(c.R.BC.Hi, 3, true) } // set 3, b
+func cbD8(c *SM83) { c.R.BC.Hi = internal.SetBit(c.R.BC.Hi, 3, true) } // set 3, b
 
-func cbD9(c *SM83) { c.R.BC.Lo = util.SetBit(c.R.BC.Lo, 3, true) }
+func cbD9(c *SM83) { c.R.BC.Lo = internal.SetBit(c.R.BC.Lo, 3, true) }
 
-func cbDA(c *SM83) { c.R.DE.Hi = util.SetBit(c.R.DE.Hi, 3, true) }
+func cbDA(c *SM83) { c.R.DE.Hi = internal.SetBit(c.R.DE.Hi, 3, true) }
 
-func cbDB(c *SM83) { c.R.DE.Lo = util.SetBit(c.R.DE.Lo, 3, true) }
+func cbDB(c *SM83) { c.R.DE.Lo = internal.SetBit(c.R.DE.Lo, 3, true) }
 
-func cbDC(c *SM83) { c.R.HL.Hi = util.SetBit(c.R.HL.Hi, 3, true) }
+func cbDC(c *SM83) { c.R.HL.Hi = internal.SetBit(c.R.HL.Hi, 3, true) }
 
-func cbDD(c *SM83) { c.R.HL.Lo = util.SetBit(c.R.HL.Lo, 3, true) }
+func cbDD(c *SM83) { c.R.HL.Lo = internal.SetBit(c.R.HL.Lo, 3, true) }
 
 func cbDE(c *SM83) { c.set_hl(3, true) }
 
-func cbDF(c *SM83) { c.R.A = util.SetBit(c.R.A, 3, true) }
+func cbDF(c *SM83) { c.R.A = internal.SetBit(c.R.A, 3, true) }
 
-func cbE0(c *SM83) { c.R.BC.Hi = util.SetBit(c.R.BC.Hi, 4, true) }
+func cbE0(c *SM83) { c.R.BC.Hi = internal.SetBit(c.R.BC.Hi, 4, true) }
 
-func cbE1(c *SM83) { c.R.BC.Lo = util.SetBit(c.R.BC.Lo, 4, true) }
+func cbE1(c *SM83) { c.R.BC.Lo = internal.SetBit(c.R.BC.Lo, 4, true) }
 
-func cbE2(c *SM83) { c.R.DE.Hi = util.SetBit(c.R.DE.Hi, 4, true) }
+func cbE2(c *SM83) { c.R.DE.Hi = internal.SetBit(c.R.DE.Hi, 4, true) }
 
-func cbE3(c *SM83) { c.R.DE.Lo = util.SetBit(c.R.DE.Lo, 4, true) }
+func cbE3(c *SM83) { c.R.DE.Lo = internal.SetBit(c.R.DE.Lo, 4, true) }
 
-func cbE4(c *SM83) { c.R.HL.Hi = util.SetBit(c.R.HL.Hi, 4, true) }
+func cbE4(c *SM83) { c.R.HL.Hi = internal.SetBit(c.R.HL.Hi, 4, true) }
 
-func cbE5(c *SM83) { c.R.HL.Lo = util.SetBit(c.R.HL.Lo, 4, true) }
+func cbE5(c *SM83) { c.R.HL.Lo = internal.SetBit(c.R.HL.Lo, 4, true) }
 
 func cbE6(c *SM83) { c.set_hl(4, true) }
 
-func cbE7(c *SM83) { c.R.A = util.SetBit(c.R.A, 4, true) }
+func cbE7(c *SM83) { c.R.A = internal.SetBit(c.R.A, 4, true) }
 
-func cbE8(c *SM83) { c.R.BC.Hi = util.SetBit(c.R.BC.Hi, 5, true) }
+func cbE8(c *SM83) { c.R.BC.Hi = internal.SetBit(c.R.BC.Hi, 5, true) }
 
-func cbE9(c *SM83) { c.R.BC.Lo = util.SetBit(c.R.BC.Lo, 5, true) }
+func cbE9(c *SM83) { c.R.BC.Lo = internal.SetBit(c.R.BC.Lo, 5, true) }
 
-func cbEA(c *SM83) { c.R.DE.Hi = util.SetBit(c.R.DE.Hi, 5, true) }
+func cbEA(c *SM83) { c.R.DE.Hi = internal.SetBit(c.R.DE.Hi, 5, true) }
 
-func cbEB(c *SM83) { c.R.DE.Lo = util.SetBit(c.R.DE.Lo, 5, true) }
+func cbEB(c *SM83) { c.R.DE.Lo = internal.SetBit(c.R.DE.Lo, 5, true) }
 
-func cbEC(c *SM83) { c.R.HL.Hi = util.SetBit(c.R.HL.Hi, 5, true) }
+func cbEC(c *SM83) { c.R.HL.Hi = internal.SetBit(c.R.HL.Hi, 5, true) }
 
-func cbED(c *SM83) { c.R.HL.Lo = util.SetBit(c.R.HL.Lo, 5, true) }
+func cbED(c *SM83) { c.R.HL.Lo = internal.SetBit(c.R.HL.Lo, 5, true) }
 
 func cbEE(c *SM83) { c.set_hl(5, true) }
 
-func cbEF(c *SM83) { c.R.A = util.SetBit(c.R.A, 5, true) }
+func cbEF(c *SM83) { c.R.A = internal.SetBit(c.R.A, 5, true) }
 
-func cbF0(c *SM83) { c.R.BC.Hi = util.SetBit(c.R.BC.Hi, 6, true) }
+func cbF0(c *SM83) { c.R.BC.Hi = internal.SetBit(c.R.BC.Hi, 6, true) }
 
-func cbF1(c *SM83) { c.R.BC.Lo = util.SetBit(c.R.BC.Lo, 6, true) }
+func cbF1(c *SM83) { c.R.BC.Lo = internal.SetBit(c.R.BC.Lo, 6, true) }
 
-func cbF2(c *SM83) { c.R.DE.Hi = util.SetBit(c.R.DE.Hi, 6, true) }
+func cbF2(c *SM83) { c.R.DE.Hi = internal.SetBit(c.R.DE.Hi, 6, true) }
 
-func cbF3(c *SM83) { c.R.DE.Lo = util.SetBit(c.R.DE.Lo, 6, true) }
+func cbF3(c *SM83) { c.R.DE.Lo = internal.SetBit(c.R.DE.Lo, 6, true) }
 
-func cbF4(c *SM83) { c.R.HL.Hi = util.SetBit(c.R.HL.Hi, 6, true) }
+func cbF4(c *SM83) { c.R.HL.Hi = internal.SetBit(c.R.HL.Hi, 6, true) }
 
-func cbF5(c *SM83) { c.R.HL.Lo = util.SetBit(c.R.HL.Lo, 6, true) }
+func cbF5(c *SM83) { c.R.HL.Lo = internal.SetBit(c.R.HL.Lo, 6, true) }
 
 func cbF6(c *SM83) { c.set_hl(6, true) }
 
-func cbF7(c *SM83) { c.R.A = util.SetBit(c.R.A, 6, true) }
+func cbF7(c *SM83) { c.R.A = internal.SetBit(c.R.A, 6, true) }
 
-func cbF8(c *SM83) { c.R.BC.Hi = util.SetBit(c.R.BC.Hi, 7, true) }
+func cbF8(c *SM83) { c.R.BC.Hi = internal.SetBit(c.R.BC.Hi, 7, true) }
 
-func cbF9(c *SM83) { c.R.BC.Lo = util.SetBit(c.R.BC.Lo, 7, true) }
+func cbF9(c *SM83) { c.R.BC.Lo = internal.SetBit(c.R.BC.Lo, 7, true) }
 
-func cbFA(c *SM83) { c.R.DE.Hi = util.SetBit(c.R.DE.Hi, 7, true) }
+func cbFA(c *SM83) { c.R.DE.Hi = internal.SetBit(c.R.DE.Hi, 7, true) }
 
-func cbFB(c *SM83) { c.R.DE.Lo = util.SetBit(c.R.DE.Lo, 7, true) }
+func cbFB(c *SM83) { c.R.DE.Lo = internal.SetBit(c.R.DE.Lo, 7, true) }
 
-func cbFC(c *SM83) { c.R.HL.Hi = util.SetBit(c.R.HL.Hi, 7, true) }
+func cbFC(c *SM83) { c.R.HL.Hi = internal.SetBit(c.R.HL.Hi, 7, true) }
 
-func cbFD(c *SM83) { c.R.HL.Lo = util.SetBit(c.R.HL.Lo, 7, true) }
+func cbFD(c *SM83) { c.R.HL.Lo = internal.SetBit(c.R.HL.Lo, 7, true) }
 
 func cbFE(c *SM83) { c.set_hl(7, true) }
 
-func cbFF(c *SM83) { c.R.A = util.SetBit(c.R.A, 7, true) }
+func cbFF(c *SM83) { c.R.A = internal.SetBit(c.R.A, 7, true) }

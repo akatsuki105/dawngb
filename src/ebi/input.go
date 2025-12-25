@@ -1,34 +1,33 @@
 package main
 
 import (
-	"fmt"
-
 	"github.com/hajimehoshi/ebiten/v2"
+	"github.com/hajimehoshi/ebiten/v2/inpututil"
 )
 
-var keyMap = map[ebiten.Key]string{
-	ebiten.KeyX:          "A",
-	ebiten.KeyZ:          "B",
-	ebiten.KeyBackspace:  "SELECT",
-	ebiten.KeyEnter:      "START",
-	ebiten.KeyArrowUp:    "UP",
-	ebiten.KeyArrowDown:  "DOWN",
-	ebiten.KeyArrowLeft:  "LEFT",
-	ebiten.KeyArrowRight: "RIGHT",
+var KeyBindings = map[string]ebiten.Key{
+	"A":      ebiten.KeyX,
+	"B":      ebiten.KeyZ,
+	"SELECT": ebiten.KeyBackspace,
+	"START":  ebiten.KeyEnter,
+	"UP":     ebiten.KeyArrowUp,
+	"DOWN":   ebiten.KeyArrowDown,
+	"LEFT":   ebiten.KeyArrowLeft,
+	"RIGHT":  ebiten.KeyArrowRight,
 }
 
-var standardButtonToString = map[ebiten.StandardGamepadButton]string{
-	ebiten.StandardGamepadButtonRightTop:    "B",
-	ebiten.StandardGamepadButtonRightRight:  "A",
-	ebiten.StandardGamepadButtonCenterLeft:  "SELECT",
-	ebiten.StandardGamepadButtonCenterRight: "START",
-	ebiten.StandardGamepadButtonLeftBottom:  "DOWN",
-	ebiten.StandardGamepadButtonLeftRight:   "RIGHT",
-	ebiten.StandardGamepadButtonLeftLeft:    "LEFT",
-	ebiten.StandardGamepadButtonLeftTop:     "UP",
+var GamepadBindings = map[string]ebiten.StandardGamepadButton{
+	"A":      ebiten.StandardGamepadButtonRightRight,
+	"B":      ebiten.StandardGamepadButtonRightBottom,
+	"SELECT": ebiten.StandardGamepadButtonCenterLeft,
+	"START":  ebiten.StandardGamepadButtonCenterRight,
+	"UP":     ebiten.StandardGamepadButtonLeftTop,
+	"DOWN":   ebiten.StandardGamepadButtonLeftBottom,
+	"LEFT":   ebiten.StandardGamepadButtonLeftLeft,
+	"RIGHT":  ebiten.StandardGamepadButtonLeftRight,
 }
 
-var inputMap = map[string]bool{
+var Inputs = map[string]bool{
 	"A":      false,
 	"B":      false,
 	"START":  false,
@@ -39,84 +38,55 @@ var inputMap = map[string]bool{
 	"RIGHT":  false,
 }
 
-var inputMapWeb = map[string]bool{
-	"A":      false,
-	"B":      false,
-	"START":  false,
-	"SELECT": false,
-	"UP":     false,
-	"DOWN":   false,
-	"LEFT":   false,
-	"RIGHT":  false,
+func Input() {
+	for key := range Inputs {
+		Inputs[key] = false
+	}
+
+	// State save/load (same with RetroArch)
+	if inpututil.IsKeyJustPressed(ebiten.KeyF2) {
+		App.Emu.SaveState()
+	} else if inpututil.IsKeyJustPressed(ebiten.KeyF4) {
+		App.Emu.LoadState()
+	}
+	pollKeyboard()
+	pollGamepad()
 }
 
-func (e *Emu) pollInput() {
-	for key := range inputMap {
-		inputMap[key] = inputMapWeb[key]
-	}
-
-	e.pollKeyInput()
-	e.pollGamepadInput()
-
-	for key, input := range inputMap {
-		e.c.SetKeyInput(key, input)
-	}
-
-	if e.c != nil {
-		if ebiten.IsKeyPressed(ebiten.KeyDigit1) && !saved {
-			fmt.Println("State save")
-			ok := e.c.Serialize(&stateSaveData)
-			if !ok {
-				fmt.Println("State save failed")
-			}
-			// fmt.Println(stateSaveData.Len())
-			saved = true
-		} else if ebiten.IsKeyPressed(ebiten.KeyDigit0) && saved {
-			fmt.Println("State load")
-			ok := e.c.Deserialize(&stateSaveData)
-			if !ok {
-				fmt.Println("State load failed")
-			}
-			// fmt.Println(stateSaveData.Len())
-			saved = false
-		}
-	}
-}
-
-func (e *Emu) pollKeyInput() {
-	for key, input := range keyMap {
-		if _, ok := inputMap[input]; ok {
+func pollKeyboard() {
+	for input, key := range KeyBindings {
+		if _, ok := Inputs[input]; ok {
 			if ebiten.IsKeyPressed(key) {
-				inputMap[input] = true
+				Inputs[input] = true
 			}
 		}
 	}
 }
 
-func (e *Emu) pollGamepadInput() {
+func pollGamepad() {
 	ids := ebiten.AppendGamepadIDs(nil)
 	for _, id := range ids {
 
-		for b, input := range standardButtonToString {
+		for input, b := range GamepadBindings {
 			switch {
 			case ebiten.IsStandardGamepadButtonPressed(id, b):
-				if _, ok := inputMap[input]; ok {
-					inputMap[input] = true
+				if _, ok := Inputs[input]; ok {
+					Inputs[input] = true
 				}
 			}
 		}
 
 		switch ebiten.StandardGamepadAxisValue(id, ebiten.StandardGamepadAxisLeftStickHorizontal) {
 		case 1:
-			inputMap["RIGHT"] = true
+			Inputs["RIGHT"] = true
 		case -1:
-			inputMap["LEFT"] = true
+			Inputs["LEFT"] = true
 		}
 		switch ebiten.StandardGamepadAxisValue(id, ebiten.StandardGamepadAxisLeftStickVertical) {
 		case 1:
-			inputMap["DOWN"] = true
+			Inputs["DOWN"] = true
 		case -1:
-			inputMap["UP"] = true
+			Inputs["UP"] = true
 		}
 	}
 }

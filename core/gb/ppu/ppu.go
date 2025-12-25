@@ -3,9 +3,9 @@ package ppu
 import (
 	"image/color"
 
+	"github.com/akatsuki105/dawngb/core/gb/internal"
 	"github.com/akatsuki105/dawngb/core/gb/ppu/renderer"
 	"github.com/akatsuki105/dawngb/core/gb/ppu/renderer/software"
-	"github.com/akatsuki105/dawngb/util"
 )
 
 const KB = 1024
@@ -47,18 +47,18 @@ type PPU struct {
 	cpu             CPU
 	cycles          int64 // 遅れているサイクル数(8.38MHzのマスターサイクル単位)
 	screen          [160 * 144]color.NRGBA
-	frameCounter    uint64
-	lx, ly          int
+	Frame           uint64
+	Lx, Ly          int
 	r               renderer.Renderer
 	RAM             VRAM
 	DMA             DMA
-	lcdc, stat, lyc uint8
+	LCDC, STAT, LYC uint8
 	OAM             [160]uint8
 	Palette         [(4 * 8) * 2]uint16 // 4bppの8パレットが BG と OBJ　の1つずつ
 	ioreg           [0x30]uint8
 	enableLatch     bool // LCDC.7をセットしてPPUを有効にすると、次のフレームから表示が開始される そうじゃないとゴミが表示される
 	objCount        uint8
-	bgpi, obpi      uint8
+	BGPI, OBPI      uint8
 
 	// For debugging
 	StatIRQ LCDStatIRQInfo
@@ -73,13 +73,13 @@ func New(cpu CPU) *PPU {
 
 func (p *PPU) Reset() {
 	p.r = software.New(p.RAM.Data[:], p.Palette[:], p.OAM[:], p.cpu.IsCGBMode)
-	p.frameCounter = 0
-	p.lx, p.ly = 0, 0
-	p.stat = 0x80
+	p.Frame = 0
+	p.Lx, p.Ly = 0, 0
+	p.STAT = 0x80
 	p.RAM.Bank = 0
 	p.objCount = 0
 	p.DMA.Active, p.DMA.Src, p.DMA.Until = false, 0, 0
-	p.bgpi, p.obpi = 0, 0
+	p.BGPI, p.OBPI = 0, 0
 	clear(p.Palette[:])
 }
 
@@ -88,10 +88,6 @@ func (p *PPU) SkipBIOS() {
 	p.Write(0xFF47, 0xFC) // BGP
 	copy(p.Palette[:4], dmgPalette[:])
 	copy(p.Palette[32:36], dmgPalette[:])
-}
-
-func (p *PPU) Frame() uint64 {
-	return p.frameCounter
 }
 
 func (p *PPU) Screen() []color.NRGBA {
@@ -111,11 +107,11 @@ func (p *PPU) Run(cycles8MHz int64) {
 }
 
 func (p *PPU) step() {
-	if (p.lcdc & (1 << 7)) != 0 {
-		if p.ly < 144 {
-			switch p.lx {
+	if (p.LCDC & (1 << 7)) != 0 {
+		if p.Ly < 144 {
+			switch p.Lx {
 			case 0:
-				if p.ly == 0 {
+				if p.Ly == 0 {
 					p.StatIRQ.Triggered = false
 					p.StatIRQ.Mode, p.StatIRQ.Lx, p.StatIRQ.Ly = 0, 0, 0
 				}
@@ -126,9 +122,9 @@ func (p *PPU) step() {
 				p.hblank()
 			}
 		}
-		p.lx++
-		if p.lx == 456 {
-			p.lx = 0
+		p.Lx++
+		if p.Lx == 456 {
+			p.Lx = 0
 			p.incrementLY()
 		}
 	}
@@ -136,22 +132,22 @@ func (p *PPU) step() {
 
 func (p *PPU) incrementLY() {
 	p.objCount = 0
-	p.ly++
-	switch p.ly {
+	p.Ly++
+	switch p.Ly {
 	case 144:
 		p.vblank()
 	case 154:
-		p.ly = 0
+		p.Ly = 0
 		p.enableLatch = false
-		p.frameCounter++
+		p.Frame++
 	}
 	p.compareLYC()
 }
 
 func (p *PPU) compareLYC() {
-	oldStat := p.stat
-	p.stat = util.SetBit(p.stat, 2, p.ly == int(p.lyc))
-	if !statIRQAsserted(oldStat) && statIRQAsserted(p.stat) {
+	oldStat := p.STAT
+	p.STAT = internal.SetBit(p.STAT, 2, p.Ly == int(p.LYC))
+	if !statIRQAsserted(oldStat) && statIRQAsserted(p.STAT) {
 		p.cpu.IRQ(1)
 	}
 }

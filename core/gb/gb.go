@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"image/color"
 	"io"
+	"os"
+	"runtime"
 
 	"github.com/akatsuki105/dawngb/core/gb/apu"
 	"github.com/akatsuki105/dawngb/core/gb/cartridge"
@@ -41,33 +43,38 @@ const (
 var buttons = [8]string{"A", "B", "SELECT", "START", "RIGHT", "LEFT", "UP", "DOWN"}
 
 type GB struct {
-	Model    Model // ハードウェアの種類
-	CPU      *cpu.CPU
-	PPU      *ppu.PPU
-	APU      *apu.APU
-	Cart     *cartridge.Cartridge
-	inputs   uint8 // 押されている時にビットを立てる; bit0: A, bit1: B, bit2: SELECT, bit3: START, bit4: RIGHT, bit5: LEFT, bit6: UP, bit7: DOWN
-	wram     [(4 * KB) * 8]uint8
-	wramBank uint8 // SVBK(0xFF70, 0..7, CGB only)
+	Model  Model // ハードウェアの種類
+	CPU    *cpu.CPU
+	PPU    *ppu.PPU
+	APU    *apu.APU
+	Cart   *cartridge.Cartridge
+	inputs uint8 // 押されている時にビットを立てる; bit0: A, bit1: B, bit2: SELECT, bit3: START, bit4: RIGHT, bit5: LEFT, bit6: UP, bit7: DOWN
+	WRAM   WRAM
+	Snap   Snapshot
 	debugger.Debugger
+}
+
+type WRAM struct {
+	Data [(4 * KB) * 8]uint8
+	Bank uint8 // SVBK(0xFF70, 0..7, CGB only)
 }
 
 func New(model Model, audioBuffer io.Writer) *GB {
 	g := &GB{
-		Model:    model,
-		wramBank: 1,
+		Model: model,
+		Snap:  *NewSnapshot(0),
 	}
 	g.CPU = cpu.New(g.IsColor(), g)
 	g.PPU = ppu.New(g.CPU)
 	g.APU = apu.New(audioBuffer)
-	g.wramBank = 1
+	g.WRAM.Bank = 1
 	return g
 }
 
 func (g *GB) Reset() {
 	if g.Cart != nil {
-		clear(g.wram[:])
-		g.wramBank = 1
+		clear(g.WRAM.Data[:])
+		g.WRAM.Bank = 1
 		g.CPU.Reset()
 		g.PPU.Reset()
 		g.APU.Reset()
@@ -75,9 +82,26 @@ func (g *GB) Reset() {
 	}
 }
 
-func (g *GB) DirectBoot() { g.skipBIOS() }
+func (g *GB) DirectBoot() error {
+	g.skipBIOS()
+	return nil
+}
 
 func (g *GB) Quit() {}
+
+func (g *GB) onPanic() {
+	if r := recover(); r != nil {
+		fmt.Fprintf(os.Stderr, "Frame: %d, y: %d, PC: 0x%04X\n", g.PPU.Frame, g.PPU.Ly, g.CPU.R.PC)
+		for depth := 0; ; depth++ {
+			_, file, line, ok := runtime.Caller(depth)
+			if !ok {
+				break
+			}
+			fmt.Fprintf(os.Stderr, "======> %d: %v:%d\n", depth, file, line)
+		}
+		panic(r)
+	}
+}
 
 func (g *GB) skipBIOS() {
 	g.CPU.SkipBIOS()
@@ -179,6 +203,8 @@ func (g *GB) Dump(cmd DumpCmd, args ...any) ([]uint8, error) {
 
 func (g *GB) RunFrame() {
 	if g.Cart != nil {
+		// defer g.onPanic()
+
 		g.CPU.SendInputs(g.inputs ^ 0xFF) // ボタンの状態をCPUに送る(ただし、押されてないボタンのビットを立てる)
 		g.inputs = 0
 
@@ -187,8 +213,8 @@ func (g *GB) RunFrame() {
 		const FRAME = 70224 * ppu.CYCLE
 		start := g.CPU.Cycles
 
-		frame := g.PPU.Frame()
-		for frame == g.PPU.Frame() && ((g.CPU.Cycles - start) < FRAME) {
+		frame := g.PPU.Frame
+		for frame == g.PPU.Frame && ((g.CPU.Cycles - start) < FRAME) {
 			g.step()
 		}
 		g.APU.FlushSamples()

@@ -13,7 +13,7 @@ type APU struct {
 	*psg.PSG
 	sampleWriter io.Writer
 
-	samples     [549 * 2]int16 // [[left, right]...], 549 = 32768 / 59.7275
+	samples     [560 * 2]int16 // [[left, right]...], 549 = 32768 / 59.7275
 	sampleCount uint16
 	Mask        uint8
 }
@@ -43,7 +43,7 @@ func (a *APU) Run(cycles8MHz int64) {
 		if a.cycles&0b11 == 0 { // 2MHz
 			a.PSG.Step()
 		}
-		if a.cycles%256 == 0 { // 32768Hzにダウンサンプリングしたい = 32768Hzごとにサンプルを生成したい = 256マスターサイクルごとにサンプルを生成する (8MHz / 32768Hz = 256)
+		if (a.cycles & 0xFF) == 0 { // 32768Hzにダウンサンプリングしたい = 32768Hzごとにサンプルを生成したい = 256マスターサイクルごとにサンプルを生成する (8MHz / 32768Hz = 256)
 			if int(a.sampleCount) < len(a.samples)/2 {
 				left, right := a.PSG.Sample(a.Mask)
 				lvolume, rvolume := a.PSG.Volume()

@@ -1,7 +1,7 @@
 package sm83
 
 import (
-	"github.com/akatsuki105/dawngb/util"
+	"github.com/akatsuki105/dawngb/core/gb/internal"
 )
 
 type opcode = func(c *SM83)
@@ -146,7 +146,7 @@ func op16(c *SM83) { c.R.DE.Hi = c.fetch() }
 // rla
 func op17(c *SM83) {
 	carry := btou8(c.R.F.c)
-	c.R.F.c = util.Bit(c.R.A, 7)
+	c.R.F.c = internal.Bit(c.R.A, 7)
 	c.R.A = (c.R.A << 1) | carry
 	c.R.F.z, c.R.F.n, c.R.F.h = false, false, false
 }
@@ -184,7 +184,7 @@ func op1E(c *SM83) { c.R.DE.Lo = c.fetch() }
 // rra
 func op1F(c *SM83) {
 	carry := btou8(c.R.F.c)
-	c.R.F.c = util.Bit(c.R.A, 0)
+	c.R.F.c = internal.Bit(c.R.A, 0)
 	c.R.A = (c.R.A >> 1) | (carry << 7)
 	c.R.F.z, c.R.F.n, c.R.F.h = false, false, false
 }

@@ -3,7 +3,7 @@ package sm83
 import (
 	"fmt"
 
-	"github.com/akatsuki105/dawngb/util"
+	"github.com/akatsuki105/dawngb/core/gb/internal"
 )
 
 func todo(c *SM83) {
@@ -51,7 +51,7 @@ func (c *SM83) Interrupt(id int) {
 }
 
 func (c *SM83) bit(val uint8, bit int) {
-	c.R.F.z = !util.Bit(val, bit)
+	c.R.F.z = !internal.Bit(val, bit)
 	c.R.F.n, c.R.F.h = false, true
 }
 
@@ -89,36 +89,36 @@ func (c *SM83) sub(val uint8, carry bool) {
 func (c *SM83) set_hl(bit int, b bool) {
 	hl := c.R.HL.Pack()
 	val := c.bus.Read(hl)
-	val = util.SetBit(val, bit, b)
+	val = internal.SetBit(val, bit, b)
 	c.bus.Write(hl, val)
 }
 
 func (c *SM83) rr(r *uint8) {
 	carry := btou8(c.R.F.c)
-	c.R.F.c = util.Bit(*r, 0)
+	c.R.F.c = internal.Bit(*r, 0)
 	*r = (*r >> 1) | (carry << 7)
 	c.R.F.z, c.R.F.n, c.R.F.h = (*r == 0), false, false
 }
 
 func (c *SM83) rrc(r *uint8) {
 	*r = (*r << 7) | (*r >> 1)
-	c.R.F.z, c.R.F.n, c.R.F.h, c.R.F.c = (*r == 0), false, false, util.Bit(*r, 7)
+	c.R.F.z, c.R.F.n, c.R.F.h, c.R.F.c = (*r == 0), false, false, internal.Bit(*r, 7)
 }
 
 func (c *SM83) rl(r *uint8) {
-	carry := util.Bit(*r, 7)
+	carry := internal.Bit(*r, 7)
 	*r = (*r << 1) | btou8(c.R.F.c)
 	c.R.F.z, c.R.F.n, c.R.F.h, c.R.F.c = (*r == 0), false, false, carry
 }
 
 func (c *SM83) sla(r *uint8) {
-	c.R.F.c = util.Bit(*r, 7)
+	c.R.F.c = internal.Bit(*r, 7)
 	*r <<= 1
 	c.R.F.z, c.R.F.n, c.R.F.h = (*r == 0), false, false
 }
 
 func (c *SM83) srl(r *uint8) {
-	carry := util.Bit(*r, 0)
+	carry := internal.Bit(*r, 0)
 	*r >>= 1
 	c.R.F.z, c.R.F.n, c.R.F.h, c.R.F.c = (*r == 0), false, false, carry
 }
@@ -129,12 +129,12 @@ func (c *SM83) swap(r *uint8) {
 }
 
 func (c *SM83) sra(r *uint8) {
-	carry := util.Bit(*r, 0)
+	carry := internal.Bit(*r, 0)
 	*r = uint8(int8(*r) >> 1)
 	c.R.F.z, c.R.F.n, c.R.F.h, c.R.F.c = (*r == 0), false, false, carry
 }
 
 func (c *SM83) rlc(r *uint8) {
 	*r = (*r << 1) | (*r >> 7)
-	c.R.F.z, c.R.F.n, c.R.F.h, c.R.F.c = (*r == 0), false, false, util.Bit(*r, 0)
+	c.R.F.z, c.R.F.n, c.R.F.h, c.R.F.c = (*r == 0), false, false, internal.Bit(*r, 0)
 }

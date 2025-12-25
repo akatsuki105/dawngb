@@ -1,2 +1,3 @@
 go.sum linguist-generated=true
 **/wasm_exec.js linguist-vendored=false
+src/libretro/*.h linguist-vendored=true

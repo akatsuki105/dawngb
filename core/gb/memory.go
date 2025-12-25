@@ -17,13 +17,13 @@ func (g *GB) read(addr uint16, peek bool) uint8 {
 	case addr < 0xC000: // SRAM
 		return g.Cart.Read(addr)
 	case addr < 0xD000: // WRAM0
-		return g.wram[addr&0xFFF]
+		return g.WRAM.Data[addr&0xFFF]
 	case addr < 0xE000: // WRAMn
-		return g.wram[(uint(g.wramBank)<<12)|uint(addr&0xFFF)]
+		return g.WRAM.Data[(uint(g.WRAM.Bank)<<12)|uint(addr&0xFFF)]
 	case addr < 0xF000: // mirror of WRAM0
-		return g.wram[addr&0xFFF]
+		return g.WRAM.Data[addr&0xFFF]
 	case addr < 0xFE00: // mirror of WRAMn
-		return g.wram[(uint(g.wramBank)<<12)|uint(addr&0xFFF)]
+		return g.WRAM.Data[(uint(g.WRAM.Bank)<<12)|uint(addr&0xFFF)]
 	case addr < 0xFEA0: // OAM
 		return g.PPU.Read(addr)
 	case addr < 0xFF00: // unused
@@ -54,7 +54,7 @@ func (g *GB) read(addr uint16, peek bool) uint8 {
 		return 0x02 // TODO: infrared
 	case 0xFF70:
 		if g.IsColor() {
-			return g.wramBank
+			return g.WRAM.Bank
 		}
 		return 1
 	case 0xFFFF: // IE
@@ -67,7 +67,7 @@ func (g *GB) Write(addr uint16, val uint8) {
 	g.write(addr, val, false)
 }
 
-func (g *GB) write(addr uint16, val uint8, override bool) {
+func (g *GB) write(addr uint16, val uint8, poke bool) {
 	switch {
 	case addr < 0x8000: // ROM
 		g.Cart.Write(addr, val)
@@ -79,16 +79,16 @@ func (g *GB) write(addr uint16, val uint8, override bool) {
 		g.Cart.Write(addr, val)
 		return
 	case addr < 0xD000: // WRAM0
-		g.wram[addr&0xFFF] = val
+		g.WRAM.Data[addr&0xFFF] = val
 		return
 	case addr < 0xE000: // WRAMn
-		g.wram[(uint(g.wramBank)<<12)|uint(addr&0xFFF)] = val
+		g.WRAM.Data[(uint(g.WRAM.Bank)<<12)|uint(addr&0xFFF)] = val
 		return
 	case addr < 0xF000: // mirror of WRAM0
-		g.wram[addr&0xFFF] = val
+		g.WRAM.Data[addr&0xFFF] = val
 		return
 	case addr < 0xFE00: // mirror of WRAMn
-		g.wram[(uint(g.wramBank)<<12)|uint(addr&0xFFF)] = val
+		g.WRAM.Data[(uint(g.WRAM.Bank)<<12)|uint(addr&0xFFF)] = val
 		return
 	case addr < 0xFEA0: // OAM
 		g.PPU.Write(addr, val)
@@ -120,12 +120,12 @@ func (g *GB) write(addr uint16, val uint8, override bool) {
 		return
 	case 0xFF70:
 		if g.IsColor() {
-			g.wramBank = (val & 0b111)
-			if g.wramBank == 0 {
-				g.wramBank = 1
+			g.WRAM.Bank = (val & 0b111)
+			if g.WRAM.Bank == 0 {
+				g.WRAM.Bank = 1
 			}
 		} else {
-			g.wramBank = 1
+			g.WRAM.Bank = 1
 		}
 		return
 	case 0xFFFF:

@@ -1,24 +1,26 @@
 package sm83
 
-import "github.com/akatsuki105/dawngb/util"
+import (
+	"github.com/akatsuki105/dawngb/core/gb/internal"
+)
 
-type pair struct {
+type Pair struct {
 	Lo, Hi uint8
 }
 
-func (p *pair) Pack() uint16 {
+func (p *Pair) Pack() uint16 {
 	return uint16(p.Hi)<<8 | uint16(p.Lo)
 }
 
-func (p *pair) Unpack(val uint16) {
+func (p *Pair) Unpack(val uint16) {
 	p.Lo = uint8(val)
 	p.Hi = uint8(val >> 8)
 }
 
 type Registers struct {
 	A          uint8
-	F          psr
-	BC, DE, HL pair
+	F          PSR
+	BC, DE, HL Pair
 	SP, PC     uint16
 }
 
@@ -32,22 +34,22 @@ func (r *Registers) reset() {
 }
 
 // ZNHC----
-type psr struct {
+type PSR struct {
 	z, n, h, c bool
 }
 
-func (p *psr) Pack() uint8 {
+func (p *PSR) Pack() uint8 {
 	packed := uint8(0)
-	packed = util.SetBit(packed, 7, p.z)
-	packed = util.SetBit(packed, 6, p.n)
-	packed = util.SetBit(packed, 5, p.h)
-	packed = util.SetBit(packed, 4, p.c)
+	packed = internal.SetBit(packed, 7, p.z)
+	packed = internal.SetBit(packed, 6, p.n)
+	packed = internal.SetBit(packed, 5, p.h)
+	packed = internal.SetBit(packed, 4, p.c)
 	return packed
 }
 
-func (p *psr) Unpack(val uint8) {
-	p.z = util.Bit(val, 7)
-	p.n = util.Bit(val, 6)
-	p.h = util.Bit(val, 5)
-	p.c = util.Bit(val, 4)
+func (p *PSR) Unpack(val uint8) {
+	p.z = internal.Bit(val, 7)
+	p.n = internal.Bit(val, 6)
+	p.h = internal.Bit(val, 5)
+	p.c = internal.Bit(val, 4)
 }

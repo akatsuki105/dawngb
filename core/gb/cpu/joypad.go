@@ -1,24 +1,24 @@
 package cpu
 
 // P1/JOYP (0xFF00)
-type joypad struct {
+type Joypad struct {
 	irq      func(n int)
-	p14, p15 bool  // P1.4, P1.5 (P14, P15 は CPUのpinの名前)
-	joyp     uint8 // P1.0-3
+	P14, P15 bool  // P1.4, P1.5 (P14, P15 は CPUのpinの名前)
+	JOYP     uint8 // P1.0-3
 
 	inputs uint8 // ゲームの実際のキー入力を反映したもの(pollで使用), (Dpad << 4) | Buttons, 0 is pressed, 1 is not pressed
 }
 
-func newJoypad(irq func(n int)) *joypad {
-	return &joypad{
+func newJoypad(irq func(n int)) *Joypad {
+	return &Joypad{
 		irq:    irq,
 		inputs: 0xFF,
 	}
 }
 
-func (j *joypad) reset() {
-	j.p14, j.p15 = false, false
-	j.joyp = 0x0F
+func (j *Joypad) reset() {
+	j.P14, j.P15 = false, false
+	j.JOYP = 0x0F
 	j.inputs = 0xFF
 }
 
@@ -28,33 +28,33 @@ func (j *joypad) reset() {
 //	bit4-7: RIGHT, LEFT, UP, DOWN
 //
 // 0 is pressed, 1 is not pressed
-func (j *joypad) poll(inputs uint8) {
-	j.joyp = 0x0F
-	if !j.p14 {
-		j.joyp &= (inputs >> 4) & 0x0F
+func (j *Joypad) poll(inputs uint8) {
+	j.JOYP = 0x0F
+	if !j.P14 {
+		j.JOYP &= (inputs >> 4) & 0x0F
 	}
-	if !j.p15 {
-		j.joyp &= inputs & 0x0F
+	if !j.P15 {
+		j.JOYP &= inputs & 0x0F
 	}
 
-	if j.joyp != 0x0F {
+	if j.JOYP != 0x0F {
 		j.irq(IRQ_JOYPAD)
 	}
 }
 
-func (j *joypad) read() uint8 {
+func (j *Joypad) read() uint8 {
 	j.poll(j.inputs)
-	val := j.joyp | 0xC0
-	if j.p14 {
+	val := j.JOYP | 0xC0
+	if j.P14 {
 		val |= (1 << 4)
 	}
-	if j.p15 {
+	if j.P15 {
 		val |= (1 << 5)
 	}
 	return val
 }
 
-func (j *joypad) write(val uint8) {
-	j.p14 = val&(1<<4) != 0
-	j.p15 = val&(1<<5) != 0
+func (j *Joypad) write(val uint8) {
+	j.P14 = val&(1<<4) != 0
+	j.P15 = val&(1<<5) != 0
 }

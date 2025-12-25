@@ -1,6 +1,10 @@
 package cpu
 
-import "github.com/akatsuki105/dawngb/core/gb/cpu/sm83"
+import (
+	"errors"
+
+	"github.com/akatsuki105/dawngb/core/gb/cpu/sm83"
+)
 
 type Snapshot struct {
 	Header           uint64 // バージョン番号とかなんか持たせたいとき用に確保
@@ -21,46 +25,53 @@ type Snapshot struct {
 	FF72, FF73, FF74 uint8
 }
 
+var errSnapshotNil = errors.New("CPU snapshot is nil")
+
 func (c *CPU) CreateSnapshot() Snapshot {
 	s := Snapshot{
 		IsCGB:  c.isCGB,
 		Cycles: c.Cycles,
-		SM83:   c.SM83.CreateSnapshot(),
 		Clock:  c.Clock,
-		Timer:  c.timer.CreateSnapshot(),
+		Timer:  c.Timer.CreateSnapshot(),
 		DMA:    c.DMA.CreateSnapshot(),
-		P14:    c.joypad.p14,
-		P15:    c.joypad.p15,
-		JoyP:   c.joypad.joyp,
-		Inputs: c.joypad.inputs,
-		Serial: c.serial.CreateSnapshot(),
-		FF50:   c.bios.ff50,
+		P14:    c.Joypad.P14,
+		P15:    c.Joypad.P15,
+		JoyP:   c.Joypad.JOYP,
+		Inputs: c.Joypad.inputs,
+		Serial: c.Serial.CreateSnapshot(),
+		FF50:   c.BIOS.FF50,
 		HRAM:   c.HRAM,
-		Halted: c.halted,
+		Halted: c.Halted,
 		IE:     c.IE,
 		IF:     c.IF,
-		Key0:   c.key0,
-		Key1:   c.key1,
-		FF72:   c.ff72,
-		FF73:   c.ff73,
-		FF74:   c.ff74,
+		Key0:   c.Key0,
+		Key1:   c.Key1,
+		FF72:   c.FF72,
+		FF73:   c.FF73,
+		FF74:   c.FF74,
 	}
+	c.SM83.UpdateSnapshot(&s.SM83)
 	return s
 }
 
-func (c *CPU) RestoreSnapshot(snap Snapshot) bool {
+func (c *CPU) RestoreSnapshot(snap *Snapshot) error {
+	if snap == nil {
+		return errSnapshotNil
+	}
 	c.isCGB = snap.IsCGB
 	c.Cycles = snap.Cycles
-	c.SM83.RestoreSnapshot(snap.SM83)
+	if err := c.SM83.RestoreSnapshot(&snap.SM83); err != nil {
+		return err
+	}
 	c.Clock = snap.Clock
-	c.timer.RestoreSnapshot(snap.Timer)
+	c.Timer.RestoreSnapshot(snap.Timer)
 	c.DMA.RestoreSnapshot(snap.DMA)
-	c.joypad.p14, c.joypad.p15, c.joypad.joyp, c.joypad.inputs = snap.P14, snap.P15, snap.JoyP, snap.Inputs
-	c.serial.RestoreSnapshot(snap.Serial)
-	c.bios.ff50 = snap.FF50
+	c.Joypad.P14, c.Joypad.P15, c.Joypad.JOYP, c.Joypad.inputs = snap.P14, snap.P15, snap.JoyP, snap.Inputs
+	c.Serial.RestoreSnapshot(snap.Serial)
+	c.BIOS.FF50 = snap.FF50
 	copy(c.HRAM[:], snap.HRAM[:])
-	c.halted = snap.Halted
-	c.IE, c.IF, c.key0, c.key1 = snap.IE, snap.IF, snap.Key0, snap.Key1
-	c.ff72, c.ff73, c.ff74 = snap.FF72, snap.FF73, snap.FF74
-	return true
+	c.Halted = snap.Halted
+	c.IE, c.IF, c.Key0, c.Key1 = snap.IE, snap.IF, snap.Key0, snap.Key1
+	c.FF72, c.FF73, c.FF74 = snap.FF72, snap.FF73, snap.FF74
+	return nil
 }

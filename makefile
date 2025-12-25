@@ -10,13 +10,13 @@ GOOS?=$(shell go env GOOS)
 GOARCH?=$(shell go env GOARCH)
 GOOPTIONS ?= -ldflags="-s -w" -trimpath
 
-.PHONY: build wasm profile libretro clean
+.PHONY: build wasm profile libretro libretro-deck clean
 
 build:
 	go build $(GOOPTIONS) -o build/$(NAME)$(EXE) ./src/ebi
 
 wasm:
-	env GOOS=js GOARCH=wasm go build $(GOOPTIONS) -o docs/core.wasm ./src/ebi
+	env GOOS=js GOARCH=wasm go build -o docs/core.wasm ./src/ebi
 
 profile:
 	go build -o build/profile/profile ./src/profile
